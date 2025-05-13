@@ -1,27 +1,55 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:toastification/toastification.dart';
 
 class ToastHelper {
   static void showError(String message) {
-    _showToast(message, backgroundColor: Colors.red);
+    _show(
+      message,
+      type: ToastificationType.error,
+      icon: LucideIcons.xCircle,
+    );
   }
 
   static void showSuccess(String message) {
-    _showToast(message, backgroundColor: Colors.green);
+    _show(
+      message,
+      type: ToastificationType.success,
+      icon: LucideIcons.checkCircle,
+    );
   }
 
-  static void show(String message, {Color backgroundColor = Colors.black}) {
-    _showToast(message, backgroundColor: backgroundColor);
-  }
-
-  static void _showToast(String message, {required Color backgroundColor}) {
-    Fluttertoast.showToast(
-      msg: message,
-      toastLength: Toast.LENGTH_SHORT,
-      timeInSecForIosWeb: 1,
+  static void show(
+      String message, {
+        ToastificationType type = ToastificationType.info,
+        IconData icon = Icons.info,
+        Color? backgroundColor,
+      }) {
+    _show(
+      message,
+      type: type,
+      icon: icon,
       backgroundColor: backgroundColor,
-      textColor: Colors.white,
-      fontSize: 16.0,
+    );
+  }
+
+  static void _show(
+      String message, {
+        required ToastificationType type,
+        required IconData icon,
+        Color? backgroundColor,
+      }) {
+    toastification.show(
+      type: type,
+      style: ToastificationStyle.flat,
+      title: Text(message),
+      autoCloseDuration: const Duration(seconds: 2),
+      alignment: Alignment.topRight,
+      icon: Icon(icon, color: backgroundColor),
+      backgroundColor: backgroundColor,
+      borderRadius: BorderRadius.circular(8),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      showProgressBar: true,
     );
   }
 }

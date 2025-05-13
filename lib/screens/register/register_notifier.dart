@@ -4,10 +4,11 @@ import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
 import 'package:mofa/core/remote/service/auth_provider.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/utils/common/encrypt.dart';
 
 class RegisterNotifier extends BaseChangeNotifier {
 
-  //Data Controller
+  // Data Controller
   TextEditingController _fullNameController = TextEditingController();
   TextEditingController _visitorCompanyNameController = TextEditingController();
   TextEditingController _mobileNumberController = TextEditingController();
@@ -20,15 +21,15 @@ class RegisterNotifier extends BaseChangeNotifier {
   TextEditingController _iqamaController = TextEditingController();
   TextEditingController _passportNumberController = TextEditingController();
 
-  //key
+  // Key
   final formKey = GlobalKey<FormState>();
 
-  //String
+  // String
   String? _selectedNationality;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
 
-  //List
+  // List
   List<CountryData> _nationalityMenu = [];
 
   final List<DocumentIdModel> idTypeMenu = [
@@ -38,17 +39,20 @@ class RegisterNotifier extends BaseChangeNotifier {
     DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
   ];
 
-  //Functions
+  // Constructor
+  // Initializes the RegisterNotifier and makes an API call for the country list
   RegisterNotifier(BuildContext context) {
     idTypeController.text = "National ID";
     print("Function is called");
     countryApiCall(context, {});
   }
 
+  // Navigates to the login screen
   void navigateToLoginScreen(BuildContext context) {
     Navigator.pop(context);
   }
 
+  // Makes an API call to fetch the country list
   void countryApiCall(BuildContext context, Map countryRequest) async {
     print("Registre Api Called");
     await AuthRepository().apiCountryList(
@@ -59,8 +63,25 @@ class RegisterNotifier extends BaseChangeNotifier {
     });
   }
 
+  // Performs registration process
   void performRegister(BuildContext context) {
     if (formKey.currentState!.validate()) {
+
+      String encryptNationalId = nationalIdController.text.isEmpty
+          ? ""
+          : encryptAES(nationalIdController.text);
+
+      String encryptPassport = passportNumberController.text.isEmpty
+          ? ""
+          : encryptAES(passportNumberController.text);
+
+      String encryptIqama = iqamaController.text.isEmpty ? "" : encryptAES(
+          iqamaController.text);
+
+      String encryptOtherDocumentNumber = documentNumberController.text.isEmpty
+          ? ""
+          : encryptAES(documentNumberController.text);
+
       RegisterRequest registerRequest = RegisterRequest(
         sFullName: fullNameController.text,
         sEmail: emailAddressController.text,
@@ -69,16 +90,18 @@ class RegisterNotifier extends BaseChangeNotifier {
         sCompanyName: visitorCompanyNameController.text,
         iso3: selectedNationality,
         nDocumentType: int.parse(selectedIdValue ?? ""),
-        eidNumber: nationalIdController.text,
-        passportNumber: passportNumberController.text,
-        sIqama: iqamaController.text,
+        eidNumber: encryptNationalId,
+        passportNumber: encryptPassport,
+        sIqama: encryptIqama,
         sOthersDoc: documentNameController.text,
-        sOthersValue: documentNumberController.text,
+        sOthersValue: encryptOtherDocumentNumber,
       );
+
       registerApiCall(context, registerRequest);
     }
   }
 
+  // Makes an API call to register the user
   void registerApiCall(BuildContext context, RegisterRequest registerRequest) async {
     await AuthRepository().apiRegistration(
         registerRequest, context).then((value) {
@@ -88,7 +111,7 @@ class RegisterNotifier extends BaseChangeNotifier {
     });
   }
 
-  //Getter and Setter
+  // Getter and Setter
   TextEditingController get fullNameController => _fullNameController;
 
   set fullNameController(TextEditingController value) {

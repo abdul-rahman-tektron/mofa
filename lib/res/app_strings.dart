@@ -3,6 +3,7 @@ class AppStrings {
 
   //SharedPreference Key
   static const userKey = 'user';
+  static const rememberMeKey = 'remember_me';
   static const accessToken = 'access_token';
   static const languageCode = 'language_code';
 }

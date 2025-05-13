@@ -55,9 +55,13 @@ class CommonValidation {
     return null;
   }
 
-  String? mobileNumberValidator(String? value) {
+  String? validateMobile(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Mobile Number is Required';
+      return 'Mobile Number is required.';
+    }
+    final regex = RegExp(LocalInputRegex.phone);
+    if (!regex.hasMatch(value)) {
+      return 'Enter a valid number.';
     }
     return null;
   }
@@ -83,24 +87,33 @@ class CommonValidation {
     return null;
   }
 
-  String? passportNumberValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Passport Number is Required';
-    }
+  String? validateIqama(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'Iqama is required.';
+      }
+      if (!RegExp(LocalInputRegex.iqamaNumber).hasMatch(value)) {
+        return 'Enter a valid iqama number.';
+      }
     return null;
   }
 
-  String? iqamaValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Iqama is Required';
-    }
+  String? validateNationalId(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'National ID is required.';
+      }
+      if (!RegExp(LocalInputRegex.nationalId).hasMatch(value)) {
+        return 'Enter a valid National ID.';
+      }
     return null;
   }
 
-  String? nationalityIdValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Nationality ID is Required';
-    }
+  String? validatePassport(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'Passport Number is required.';
+      }
+      if (!RegExp(LocalInputRegex.passportNumber).hasMatch(value)) {
+        return 'Enter valid Passport Number';
+      }
     return null;
   }
 

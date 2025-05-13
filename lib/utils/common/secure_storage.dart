@@ -17,6 +17,14 @@ class SecureStorageHelper {
     return await _secureStorage?.read(key: AppStrings.userKey);
   }
 
+  static Future<void> setRememberMe(String value) async {
+    await _secureStorage?.write(key: AppStrings.rememberMeKey, value: value);
+  }
+
+  static Future<String?> getRememberMe() async {
+    return await _secureStorage?.read(key: AppStrings.rememberMeKey);
+  }
+
   static Future<void> setToken(String value) async {
     await _secureStorage?.write(key: AppStrings.accessToken, value: value);
   }
@@ -26,11 +34,11 @@ class SecureStorageHelper {
   }
 
   static Future<void> setLanguageCode(String value) async {
-    await _secureStorage?.write(key: AppStrings.accessToken, value: value);
+    await _secureStorage?.write(key: AppStrings.languageCode, value: value);
   }
 
   static Future<String?> getLanguageCode() async {
-    return await _secureStorage?.read(key: AppStrings.accessToken);
+    return await _secureStorage?.read(key: AppStrings.languageCode);
   }
 
   static Future<void> removeParticularKey(String key) async {

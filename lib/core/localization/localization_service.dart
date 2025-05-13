@@ -13,6 +13,7 @@ class LocalizationService implements ILocalizationService {
   Future<void> load(String languageCode) async {
     print("languageCode");
     print(languageCode);
+    print("languageCode");
     final jsonStr = await rootBundle.loadString('assets/locales/$languageCode/translation.json');
     final Map<String, dynamic> jsonMap = json.decode(jsonStr);
     _localizedStrings = jsonMap.map((key, value) => MapEntry(key, value.toString()));

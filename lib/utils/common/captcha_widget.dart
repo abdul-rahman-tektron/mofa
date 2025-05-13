@@ -1,170 +1,94 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:mofa/res/app_colors.dart';
 
-class CaptchaWidget extends StatefulWidget {
-  final String userCaptchaInput;
-  final String recaptchaError;
-  final Function(String) setUserCaptchaInput;
-  final Function(String) setCaptchaText;
+class CaptchaRenderData {
+  final List<CaptchaChar> characters;
+  final List<Offset> noiseDots;
 
-  const CaptchaWidget({
-    required this.userCaptchaInput,
-    required this.recaptchaError,
-    required this.setUserCaptchaInput,
-    required this.setCaptchaText,
-    super.key,
-  });
+  CaptchaRenderData({required this.characters, required this.noiseDots});
 
-  @override
-  State<CaptchaWidget> createState() => _CaptchaWidgetState();
+  static CaptchaRenderData generate(String code) {
+    final random = Random();
+    final List<CaptchaChar> chars = [];
+    final List<Offset> dots = [];
+
+    for (int i = 0; i < code.length; i++) {
+      double dx = 15.0 + i * 35 + random.nextDouble() * 5;  // Adjusted spacing for smaller width
+      double dy = 10.0 + random.nextDouble() * 30;          // Keep within 80 height
+      double angle = (random.nextDouble() * 2 - 1) * 0.4;   // Rotation -0.4 to +0.4
+      chars.add(CaptchaChar(char: code[i], offset: Offset(dx, dy), angle: angle));
+    }
+
+    for (int i = 0; i < 80; i++) {
+      dots.add(Offset(random.nextDouble() * 220, random.nextDouble() * 80));
+    }
+
+    return CaptchaRenderData(characters: chars, noiseDots: dots);
+  }
 }
 
-class _CaptchaWidgetState extends State<CaptchaWidget> {
-  late String captchaText;
+class CaptchaChar {
+  final String char;
+  final Offset offset;
+  final double angle;
 
-  @override
-  void initState() {
-    super.initState();
-    _generateCaptcha();
-  }
+  CaptchaChar({required this.char, required this.offset, required this.angle});
+}
 
-  void _generateCaptcha() {
-    final random = Random();
-    captchaText = List.generate(6, (_) => random.nextInt(10).toString()).join();
-    widget.setCaptchaText(captchaText);
-  }
+class CaptchaWidget extends StatelessWidget {
+  final CaptchaRenderData? renderData;
 
-  void _refreshCaptcha() {
-    setState(() {
-      _generateCaptcha();
-      widget.setUserCaptchaInput('');
-    });
-  }
+  CaptchaWidget({required this.renderData});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            CustomPaint(
-              size: const Size(200, 70),
-              painter: CaptchaPainter(captchaText),
-            ),
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _refreshCaptcha,
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          width: 200,
-          child: TextField(
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'Enter Captcha',
-              hintStyle: TextStyle(color: AppColors.fieldBorderColor),
-              border: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-            ),
-            onChanged: widget.setUserCaptchaInput,
-            controller: TextEditingController(text: widget.userCaptchaInput),
-          ),
-        ),
-        if (widget.recaptchaError.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Text(
-              widget.recaptchaError,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-      ],
+    return CustomPaint(
+      size: Size(220, 80),
+      painter: renderData != null ? _CaptchaPainter(renderData!) : null,
     );
   }
 }
 
-class CaptchaPainter extends CustomPainter {
-  final String text;
+class _CaptchaPainter extends CustomPainter {
+  final CaptchaRenderData data;
 
-  CaptchaPainter(this.text);
+  _CaptchaPainter(this.data);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
-    final bgPaint = Paint()..color = const Color(0xFFE0E0E9);
+    final bgPaint = Paint()..color = const Color(0xFFE0E0E9); // Light gray background
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
-    final random = Random();
 
-    // Draw background
-    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), bgPaint);
+    // Background
+    canvas.drawRect(Offset.zero & size, bgPaint);
 
     // Draw text
-    for (int i = 0; i < text.length; i++) {
+    for (final char in data.characters) {
       final fontSize = 30.0;
-      final angle = (random.nextDouble() - 0.5) * 0.4;
       final textSpan = TextSpan(
-        text: text[i],
+        text: char.char,
         style: TextStyle(fontSize: fontSize, color: Colors.black),
       );
+
       textPainter.text = textSpan;
       textPainter.layout();
 
-      final x = 20 + i * 30;
-      final y = 20 + random.nextDouble() * 20;
       canvas.save();
-      canvas.translate(x.toDouble(), y);
-      canvas.rotate(angle);
+      canvas.translate(char.offset.dx, char.offset.dy);
+      canvas.rotate(char.angle);
       textPainter.paint(canvas, Offset.zero);
       canvas.restore();
     }
 
-    // Draw noise
-    for (int i = 0; i < 100; i++) {
-      paint.color = Colors.black.withOpacity(random.nextDouble());
-      canvas.drawRect(
-        Rect.fromLTWH(
-          random.nextDouble() * size.width,
-          random.nextDouble() * size.height,
-          2,
-          2,
-        ),
-        paint,
-      );
+    // Draw noise: squares instead of circles
+    for (final dot in data.noiseDots) {
+      paint.color = Colors.black.withOpacity(Random().nextDouble());
+      canvas.drawRect(Rect.fromLTWH(dot.dx, dot.dy, 2, 2), paint);
     }
   }
 
   @override
-  bool shouldRepaint(CaptchaPainter oldDelegate) {
-    return oldDelegate.text != text;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

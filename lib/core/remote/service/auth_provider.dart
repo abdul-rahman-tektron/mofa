@@ -13,6 +13,8 @@ import 'package:mofa/core/remote/network/app_url.dart';
 import 'package:mofa/core/remote/network/base_repository.dart';
 import 'package:mofa/core/remote/network/method.dart';
 import 'package:mofa/utils/common/app_routes.dart';
+import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/common/widgets/common_popup.dart';
 
 class AuthRepository extends BaseRepository {
   AuthRepository._internal();
@@ -45,7 +47,10 @@ class AuthRepository extends BaseRepository {
       LoginResponse loginResponse =
       loginResponseFromJson(jsonEncode(response?.data));
 
-      Navigator.pushNamed(context, AppRoutes.home);
+      await SecureStorageHelper.setToken(loginResponse.result?.token ?? "");
+      await SecureStorageHelper.setUser(jsonEncode(loginResponse.result?.user) ?? "");
+
+      return "Success"; //Success message
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;
@@ -78,6 +83,8 @@ class AuthRepository extends BaseRepository {
   //api: Registration
   Future<Object?> apiRegistration(RegisterRequest requestParams, BuildContext context) async {
 
+    // final token = await SecureStorageHelper.getToken();
+
     Response? response = await networkProvider.call(
       method: Method.POST,
       pathUrl: AppUrl.pathRegister,
@@ -89,7 +96,8 @@ class AuthRepository extends BaseRepository {
       RegisterResponse registerResponse =
       registerResponseFromJson(jsonEncode(response?.data));
 
-      Navigator.pushNamed(context, AppRoutes.home);
+      registerSuccessPopup(context, "Registered Successfully",
+          "An account activation link has been sent to your email address. Please check your inbox and follow the instructions to activate your account.");
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

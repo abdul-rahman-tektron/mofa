@@ -37,7 +37,7 @@ class LoginResponse {
 }
 
 class Result {
-  User? user;
+  UserModel? user;
   String? token;
 
   Result({
@@ -46,7 +46,7 @@ class Result {
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
-    user: json["user"] == null ? null : User.fromJson(json["user"]),
+    user: json["user"] == null ? null : UserModel.fromJson(json["user"]),
     token: json["token"],
   );
 
@@ -56,7 +56,7 @@ class Result {
   };
 }
 
-class User {
+class UserModel {
   int? nAppointmentId;
   int? nExternalRegistrationId;
   dynamic sAppointmentCode;
@@ -150,7 +150,7 @@ class User {
   int? nIsHostRequiredMoreInfo;
   int? pseudoApprovalStatus;
 
-  User({
+  UserModel({
     this.nAppointmentId,
     this.nExternalRegistrationId,
     this.sAppointmentCode,
@@ -245,7 +245,7 @@ class User {
     this.pseudoApprovalStatus,
   });
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
+  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
     nAppointmentId: json["n_AppointmentID"],
     nExternalRegistrationId: json["n_ExternalRegistrationID"],
     sAppointmentCode: json["s_AppointmentCode"],

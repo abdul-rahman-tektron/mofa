@@ -1,35 +1,61 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/login/login_request.dart';
 import 'package:mofa/core/remote/service/auth_provider.dart';
+import 'package:mofa/model/remember_me/remember_me_model.dart';
 import 'package:mofa/utils/common/app_routes.dart';
+import 'package:mofa/utils/common/captcha_widget.dart';
 import 'package:mofa/utils/common/encrypt.dart';
+import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:mofa/utils/common/toast_helper.dart';
 
 class LoginNotifier extends BaseChangeNotifier {
-
-  //Data Controller
+  // Data Controller
   TextEditingController _userNameController = TextEditingController();
   TextEditingController _passwordNameController = TextEditingController();
+  TextEditingController _captchaController = TextEditingController();
 
-  //bool
+  // bool
   bool _isChecked = false;
 
-  //String
+  // String
   String _userCaptcha = '';
   String _generatedCaptcha = '';
   String _captchaError = '';
 
-  //key
+  CaptchaRenderData? _renderData;
+
+  // key
   final formKey = GlobalKey<FormState>();
 
-  //Functions
+  // Functions
+  LoginNotifier() {
+    generateCaptcha();
+    rememberMeData();
+  }
+
+  // Load remember me data from storage
+  void rememberMeData() async {
+    String? data = await SecureStorageHelper.getRememberMe();
+    if (data != null) {
+      RememberMeModel rememberMeModel = RememberMeModel.fromJson(jsonDecode(data));
+      userNameController.text = rememberMeModel.userName;
+      passwordNameController.text = rememberMeModel.password;
+      isChecked = true;
+    }
+  }
+
+  // Update remember me checkbox state
   void rememberMeChecked(BuildContext context, bool? value) {
     isChecked = value!;
   }
 
+  // Perform login action
   void performLogin(context, {required String email, required String password}) async {
-    if (formKey.currentState!.validate() && !verifyCaptcha()) {
+    if (formKey.currentState!.validate()) {
       String encryptedPassword = encryptAES(password);
 
       final loginRequest = LoginRequest(
@@ -39,33 +65,49 @@ class LoginNotifier extends BaseChangeNotifier {
     }
   }
 
+  // API call for login
   void loginApiCall(BuildContext context, LoginRequest loginRequest) async {
     await AuthRepository().apiUserLogin(
-        loginRequest, context).then((value) {
-      if (value == "Not Found") {
+        loginRequest, context).then((value) async {
+      if (value == "Success") {
+        if (isChecked) {
+          await SecureStorageHelper.setRememberMe(
+            jsonEncode(
+              RememberMeModel(
+                userName: userNameController.text,
+                password: passwordNameController.text,
+              ),
+            ),
+          );
+        }
+        Navigator.pushReplacementNamed(context, AppRoutes.applyPass);
+      } else {
         ToastHelper.showError("Incorrect Email or Password");
       }
     });
   }
 
+  // Generate CAPTCHA
+  void generateCaptcha() {
+    final captcha = randomDigits(6);
+    final renderedData = CaptchaRenderData.generate(captcha);
+    generatedCaptcha = captcha;
+    renderData = renderedData;
+    captchaController.clear();
+  }
+
+  // Generate random digits for CAPTCHA
+  String randomDigits(int length) {
+    final rand = Random();
+    return List.generate(length, (_) => rand.nextInt(10)).join();
+  }
+
+  // Navigate to register screen
   void navigateToRegisterScreen(BuildContext context) {
     Navigator.pushNamed(context, AppRoutes.register);
   }
 
-  bool verifyCaptcha() {
-    if (userCaptcha.isEmpty) {
-        captchaError = 'Captcha is required';
-        return true;
-    }else if (userCaptcha != generatedCaptcha) {
-        captchaError = 'Captcha does not match. Please try again.';
-        return true;
-    } else {
-        captchaError = '';
-        return false;
-    }
-  }
-
-  //Getter and Setter
+  // Getter and Setter
   TextEditingController get userNameController => _userNameController;
 
   set userNameController(TextEditingController value) {
@@ -79,6 +121,14 @@ class LoginNotifier extends BaseChangeNotifier {
   set passwordNameController(TextEditingController value) {
     if (_passwordNameController == value) return;
     _passwordNameController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get captchaController => _captchaController;
+
+  set captchaController(TextEditingController value) {
+    if (_captchaController == value) return;
+    _captchaController = value;
     notifyListeners();
   }
 
@@ -111,6 +161,14 @@ class LoginNotifier extends BaseChangeNotifier {
   set captchaError(String value) {
     if (_captchaError == value) return;
     _captchaError = value;
+    notifyListeners();
+  }
+
+  CaptchaRenderData? get renderData => _renderData;
+
+  set renderData(CaptchaRenderData? value) {
+    if (_renderData == value) return;
+    _renderData = value;
     notifyListeners();
   }
 }

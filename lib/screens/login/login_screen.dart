@@ -1,5 +1,8 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
@@ -28,6 +31,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to build the body of the login screen
   Widget buildBody(BuildContext context, LoginNotifier loginNotifier) {
     return SafeArea(
       child: Scaffold(
@@ -69,17 +73,22 @@ class LoginScreen extends StatelessWidget {
                         SizedBox(height: 3),
                         forgotPassword(context, loginNotifier),
                         SizedBox(height: 15),
-                        CaptchaWidget(
-                          userCaptchaInput: loginNotifier.userCaptcha,
-                          recaptchaError: loginNotifier.captchaError,
-                          setUserCaptchaInput:
-                              (val) => loginNotifier.userCaptcha = val,
-                          setCaptchaText:
-                              (val) => loginNotifier.generatedCaptcha = val,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CaptchaWidget(renderData: loginNotifier.renderData),
+                            IconButton(
+                              icon: Icon(LucideIcons.refreshCcw),
+                              onPressed: loginNotifier.generateCaptcha,
+                            ),
+                          ],
                         ),
+                        SizedBox(height: 16),
+                        captchaField(context, loginNotifier),
                         SizedBox(height: 15),
                         rememberMeWidget(context, loginNotifier),
-                        SizedBox(height: 10),
+                        SizedBox(height: 15),
                         loginButton(context, loginNotifier),
                         SizedBox(height: 10),
                         createAccount(context, loginNotifier),
@@ -95,6 +104,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to create the logo image widget
   Widget logoImage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 45.0),
@@ -102,28 +112,22 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to create the welcome heading widget
   Widget welcomeHeading(BuildContext context) {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          RichText(
+          Text.rich(
             textAlign: TextAlign.center,
-            text: TextSpan(
-              text: "${context.watchLang.translate(AppLanguageText.welcomeTo)} ",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: AppColors.textColor,
-                fontSize: 30,
-              ),
+            TextSpan(
+              text:
+                  "${context.watchLang.translate(AppLanguageText.welcomeTo)} ",
+              style: AppFonts.textMedium30with600,
               children: [
                 TextSpan(
                   text: context.watchLang.translate(AppLanguageText.mofaShort),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textRedColor,
-                    fontSize: 30,
-                  ),
+                  style: AppFonts.textMedium30with600Red,
                 ),
               ],
             ),
@@ -131,7 +135,7 @@ class LoginScreen extends StatelessWidget {
           SizedBox(height: 5),
           Text(
             context.watchLang.translate(AppLanguageText.visitorPortal),
-            style: TextStyle(color: AppColors.textColor, fontSize: 30),
+            style: AppFonts.textMedium30with600,
           ),
           SizedBox(height: 5),
           Text(
@@ -144,6 +148,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to create the email field widget
   Widget emailField(BuildContext context, LoginNotifier loginNotifier) {
     return CustomTextField(
       controller: loginNotifier.userNameController,
@@ -153,6 +158,7 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to create the password field widget
   Widget passwordField(BuildContext context, LoginNotifier loginNotifier) {
     return CustomTextField(
       controller: loginNotifier.passwordNameController,
@@ -162,38 +168,104 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  Widget forgotPassword(BuildContext context, LoginNotifier loginNotifier) {
-    return Text(context.watchLang.translate(AppLanguageText.forgotPassword), style: AppFonts.textRegular16withUnderline);
+  // Function to create the captcha field widget
+  Widget captchaField(BuildContext context, LoginNotifier loginNotifier) {
+    return SizedBox(
+      width: 220,
+      child: TextFormField(
+        controller: loginNotifier.captchaController,
+        decoration: InputDecoration(
+          fillColor: AppColors.whiteColor,
+          filled: true,
+          hintText: context.watchLang.translate(AppLanguageText.enterCaptcha),
+          border: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          hintStyle: AppFonts.textRegularGrey16,
+          labelStyle: AppFonts.textRegular17,
+          errorStyle: TextStyle(color: AppColors.underscoreColor),
+        ),
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Please enter the CAPTCHA';
+          }
+          if (value != loginNotifier.generatedCaptcha) {
+            return 'Incorrect CAPTCHA';
+          }
+          return null;
+        },
+      ),
+    );
   }
 
+  // Function to create the forgot password widget
+  Widget forgotPassword(BuildContext context, LoginNotifier loginNotifier) {
+    return Text(
+      context.watchLang.translate(AppLanguageText.forgotPassword),
+      style: AppFonts.textRegular16withUnderline,
+    );
+  }
+
+  // Function to create the remember me widget
   Widget rememberMeWidget(BuildContext context, LoginNotifier loginNotifier) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
-      // Align the children at the top
       children: [
-        SizedBox(
-          height: 20, // Adjust the height for larger checkbox
-          width: 20, // Adjust the width for larger checkbox
-          child: Checkbox(
-            value: loginNotifier.isChecked,
-            onChanged: (value) {
-              loginNotifier.rememberMeChecked(context, value);
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-              side: BorderSide(width: 1.2, color: AppColors.primaryColor),
+        GestureDetector(
+          onTap: () {
+            loginNotifier.rememberMeChecked(context, !loginNotifier.isChecked);
+          },
+          child: Container(
+            width: 20,
+            height: 20,
+            decoration: BoxDecoration(
+              border: Border.all(
+                color:
+                    loginNotifier.isChecked
+                        ? AppColors.primaryColor
+                        : AppColors.primaryColor,
+                width: 1.5,
+              ),
+              borderRadius: BorderRadius.circular(6),
+              color:
+                  loginNotifier.isChecked
+                      ? AppColors.whiteColor
+                      : Colors.transparent,
             ),
-            side: BorderSide(width: 1.2, color: AppColors.primaryColor),
-            activeColor: AppColors.whiteColor,
-            checkColor: Colors.black,
+            child:
+                loginNotifier.isChecked
+                    ? Icon(Icons.check, size: 17, color: Colors.black)
+                    : null,
           ),
         ),
         const SizedBox(width: 12.0),
-        Text(context.watchLang.translate(AppLanguageText.rememberMe), style: AppFonts.textRegular14),
+        Text(
+          context.watchLang.translate(AppLanguageText.rememberMe),
+          style: AppFonts.textRegular14,
+        ),
       ],
     );
   }
 
+  // Function to create the login button widget
   Widget loginButton(BuildContext context, LoginNotifier loginNotifier) {
     return Center(
       child: CustomButton(
@@ -209,12 +281,16 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  // Function to create the create account widget
   Widget createAccount(BuildContext context, LoginNotifier loginNotifier) {
     return Center(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(context.watchLang.translate(AppLanguageText.dontHaveAccount), style: AppFonts.textRegular18),
+          Text(
+            context.watchLang.translate(AppLanguageText.dontHaveAccount),
+            style: AppFonts.textRegular18,
+          ),
           SizedBox(height: 5),
           InkWell(
             onTap: () => loginNotifier.navigateToRegisterScreen(context),

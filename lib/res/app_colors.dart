@@ -7,6 +7,8 @@ class AppColors {
   static const Color whiteColor = Color(0xFFFFFFFF);
   static const Color backgroundColor = Color(0xFFECEBF0);
   static const Color buttonBgColor = Color(0xFF404069);
+  static const Color purpleColor = Color(0xFF403F68);
+  static const Color purpleOpacityColor = Color(0x4D403F68);
   static const Color darkGreyColor = Color(0xFF2D2B2B);
   static const Color buttonGreyColor = Color(0xFF292929);
   static const Color splashBgColor = Color(0xFF232628);

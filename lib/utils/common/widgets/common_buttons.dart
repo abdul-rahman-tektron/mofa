@@ -25,7 +25,7 @@ class CustomButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        textStyle: textFont ?? AppFonts.textSemiBold16,
+        // textStyle: textFont ?? AppFonts.textSemiBold16,
         backgroundColor: backgroundColor ?? AppColors.buttonBgColor,
         foregroundColor: backgroundColor == AppColors.buttonBgColor
             ? Colors.white

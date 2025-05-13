@@ -33,6 +33,20 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textMedium30with600 = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textMedium30with600Red = TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textRedColor,
+    letterSpacing: 0.5,
+  );
+
   static const textBold14 = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.bold,

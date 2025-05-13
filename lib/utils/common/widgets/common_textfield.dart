@@ -26,6 +26,7 @@ class CustomTextField extends StatefulWidget {
   final bool hidePassIcon;
   final bool isEditable;
   final bool isDisable;
+  final String? toolTipContent;
 
   const CustomTextField({
     super.key,
@@ -46,6 +47,7 @@ class CustomTextField extends StatefulWidget {
     this.hidePassIcon = false,
     this.isEditable = true,
     this.isDisable = false,
+    this.toolTipContent,
   });
 
   @override
@@ -103,6 +105,17 @@ class _CustomTextFieldState extends State<CustomTextField> {
                   style: TextStyle(
                     fontSize: 15, color: AppColors.textRedColor,
                   ),
+                ),
+                if(widget.toolTipContent != null) SizedBox(width: 3,),
+                if(widget.toolTipContent != null) Tooltip(
+                  message: widget.toolTipContent,
+                  textAlign: TextAlign.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Icon(Icons.info_outline, size: 20,
+                    color: AppColors.primaryColor,),
                 ),
               ],
             ),
