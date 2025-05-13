@@ -1,0 +1,298 @@
+import 'package:flutter/material.dart';
+import 'package:mofa/model/appointment_model.dart';
+import 'package:mofa/appointment_table.dart';
+
+class HomeScreen extends StatelessWidget {
+  const HomeScreen({super.key});
+
+  Future<List<Appointment>> fetchAppointments() async {
+    // Simulate API call
+    final responseData = {
+      "result": {
+        "pagination": {
+          "pageNumber": 1,
+          "pageSize": 10,
+          "count": 235,
+          "pages": 24
+        },
+        "data": [
+          {
+            "n_AppointmentID": 31357,
+            "s_AppointmentCode": "V31357",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Muhammad",
+            "s_Sponsor": "ATSS",
+            "dt_AppointmentStartTime": "2025-05-08T11:53:00",
+            "dt_AppointmentEndTime": "2025-05-08T12:53:00",
+            "s_MobileNo": "971521234567",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "abc@mail.com",
+            "s_Purpose": "Government Visit",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": -1,
+            "s_VehicleNo": "",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 50,
+            "currentRoleAppointmentStatusEN": "Pending",
+            "currentRoleAppointmentStatusAR": "قيد الانتظار",
+            "overAllAppointmentStatusEN": "Pending - Staff",
+            "overAllAppointmentStatusAR": "قيد الانتظار - الموظف",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31356,
+            "s_AppointmentCode": "V31356",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "critical nationality - for the day",
+            "s_Sponsor": "tektronix",
+            "dt_AppointmentStartTime": "2025-05-07T17:07:03",
+            "dt_AppointmentEndTime": "2025-05-08T18:07:03",
+            "s_MobileNo": "898982927",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 1,
+            "s_VehicleNo": "DXB 0 1123",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 48,
+            "n_CheckedInStatus": 2280
+          },
+          {
+            "n_AppointmentID": 31355,
+            "s_AppointmentCode": "V31355",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "critical nationality overstay test",
+            "s_Sponsor": "abc",
+            "dt_AppointmentStartTime": "2025-05-07T16:56:06",
+            "dt_AppointmentEndTime": "2025-05-08T17:56:06",
+            "s_MobileNo": "43565788",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": -1,
+            "s_VehicleNo": "DXB V 1234",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 51,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Rejected",
+            "overAllAppointmentStatusAR": "مرفوض",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31354,
+            "s_AppointmentCode": "V31354",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Sana Parveen test test",
+            "s_Sponsor": "SBI",
+            "dt_AppointmentStartTime": "2029-08-20T15:31:00",
+            "dt_AppointmentEndTime": "2029-08-20T16:31:00",
+            "s_MobileNo": "987654",
+            "s_LocationName_En": "Makkah Al-Mukaramah and Jeddah",
+            "s_LocationName_Ar": "مكة المكرمة وجدة",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 0,
+            "s_VehicleNo": "90الهند",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31353,
+            "s_AppointmentCode": "V31353",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Sana Parveen",
+            "s_Sponsor": "SBI",
+            "dt_AppointmentStartTime": "2025-05-08T10:10:13",
+            "dt_AppointmentEndTime": "2025-06-14T11:10:13",
+            "s_MobileNo": "987654",
+            "s_LocationName_En": "Makkah Al-Mukaramah and Jeddah",
+            "s_LocationName_Ar": "مكة المكرمة وجدة",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 0,
+            "s_VehicleNo": "",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31352,
+            "s_AppointmentCode": "V31352",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Sana--",
+            "s_Sponsor": "abc",
+            "dt_AppointmentStartTime": "2025-05-07T08:54:54",
+            "dt_AppointmentEndTime": "2025-05-07T09:54:54",
+            "s_MobileNo": "3546768798",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 1,
+            "s_VehicleNo": "8976ABC",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2281
+          },
+          {
+            "n_AppointmentID": 31349,
+            "s_AppointmentCode": "V31349",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "With devices",
+            "s_Sponsor": "TEK",
+            "dt_AppointmentStartTime": "2025-05-06T16:37:18",
+            "dt_AppointmentEndTime": "2025-05-15T17:37:18",
+            "s_MobileNo": "232134243",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "sana.parveen@tektronixllc.ae",
+            "s_Purpose": "Government Visit",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 1,
+            "s_VehicleNo": "11212ABC",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31348,
+            "s_AppointmentCode": "V31348",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Arbkan Arshad",
+            "s_Sponsor": "Tektronix LLC",
+            "dt_AppointmentStartTime": "2025-05-06T15:30:00",
+            "dt_AppointmentEndTime": "2025-05-06T16:30:00",
+            "s_MobileNo": "0527082324",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "arbkan@tektronixllc.ae",
+            "s_Purpose": "Material Entry",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": 0,
+            "s_VehicleNo": "DXB1122",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 49,
+            "currentRoleAppointmentStatusEN": "Approved",
+            "currentRoleAppointmentStatusAR": "صدرت الموافقة",
+            "overAllAppointmentStatusEN": "Approved",
+            "overAllAppointmentStatusAR": "صدرت الموافقة",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31347,
+            "s_AppointmentCode": "V31347",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "Aimon",
+            "s_Sponsor": "Tektronixllc",
+            "dt_AppointmentStartTime": "2025-05-06T14:43:33",
+            "dt_AppointmentEndTime": "2025-05-06T15:43:33",
+            "s_MobileNo": "0543456789",
+            "s_LocationName_En": "Makkah Al-Mukaramah and Jeddah",
+            "s_LocationName_Ar": "مكة المكرمة وجدة",
+            "s_Email": "aimon@tektronixllc.ae",
+            "s_Purpose": "Meeting",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": -1,
+            "s_VehicleNo": "",
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 50,
+            "currentRoleAppointmentStatusEN": "Pending",
+            "currentRoleAppointmentStatusAR": "قيد الانتظار",
+            "overAllAppointmentStatusEN": "Pending - Staff",
+            "overAllAppointmentStatusAR": "قيد الانتظار - الموظف",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          },
+          {
+            "n_AppointmentID": 31344,
+            "s_AppointmentCode": "V31344",
+            "s_VisitorName": null,
+            "s_VisitorName_En": "yumna",
+            "s_Sponsor": "tek",
+            "dt_AppointmentStartTime": "2025-05-06T14:04:22",
+            "dt_AppointmentEndTime": "2025-05-06T15:04:22",
+            "s_MobileNo": "4938794",
+            "s_LocationName_En": "Riyadh",
+            "s_LocationName_Ar": "الرياض",
+            "s_Email": "aimon@tektronixllc.ae",
+            "s_Purpose": "Meeting",
+            "s_HostName": "Staff Tektronix",
+            "n_IsVehicleAllowed": -1,
+            "s_VehicleNo": null,
+            "dt_CreatedDate_External": null,
+            "approvalStatus": 2265,
+            "currentRoleAppointmentStatusEN": "Request Info",
+            "currentRoleAppointmentStatusAR": "طلب المعلومات",
+            "overAllAppointmentStatusEN": "Request Info",
+            "overAllAppointmentStatusAR": "طلب المعلومات",
+            "checkinID": 0,
+            "n_CheckedInStatus": 2279
+          }
+        ]
+      },
+      "statusCode": 200,
+      "message": "record fetched successfully",
+      "status": false
+    };
+    final result = responseData["result"] as Map<String, dynamic>?;
+    final data = (result?["data"] as List?) ?? [];
+    return data.map<Appointment>((item) => Appointment.fromJson(item)).toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Appointments')),
+      body: FutureBuilder<List<Appointment>>(
+        future: fetchAppointments(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snapshot.hasError) {
+            return Center(child: Text('❌ Error: ${snapshot.error}'));
+          }
+          return AppointmentTable(appointments: snapshot.data ?? []);
+        },
+      ),
+    );
+  }
+}
