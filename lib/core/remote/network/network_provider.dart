@@ -1,9 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
+import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/main.dart';
 import 'package:mofa/utils/common/app_routes.dart';
+import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/common/widgets/common_popup.dart';
+import 'package:provider/provider.dart';
 import 'app_url.dart';
 import 'method.dart';
 
@@ -66,6 +71,15 @@ class NetworkProvider {
     final url = _buildUrl(pathUrl, queryParam);
     final options = Options(headers: headers, responseType: responseType);
 
+    //Check internet before making request
+    final connectivityResult = await Connectivity().checkConnectivity();
+    if (connectivityResult.contains(ConnectivityResult.none)) {
+      // Show internet popup and skip request
+      showNoInternetPopup(MyApp.navigatorKey.currentContext!);
+      logger.w("📡 No internet connection. Request to $url was not sent.");
+      return null;
+    }
+
     try {
       logger.i("📤 Request => ${method.name} $url");
       if (body != null) logger.d("📦 Body: $body");
@@ -115,6 +129,8 @@ class NetworkProvider {
           AppUrl.baseUrl + AppUrl.pathLogin,
         ].any(url.contains)) {
           // await SharedPreferencesMobileWeb.instance.removeParticularKey(apiToken);
+          await SecureStorageHelper.clear();
+          Provider.of<CommonNotifier>(MyApp.navigatorKey.currentContext!, listen: false).clearUser();
           MyApp.navigatorKey.currentState?.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
         }
         break;

@@ -9,6 +9,12 @@ class CommonNotifier extends BaseChangeNotifier{
 
   UserModel? get user => _user;
 
+  set user(UserModel? value) {
+    if(_user == value) return;
+    _user = value;
+    notifyListeners();
+  }
+
   CommonNotifier() {
     loadUserFromStorage();
   }
@@ -17,19 +23,19 @@ class CommonNotifier extends BaseChangeNotifier{
   Future<void> loadUserFromStorage() async {
     final userString = await SecureStorageHelper.getUser();
     if (userString != null) {
-      _user = UserModel.fromJson(jsonDecode(userString));
+      user = UserModel.fromJson(jsonDecode(userString));
       notifyListeners();
     }
   }
 
   // Optional: update user from API or any source
   void updateUser(UserModel user) {
-    _user = user;
+    user = user;
     notifyListeners();
   }
 
   void clearUser() {
-    _user = null;
+    user = null;
     notifyListeners();
   }
 }

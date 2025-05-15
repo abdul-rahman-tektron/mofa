@@ -1,0 +1,608 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/model/country/country_response.dart';
+import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
+import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
+import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
+import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
+import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
+import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
+import 'package:mofa/core/remote/service/apply_pass_repository.dart';
+import 'package:mofa/core/remote/service/auth_repository.dart';
+import 'package:mofa/model/device/device_model.dart';
+import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/utils/common/encrypt.dart';
+import 'package:mofa/utils/common/file_uplaod_helper.dart';
+
+class ApplyPassCategoryNotifier extends BaseChangeNotifier{
+
+  // String
+  String? _selectedNationality;
+  String? _selectedIdType = "National ID";
+  String? _selectedIdValue;
+
+  //int
+  int? _editDeviceIndex;
+
+  // bool
+  bool _isChecked = false;
+  bool _isCheckedDevice = false;
+  bool _showDeviceFields = true;
+  bool _isEditingDevice = false;
+
+  //File
+  File? _uploadedImageFile;
+  File? _uploadedDocumentFile;
+  File? _uploadedVehicleRegistrationFile;
+
+  // List
+  List<CountryData> _nationalityMenu = [];
+  List<LocationDropdownResult> _locationDropdownData = [];
+  List<VisitRequestDropdownResult> _visitRequestTypesDropdownData = [];
+  List<DeviceDropdownResult> _deviceTypeDropdownData = [];
+  List<DeviceDropdownResult> _devicePurposeDropdownData = [];
+  List<VisitPurposeDropdownResult> _visitPurposeDropdownData = [];
+  List<DeviceDetailModel> _addedDevices = [];
+
+  final List<DocumentIdModel> idTypeMenu = [
+    DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
+    DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
+    DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
+    DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
+  ];
+
+
+  // Data Controller
+  TextEditingController _visitorNameController = TextEditingController();
+  TextEditingController _companyNameController = TextEditingController();
+  TextEditingController _nationalityController = TextEditingController();
+  TextEditingController _nationalityIdController = TextEditingController();
+  TextEditingController _phoneNumberController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _idTypeController = TextEditingController();
+  TextEditingController _expiryDateController = TextEditingController();
+  TextEditingController _vehicleNumberController = TextEditingController();
+  TextEditingController _documentNameController = TextEditingController();
+  TextEditingController _documentNumberController = TextEditingController();
+  TextEditingController _iqamaController = TextEditingController();
+  TextEditingController _passportNumberController = TextEditingController();
+
+  //Visit Detail
+  TextEditingController _locationController = TextEditingController();
+  TextEditingController _visitRequestTypeController = TextEditingController();
+  TextEditingController _visitPurposeController = TextEditingController();
+  TextEditingController _mofaHostEmailController = TextEditingController();
+  TextEditingController _visitStartDateController = TextEditingController();
+  TextEditingController _visitEndDateController = TextEditingController();
+  TextEditingController _noteController = TextEditingController();
+
+  //Device Details
+  TextEditingController _deviceTypeController = TextEditingController();
+  TextEditingController _deviceModelController = TextEditingController();
+  TextEditingController _serialNumberController = TextEditingController();
+  TextEditingController _devicePurposeController = TextEditingController();
+
+  //Functions
+  ApplyPassCategoryNotifier(BuildContext context) {
+    fetchAllDropdownData(context);
+  }
+
+  Future<void> fetchAllDropdownData(BuildContext context) async {
+    try {
+      await Future.wait([
+        apiLocationDropdown(context),
+        apiNationalityDropdown(context),
+        apiVisitRequestDropdown(context),
+        apiVisitPurposeDropdown(context),
+        apiDeviceTypeDropdown(context),
+        apiDevicePurposeDropdown(context),
+      ]);
+      // notifyListeners(); // if any UI depends on dropdowns
+    } catch (e) {
+      // Handle exceptions if needed
+      debugPrint('Dropdown fetch error: $e');
+    }
+  }
+
+  //location dropdown Api call
+  Future apiLocationDropdown(BuildContext context) async {
+    await ApplyPassRepository().apiLocationDropDown({}, context).then((value) {
+      var locationData = value as List<LocationDropdownResult>;
+      locationDropdownData = List<LocationDropdownResult>.from(locationData);
+    },);
+  }
+
+  //Nationality dropdown Api call
+  Future apiNationalityDropdown(BuildContext context) async {
+    await AuthRepository().apiCountryList({}, context).then((value) {
+      var countryData = value as List<CountryData>;
+      nationalityMenu = List<CountryData>.from(countryData);
+    },);
+  }
+
+  //Visit Purpose dropdown Api call
+  Future apiVisitPurposeDropdown(BuildContext context) async {
+    await ApplyPassRepository().apiVisitPurposeDropDown(VisitPurposeDropdownRequest(encryptedVisitRequestTypeId: ""), context).then((value) {
+      var visitPurposeData = value as List<VisitPurposeDropdownResult>;
+      visitPurposeDropdownData = List<VisitPurposeDropdownResult>.from(visitPurposeData);
+    },);
+  }
+
+  //Visit Request dropdown Api call
+  Future apiVisitRequestDropdown(BuildContext context) async {
+    await ApplyPassRepository().apiVisitRequestDropDown({}, context).then((value) {
+      var visitRequestData = value as List<VisitRequestDropdownResult>;
+      visitRequestTypesDropdownData = List<VisitRequestDropdownResult>.from(visitRequestData);
+    },);
+  }
+
+  //Device Type dropdown Api call
+  Future apiDeviceTypeDropdown(BuildContext context) async {
+    await ApplyPassRepository().apiDeviceDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1036")), context).then((value) {
+      var deviceTypeData = value as List<DeviceDropdownResult>;
+      deviceTypeDropdownData = List<DeviceDropdownResult>.from(deviceTypeData);
+    },);
+  }
+
+  //Device Purpose dropdown Api call
+  Future apiDevicePurposeDropdown(BuildContext context) async {
+    await ApplyPassRepository().apiDeviceDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1037")), context).then((value) {
+      var devicePurposeData = value as List<DeviceDropdownResult>;
+      devicePurposeDropdownData = List<DeviceDropdownResult>.from(devicePurposeData);
+    },);
+  }
+
+  // Update User Verify checkbox state
+  void userVerifyChecked(BuildContext context, bool? value) {
+    isChecked = value!;
+  }
+
+  // Update User Verify checkbox state
+  void deviceDetailChecked(BuildContext context, bool? value) {
+    isCheckedDevice = value!;
+  }
+
+  Future<void> uploadImage({bool fromCamera = false, bool cropAfterPick = true}) async {
+    File? image = await FileUploadHelper.pickImage(
+      fromCamera: fromCamera,
+      cropAfterPick: cropAfterPick,
+    );
+    if (image != null) {
+      uploadedImageFile = image;
+      notifyListeners();
+    }
+  }
+
+  Future<void> uploadVehicleRegistrationImage({bool fromCamera = false, bool cropAfterPick = true}) async {
+    File? image = await FileUploadHelper.pickImage(
+      fromCamera: fromCamera,
+      cropAfterPick: cropAfterPick,
+    );
+    if (image != null) {
+      uploadedVehicleRegistrationFile = image;
+      notifyListeners();
+    }
+  }
+
+  Future<void> uploadDocument() async {
+    File? doc = await FileUploadHelper.pickDocument(
+      allowedExtensions: ['pdf', 'doc', 'docx'],
+    );
+    if (doc != null) {
+      uploadedDocumentFile = doc;
+      notifyListeners();
+    }
+  }
+
+  void clearUploadedImage() {
+    _uploadedImageFile = null;
+    notifyListeners();
+  }
+
+  void showDeviceFieldsAgain() {
+    showDeviceFields = true;
+    notifyListeners();
+  }
+
+  void clearDeviceFields() {
+    deviceTypeController.clear();
+    deviceModelController.clear();
+    serialNumberController.clear();
+    devicePurposeController.clear();
+  }
+
+  void removeDevice(int index) {
+    addedDevices.removeAt(index);
+    notifyListeners();
+  }
+
+  void startEditingDevice(int index) {
+    editDeviceIndex = index;
+    isEditingDevice = true;
+    showDeviceFields = true;
+
+    final device = _addedDevices[index];
+    deviceTypeController.text = device.type;
+    deviceModelController.text = device.model;
+    serialNumberController.text = device.serialNumber;
+    devicePurposeController.text = device.purpose;
+  }
+
+  void cancelEditing() {
+    editDeviceIndex = null;
+    isEditingDevice = false;
+    showDeviceFields = false;
+
+    deviceTypeController.clear();
+    deviceModelController.clear();
+    serialNumberController.clear();
+    devicePurposeController.clear();
+  }
+
+  void saveDevice() {
+    if(deviceTypeController.text.isEmpty || deviceModelController.text.isEmpty || serialNumberController.text.isEmpty || devicePurposeController.text.isEmpty) {
+      return;
+    }
+    final newDevice = DeviceDetailModel(
+      type: deviceTypeController.text,
+      model: deviceModelController.text,
+      serialNumber: serialNumberController.text,
+      purpose: devicePurposeController.text,
+    );
+
+    if (isEditingDevice && editDeviceIndex != null) {
+      addedDevices[editDeviceIndex!] = newDevice; // update
+    } else {
+      addedDevices.add(newDevice); // add new
+    }
+
+    showDeviceFields = false;
+
+    cancelEditing(); // reset form
+    notifyListeners();
+  }
+
+  //Getter and Setter
+  bool get isChecked => _isChecked;
+
+  set isChecked(bool value) {
+    if (_isChecked == value) return;
+    _isChecked = value;
+    notifyListeners();
+  }
+
+  bool get isCheckedDevice => _isCheckedDevice;
+
+  set isCheckedDevice(bool value) {
+    if (_isCheckedDevice == value) return;
+    _isCheckedDevice = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visitorNameController => _visitorNameController;
+
+  set visitorNameController(TextEditingController value) {
+    if (_visitorNameController == value) return;
+    _visitorNameController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get companyNameController => _companyNameController;
+
+  set companyNameController(TextEditingController value) {
+    if (_companyNameController == value) return;
+    _companyNameController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get nationalityController => _nationalityController;
+
+  set nationalityController(TextEditingController value) {
+    if (_nationalityController == value) return;
+    _nationalityController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get phoneNumberController => _phoneNumberController;
+
+  set phoneNumberController(TextEditingController value) {
+    if (_phoneNumberController == value) return;
+    _phoneNumberController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get nationalityIdController => _nationalityIdController;
+
+  set nationalityIdController(TextEditingController value) {
+    if (_nationalityIdController == value) return;
+    _nationalityIdController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get emailController => _emailController;
+
+  set emailController(TextEditingController value) {
+    if (_emailController == value) return;
+    _emailController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get idTypeController => _idTypeController;
+
+  set idTypeController(TextEditingController value) {
+    if (_idTypeController == value) return;
+    _idTypeController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get expiryDateController =>
+      _expiryDateController;
+
+  set expiryDateController(TextEditingController value) {
+    if (_expiryDateController == value) return;
+    _expiryDateController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get vehicleNumberController => _vehicleNumberController;
+
+  set vehicleNumberController(TextEditingController value) {
+    if (_vehicleNumberController == value) return;
+    _vehicleNumberController = value;
+    notifyListeners();
+  }
+
+  List<CountryData> get nationalityMenu => _nationalityMenu;
+
+  set nationalityMenu(List<CountryData> value) {
+    if (_nationalityMenu == value) return;
+    _nationalityMenu = value;
+    notifyListeners();
+  }
+
+  String? get selectedNationality => _selectedNationality;
+
+  set selectedNationality(String? value) {
+    if (_selectedNationality == value) return;
+    _selectedNationality = value;
+    notifyListeners();
+  }
+
+  String? get selectedIdType => _selectedIdType;
+
+  set selectedIdType(String? value) {
+    if (_selectedIdType == value) return;
+    _selectedIdType = value;
+    notifyListeners();
+  }
+
+  String? get selectedIdValue => _selectedIdValue;
+
+  set selectedIdValue(String? value) {
+    if (_selectedIdValue == value) return;
+    _selectedIdValue = value;
+    notifyListeners();
+  }
+
+  TextEditingController get documentNameController => _documentNameController;
+
+  set documentNameController(TextEditingController value) {
+    if (_documentNameController == value) return;
+    _documentNameController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get documentNumberController => _documentNumberController;
+
+  set documentNumberController(TextEditingController value) {
+    if (_documentNumberController == value) return;
+    _documentNumberController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get iqamaController => _iqamaController;
+
+  set iqamaController(TextEditingController value) {
+    if (_iqamaController == value) return;
+    _iqamaController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get passportNumberController => _passportNumberController;
+
+  set passportNumberController(TextEditingController value) {
+    if (_passportNumberController == value) return;
+    _passportNumberController = value;
+    notifyListeners();
+  }
+
+  File? get uploadedImageFile => _uploadedImageFile;
+
+  set uploadedImageFile(File? value) {
+    if(_uploadedImageFile == value) return;
+    _uploadedImageFile = value;
+    notifyListeners();
+  }
+
+  File? get uploadedDocumentFile => _uploadedDocumentFile;
+
+  set uploadedDocumentFile(File? value) {
+    if(_uploadedDocumentFile == value) return;
+    _uploadedDocumentFile = value;
+    notifyListeners();
+  }
+
+  File? get uploadedVehicleRegistrationFile => _uploadedVehicleRegistrationFile;
+
+  set uploadedVehicleRegistrationFile(File? value) {
+    if(_uploadedVehicleRegistrationFile == value) return;
+    _uploadedVehicleRegistrationFile = value;
+    notifyListeners();
+  }
+
+  List<LocationDropdownResult> get locationDropdownData => _locationDropdownData;
+
+  set locationDropdownData(List<LocationDropdownResult> value) {
+    if (_locationDropdownData == value) return;
+    _locationDropdownData = value;
+    notifyListeners();
+  }
+
+  List<VisitRequestDropdownResult> get visitRequestTypesDropdownData => _visitRequestTypesDropdownData;
+
+  set visitRequestTypesDropdownData(List<VisitRequestDropdownResult> value) {
+    if (_visitRequestTypesDropdownData == value) return;
+    _visitRequestTypesDropdownData = value;
+    notifyListeners();
+  }
+
+  List<DeviceDropdownResult> get deviceTypeDropdownData => _deviceTypeDropdownData;
+
+  set deviceTypeDropdownData(List<DeviceDropdownResult> value) {
+    if (_deviceTypeDropdownData == value) return;
+    _deviceTypeDropdownData = value;
+    notifyListeners();
+  }
+
+  List<DeviceDropdownResult> get devicePurposeDropdownData => _devicePurposeDropdownData;
+
+  set devicePurposeDropdownData(List<DeviceDropdownResult> value) {
+    if (_devicePurposeDropdownData == value) return;
+    _devicePurposeDropdownData = value;
+    notifyListeners();
+  }
+
+  List<VisitPurposeDropdownResult> get visitPurposeDropdownData => _visitPurposeDropdownData;
+
+  set visitPurposeDropdownData(List<VisitPurposeDropdownResult> value) {
+    if (_visitPurposeDropdownData == value) return;
+    _visitPurposeDropdownData = value;
+    notifyListeners();
+  }
+
+  TextEditingController get locationController => _locationController;
+
+  set locationController(TextEditingController value) {
+    if (_locationController == value) return;
+    _locationController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visitRequestTypeController => _visitRequestTypeController;
+
+  set visitRequestTypeController(TextEditingController value) {
+    if (_visitRequestTypeController == value) return;
+    _visitRequestTypeController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visitPurposeController => _visitPurposeController;
+
+  set visitPurposeController(TextEditingController value) {
+    if (_visitPurposeController == value) return;
+    _visitPurposeController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get mofaHostEmailController => _mofaHostEmailController;
+
+  set mofaHostEmailController(TextEditingController value) {
+    if (_mofaHostEmailController == value) return;
+    _mofaHostEmailController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visitStartDateController => _visitStartDateController;
+
+  set visitStartDateController(TextEditingController value) {
+    if (_visitStartDateController == value) return;
+    _visitStartDateController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visitEndDateController => _visitEndDateController;
+
+  set visitEndDateController(TextEditingController value) {
+    if (_visitEndDateController == value) return;
+    _visitEndDateController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get noteController => _noteController;
+
+  set noteController(TextEditingController value) {
+    if (_noteController == value) return;
+    _noteController = value;
+    notifyListeners();
+  }
+
+  // Device Type Controller
+  TextEditingController get deviceTypeController => _deviceTypeController;
+
+  set deviceTypeController(TextEditingController value) {
+    if (_deviceTypeController == value) return;
+    _deviceTypeController = value;
+    notifyListeners();
+  }
+
+// Device Model Controller
+  TextEditingController get deviceModelController => _deviceModelController;
+
+  set deviceModelController(TextEditingController value) {
+    if (_deviceModelController == value) return;
+    _deviceModelController = value;
+    notifyListeners();
+  }
+
+// Serial Number Controller
+  TextEditingController get serialNumberController => _serialNumberController;
+
+  set serialNumberController(TextEditingController value) {
+    if (_serialNumberController == value) return;
+    _serialNumberController = value;
+    notifyListeners();
+  }
+
+// Device Purpose Controller
+  TextEditingController get devicePurposeController => _devicePurposeController;
+
+  set devicePurposeController(TextEditingController value) {
+    if (_devicePurposeController == value) return;
+    _devicePurposeController = value;
+    notifyListeners();
+  }
+
+  List<DeviceDetailModel> get addedDevices => _addedDevices;
+
+  set addedDevices(List<DeviceDetailModel> value) {
+    if (_addedDevices == value) return;
+    _addedDevices = value;
+    notifyListeners();
+  }
+
+  bool get showDeviceFields => _showDeviceFields;
+
+  set showDeviceFields(bool value) {
+    if (_showDeviceFields == value) return;
+    _showDeviceFields = value;
+    notifyListeners();
+  }
+
+  int? get editDeviceIndex => _editDeviceIndex;
+
+  set editDeviceIndex(int? value) {
+    if (_editDeviceIndex == value) return;
+    _editDeviceIndex = value;
+    notifyListeners();
+  }
+
+  bool get isEditingDevice => _isEditingDevice;
+
+  set isEditingDevice(bool value) {
+    if (_isEditingDevice == value) return;
+    _isEditingDevice = value;
+    notifyListeners();
+  }
+}

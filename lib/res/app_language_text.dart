@@ -127,6 +127,16 @@ class AppLanguageText {
   static const iqama = 'iqama';
   static const documentNameOther = 'documentNameOther';
   static const documentNumberOther = 'documentNumberOther';
+  static const vehicleNo = 'vehicleNo';
+  static const iqamaExpiryDate = 'iqamaExpiryDate';
+  static const documentExpiryDateOther = 'documentExpiryDateOther';
+  static const one = '1';
+  static const two = '2';
+  static const three = '3';
+  static const four = '4';
+  static const applyPass = 'applyPass';
+  static const vehicleRegistrationLicense = 'vehicleRegistrationLicense';
+  static const declareDevicesBroughtOnsite = 'declareDevicesBroughtOnsite';
 
 // Add the rest of the keys here...
 }

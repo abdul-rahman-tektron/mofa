@@ -1,0 +1,80 @@
+import 'dart:io';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mofa/res/app_colors.dart';
+
+enum UploadFileType { image, document }
+
+class FileUploadHelper {
+  static final ImagePicker _imagePicker = ImagePicker();
+
+  /// Pick an image using camera or gallery (with optional cropping).
+  static Future<File?> pickImage({
+    bool fromCamera = false,
+    bool cropAfterPick = false,
+    BuildContext? context,
+  }) async {
+    final XFile? pickedFile = await _imagePicker.pickImage(
+      source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile == null) return null;
+
+    File imageFile = File(pickedFile.path);
+
+    if (cropAfterPick) {
+      final croppedFile = await _cropImage(imageFile.path);
+      if (croppedFile == null) return null;
+      imageFile = File(croppedFile.path);
+    }
+
+    return await _saveToPermanentDirectory(imageFile);
+  }
+
+  /// Pick a document (PDF, Word, Excel, etc.)
+  static Future<File?> pickDocument({List<String>? allowedExtensions}) async {
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: allowedExtensions != null ? FileType.custom : FileType.any,
+      allowedExtensions: allowedExtensions,
+    );
+    if (result != null && result.files.single.path != null) {
+      final file = File(result.files.single.path!);
+      return await _saveToPermanentDirectory(file);
+    }
+    return null;
+  }
+
+  /// Crop the selected image (used internally)
+  static Future<CroppedFile?> _cropImage(String path) async {
+    return await ImageCropper().cropImage(
+      sourcePath: path,
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image',
+          toolbarColor: AppColors.primaryColor,
+          toolbarWidgetColor: Colors.white,
+          initAspectRatio: CropAspectRatioPreset.original,
+          lockAspectRatio: false,
+        ),
+        IOSUiSettings(
+          title: 'Crop Image',
+        ),
+      ],
+    );
+  }
+
+  /// Save file to app's document directory with a unique name
+  static Future<File> _saveToPermanentDirectory(File file) async {
+    final appDir = await getApplicationDocumentsDirectory();
+    final fileName = basename(file.path);
+    final savedPath = '${appDir.path}/$fileName';
+
+    final savedFile = await file.copy(savedPath);
+    return savedFile;
+  }
+}

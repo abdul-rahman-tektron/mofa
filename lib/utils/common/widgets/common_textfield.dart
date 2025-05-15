@@ -25,6 +25,7 @@ class CustomTextField extends StatefulWidget {
   final Color? backgroundColor;
   final bool hidePassIcon;
   final bool isEditable;
+  final bool isSmallFieldFont;
   final bool isDisable;
   final String? toolTipContent;
 
@@ -47,6 +48,7 @@ class CustomTextField extends StatefulWidget {
     this.hidePassIcon = false,
     this.isEditable = true,
     this.isDisable = false,
+    this.isSmallFieldFont = false,
     this.toolTipContent,
   });
 
@@ -77,6 +79,23 @@ class _CustomTextFieldState extends State<CustomTextField> {
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.buttonBgColor, // header background color
+              onPrimary: Colors.white,
+              onSurface: Colors.black,
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.buttonBgColor, // button text color
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
       initialDate: _selectedDate ?? DateTime.now(),
       firstDate: _minDate ?? DateTime(1900),
       lastDate: _maxDate ?? DateTime(2100),
@@ -99,7 +118,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           children: [
             Row(
               children: [
-                Text(widget.fieldName, style: AppFonts.textRegular18,),
+                Text(widget.fieldName, style: widget.isSmallFieldFont
+                    ? AppFonts.textRegular14
+                    : AppFonts.textRegular18,),
                 SizedBox(width: 3,),
                 if(!widget.skipValidation) Text("*",
                   style: TextStyle(
@@ -133,8 +154,12 @@ class _CustomTextFieldState extends State<CustomTextField> {
                     onTap: _toggleVisibility,
                     child:
                     widget.isPassword && _obscureText
-                        ? Text(context.watchLang.translate(AppLanguageText.show), style: AppFonts.textRegular18,)
-                        : Text(context.watchLang.translate(AppLanguageText.hide), style: AppFonts.textRegular18,),
+                        ? Text(
+                      context.watchLang.translate(AppLanguageText.show),
+                      style: AppFonts.textRegular18,)
+                        : Text(
+                      context.watchLang.translate(AppLanguageText.hide),
+                      style: AppFonts.textRegular18,),
                   )
               ],
             )
@@ -159,7 +184,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
             }
           },
           maxLines: widget.isMaxLines ?? false ? 4 : 1,
-          style: widget.isDisable ? AppFonts.textRegular17Disable : AppFonts.textRegular17,
+          style: widget.isDisable ? AppFonts.textRegular17Disable : widget
+              .isSmallFieldFont ? AppFonts.textRegular14 : AppFonts
+              .textRegular17,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
             fillColor: widget.backgroundColor ?? AppColors.whiteColor,

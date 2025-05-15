@@ -73,6 +73,34 @@ class CommonValidation {
     return null;
   }
 
+  String? visitorNameValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Visitor Name is Required';
+    }
+    return null;
+  }
+
+  String? vehicleNumberValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Vehicle Number is Required';
+    }
+    return null;
+  }
+
+  String? nationalityValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Nationality is Required';
+    }
+    return null;
+  }
+
+  String? iDTypeValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'ID Type is Required';
+    }
+    return null;
+  }
+
   String? documentNumberValidator(String? value) {
     if (value == null || value.isEmpty) {
       return 'Document Number is Required';
@@ -120,6 +148,91 @@ class CommonValidation {
   String? lastnameValidator(String? value) {
     if (value == null || value.isEmpty) {
       return 'Required Lastname';
+    }
+    return null;
+  }
+
+  // Validates location input
+  String? validateLocation(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Location is required';
+    }
+    return null;
+  }
+
+// Validates visit request type input
+  String? validateVisitRequestType(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Visit request type is required';
+    }
+    return null;
+  }
+
+// Validates visit purpose input
+  String? validateVisitPurpose(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Visit purpose is required';
+    }
+    return null;
+  }
+
+// Validates MOFA host email input
+  String? validateMofaHostEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
+    }
+    // Basic email format check
+    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+// Validates visit start date input
+  String? validateVisitStartDate(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Visit start date is required';
+    }
+    return null;
+  }
+
+// Validates visit end date input
+  String? validateVisitEndDate(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Visit end date is required';
+    }
+    return null;
+  }
+
+  // Validates device type
+  String? validateDeviceType(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Device type is required';
+    }
+    return null;
+  }
+
+  // Validates device model
+  String? validateDeviceModel(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Device model is required';
+    }
+    return null;
+  }
+
+  // Validates serial number
+  String? validateSerialNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Serial number is required';
+    }
+    return null;
+  }
+
+  // Validates device purpose
+  String? validateDevicePurpose(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Device purpose is required';
     }
     return null;
   }

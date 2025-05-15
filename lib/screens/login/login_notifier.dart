@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/login/login_request.dart';
-import 'package:mofa/core/remote/service/auth_provider.dart';
+import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/remember_me/remember_me_model.dart';
 import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/captcha_widget.dart';

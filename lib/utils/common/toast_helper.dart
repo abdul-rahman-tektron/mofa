@@ -43,7 +43,7 @@ class ToastHelper {
       type: type,
       style: ToastificationStyle.flat,
       title: Text(message),
-      autoCloseDuration: const Duration(seconds: 2),
+      autoCloseDuration: const Duration(milliseconds: 2500),
       alignment: Alignment.topRight,
       icon: Icon(icon, color: backgroundColor),
       backgroundColor: backgroundColor,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
@@ -16,87 +17,25 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<CommonNotifier>(context, listen: false).user;
+
 
     return AppBar(
       backgroundColor: AppColors.whiteColor,
-      leading: Padding(
-        padding: const EdgeInsets.only(left: 24.0),
-        child: Image.asset(AppImages.logo),
+      leading: Builder(
+        builder: (context) => Padding(
+          padding: const EdgeInsets.only(left: 15.0),
+          child: GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: Icon(LucideIcons.menu, color: Colors.black, size: 25.r,)),
+        ),
       ),
-      leadingWidth: 120,
+
+      centerTitle: true,
+      title: Image.asset(AppImages.logo, height: 50,),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 24.0),
       actions: [
-        Text(context.watchLang.translate(AppLanguageText.hello), style: AppFonts.textMedium14),
-        PopupMenuButton<int>(
-          color: Colors.white,
-          offset: Offset(-10, 50),
-          onSelected: (value) async {
-            switch (value) {
-              case 0:
-                // Navigate to Apply Pass
-                break;
-              case 1:
-                // Navigate to Search Pass
-                break;
-              case 2:
-                // Navigate to Edit Profile
-                break;
-              case 3:
-                // Navigate to Change Password
-                break;
-              case 4:
-                // Delete Account
-                break;
-              case 5:
-                // Navigate to Dashboard
-                break;
-              case 6:
-                await SecureStorageHelper.clear();
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.login,
-                  (Route<dynamic> route) => false,
-                );
-                break;
-            }
-          },
-          icon: Container(
-            height: 24,
-            width: 24,
-            decoration: BoxDecoration(
-              color: AppColors.purpleColor,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            child: Icon(
-              Icons.keyboard_arrow_down,
-              color: AppColors.whiteColor,
-              size: 20,
-            ),
-          ),
-          itemBuilder:
-              (context) => [
-                _buildMenuItem(LucideIcons.creditCard, 'Apply Pass', 0),
-                _buildMenuItem(LucideIcons.search, 'Search Pass', 1),
-                _buildMenuItem(LucideIcons.user, 'Edit Profile', 2),
-                _buildMenuItem(LucideIcons.lock, 'Change Password', 3),
-                _buildMenuItem(LucideIcons.trash, 'Delete Account', 4),
-                _buildMenuItem(LucideIcons.layoutDashboard, 'Dashboard', 5),
-                const PopupMenuDivider(), // <-- Divider before logout
-                _buildMenuItem(Icons.logout, 'Logout', 6),
-              ],
-        ),
         LanguageButton(),
       ],
-    );
-  }
-
-  PopupMenuItem<int> _buildMenuItem(IconData icon, String text, int value) {
-    return PopupMenuItem<int>(
-      value: value,
-      child: Row(
-        children: [Icon(icon, size: 20), const SizedBox(width: 10), Text(text)],
-      ),
     );
   }
 

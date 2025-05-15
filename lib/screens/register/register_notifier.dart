@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
-import 'package:mofa/core/remote/service/auth_provider.dart';
+import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/utils/common/encrypt.dart';
 
@@ -43,7 +43,6 @@ class RegisterNotifier extends BaseChangeNotifier {
   // Initializes the RegisterNotifier and makes an API call for the country list
   RegisterNotifier(BuildContext context) {
     idTypeController.text = "National ID";
-    print("Function is called");
     countryApiCall(context, {});
   }
 
@@ -54,10 +53,8 @@ class RegisterNotifier extends BaseChangeNotifier {
 
   // Makes an API call to fetch the country list
   void countryApiCall(BuildContext context, Map countryRequest) async {
-    print("Registre Api Called");
     await AuthRepository().apiCountryList(
         countryRequest, context).then((value) {
-          print(value);
           var countryData = value as List<CountryData>;
       nationalityMenu = List<CountryData>.from(countryData);
     });

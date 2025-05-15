@@ -12,6 +12,7 @@ import 'package:mofa/screens/login/login_notifier.dart';
 import 'package:mofa/utils/common/captcha_widget.dart';
 import 'package:mofa/utils/common/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
+import 'package:mofa/utils/common/widgets/common_popup.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +49,7 @@ class LoginScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 LanguageButton(),
-                SizedBox(height: 10),
+                10.verticalSpace,
                 Container(
                   padding: EdgeInsets.symmetric(
                     vertical: 25.h,
@@ -64,33 +65,23 @@ class LoginScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         logoImage(),
-                        SizedBox(height: 20),
+                        20.verticalSpace,
                         welcomeHeading(context),
-                        SizedBox(height: 20),
+                        20.verticalSpace,
                         emailField(context, loginNotifier),
-                        SizedBox(height: 20),
+                        20.verticalSpace,
                         passwordField(context, loginNotifier),
-                        SizedBox(height: 3),
+                        3.verticalSpace,
                         forgotPassword(context, loginNotifier),
-                        SizedBox(height: 15),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CaptchaWidget(renderData: loginNotifier.renderData),
-                            IconButton(
-                              icon: Icon(LucideIcons.refreshCcw),
-                              onPressed: loginNotifier.generateCaptcha,
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 16),
+                        15.verticalSpace,
+                        captchaWidget(loginNotifier),
+                        16.verticalSpace,
                         captchaField(context, loginNotifier),
-                        SizedBox(height: 15),
+                        15.verticalSpace,
                         rememberMeWidget(context, loginNotifier),
-                        SizedBox(height: 15),
+                        15.verticalSpace,
                         loginButton(context, loginNotifier),
-                        SizedBox(height: 10),
+                        10.verticalSpace,
                         createAccount(context, loginNotifier),
                       ],
                     ),
@@ -108,7 +99,7 @@ class LoginScreen extends StatelessWidget {
   Widget logoImage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 45.0),
-      child: Image.asset(AppImages.logo),
+      child: Center(child: Image.asset(AppImages.logo)),
     );
   }
 
@@ -132,12 +123,12 @@ class LoginScreen extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: 5),
+          5.verticalSpace,
           Text(
             context.watchLang.translate(AppLanguageText.visitorPortal),
             style: AppFonts.textMedium30with600,
           ),
-          SizedBox(height: 5),
+          5.verticalSpace,
           Text(
             context.watchLang.translate(AppLanguageText.loginToContinue),
             textAlign: TextAlign.center,
@@ -216,11 +207,30 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  Widget captchaWidget(LoginNotifier loginNotifier) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CaptchaWidget(renderData: loginNotifier.renderData),
+        IconButton(
+          icon: Icon(LucideIcons.refreshCcw),
+          onPressed: loginNotifier.generateCaptcha,
+        ),
+      ],
+    );
+  }
+
   // Function to create the forgot password widget
   Widget forgotPassword(BuildContext context, LoginNotifier loginNotifier) {
-    return Text(
-      context.watchLang.translate(AppLanguageText.forgotPassword),
-      style: AppFonts.textRegular16withUnderline,
+    return GestureDetector(
+      onTap: () {
+        showForgotPasswordPopup(context);
+      },
+      child: Text(
+        context.watchLang.translate(AppLanguageText.forgotPassword),
+        style: AppFonts.textRegular16withUnderline,
+      ),
     );
   }
 
@@ -256,7 +266,7 @@ class LoginScreen extends StatelessWidget {
                     : null,
           ),
         ),
-        const SizedBox(width: 12.0),
+        12.horizontalSpace,
         Text(
           context.watchLang.translate(AppLanguageText.rememberMe),
           style: AppFonts.textRegular14,
@@ -291,7 +301,7 @@ class LoginScreen extends StatelessWidget {
             context.watchLang.translate(AppLanguageText.dontHaveAccount),
             style: AppFonts.textRegular18,
           ),
-          SizedBox(height: 5),
+          5.verticalSpace,
           InkWell(
             onTap: () => loginNotifier.navigateToRegisterScreen(context),
             child: Text(

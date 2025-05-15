@@ -11,6 +11,7 @@ import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/register/register_notifier.dart';
 import 'package:mofa/utils/common/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
+import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:provider/provider.dart';
@@ -67,21 +68,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     logoImage(),
-                    SizedBox(height: 20),
+                    20.verticalSpace,
                     welcomeHeading(),
-                    SizedBox(height: 20),
+                    20.verticalSpace,
                     fullNameField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     visitorCompanyNameField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     mobileNumberField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     emailAddressField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     nationalityField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     idTypeField(registerNotifier),
-                    SizedBox(height: 15),
+                    15.verticalSpace,
                     if (registerNotifier.selectedIdType == "National ID")
                       nationalIdField(registerNotifier),
                     if (registerNotifier.selectedIdType == "Passport")
@@ -91,12 +92,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     if (registerNotifier.selectedIdType == "Other")
                       documentNameField(registerNotifier),
                     if (registerNotifier.selectedIdType == "Other")
-                      SizedBox(height: 15),
+                      15.verticalSpace,
                     if (registerNotifier.selectedIdType == "Other")
                       documentNumberField(registerNotifier),
-                    SizedBox(height: 20),
+                    20.verticalSpace,
                     registerButton(context, registerNotifier),
-                    SizedBox(height: 10),
+                    15.verticalSpace,
                     alreadyHaveAccount(context, registerNotifier),
                   ],
                 ),
@@ -112,7 +113,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget logoImage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 45.0),
-      child: Image.asset(AppImages.logo),
+      child: Center(child: Image.asset(AppImages.logo)),
     );
   }
 
@@ -218,123 +219,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // nationalityField
   Widget nationalityField(RegisterNotifier registerNotifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              context.watchLang.translate(AppLanguageText.nationality),
-              style: AppFonts.textRegular18,
-            ),
-            SizedBox(width: 3),
-            Text(
-              "*",
-              style: TextStyle(fontSize: 15, color: AppColors.textRedColor),
-            ),
-          ],
-        ),
-        SizedBox(height: 5),
-        DropdownMenu<CountryData>(
-          controller: registerNotifier.nationalityController,
-          width: double.infinity,
-          requestFocusOnTap: true,
-          enableFilter: true,
-          inputDecorationTheme: InputDecorationTheme(
-            contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 13),
-            border: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-          ),
-          hintText: 'Select Country',
-          onSelected: (CountryData? country) {
-            registerNotifier.selectedNationality = country?.iso3 ?? "";
-            print("Selected: ${country?.name}");
-          },
-          dropdownMenuEntries:
-              registerNotifier.nationalityMenu.map((CountryData item) {
-                return DropdownMenuEntry<CountryData>(
-                  value: item,
-                  label: item.name ?? 'Unknown',
-                );
-              }).toList(),
-        ),
-      ],
+    return CustomSearchDropdown<CountryData>(
+      fieldName: context.watchLang.translate(AppLanguageText.nationality),
+      hintText: 'Select Country',
+      controller: registerNotifier.nationalityController,
+      items: registerNotifier.nationalityMenu,
+      itemLabel: (item) => item.name ?? 'Unknown',
+      onSelected: (country) {
+        registerNotifier.selectedNationality = country?.iso3 ?? "";
+      },
+      validator: CommonValidation().iDTypeValidator,
     );
   }
 
   // idTypeField
   Widget idTypeField(RegisterNotifier registerNotifier) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              context.watchLang.translate(AppLanguageText.idType),
-              style: AppFonts.textRegular18,
-            ),
-            SizedBox(width: 3),
-            Text(
-              "*",
-              style: TextStyle(fontSize: 15, color: AppColors.textRedColor),
-            ),
-          ],
-        ),
-        SizedBox(height: 5),
-        DropdownMenu<DocumentIdModel>(
-          //initialSelection: menuItems.first,
-          controller: registerNotifier.idTypeController,
-          width: double.infinity,
-          requestFocusOnTap: true,
-          enableFilter: true,
-          inputDecorationTheme: InputDecorationTheme(
-            contentPadding: EdgeInsets.symmetric(vertical: 18, horizontal: 13),
-            border: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-          ),
-          hintText: 'Select Id type',
-          onSelected: (DocumentIdModel? menu) {
-            registerNotifier.selectedIdValue = menu?.value.toString() ?? "";
-            registerNotifier.selectedIdType = menu?.labelEn ?? "";
-          },
-          dropdownMenuEntries:
-              registerNotifier.idTypeMenu.map((DocumentIdModel item) {
-                return DropdownMenuEntry<DocumentIdModel>(
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all(
-                      AppColors.whiteColor,
-                    ),
-                  ),
-                  value: item,
-                  label: item.labelEn,
-                );
-              }).toList(),
-        ),
-      ],
+    return CustomSearchDropdown<DocumentIdModel>(
+      fieldName: context.watchLang.translate(AppLanguageText.idType),
+      hintText: 'Select Id type',
+      controller: registerNotifier.idTypeController,
+      items: registerNotifier.idTypeMenu,
+      itemLabel: (item) => item.labelEn ?? 'Unknown',
+      onSelected: (DocumentIdModel? menu) {
+        registerNotifier.selectedIdValue = menu?.value.toString() ?? "";
+        registerNotifier.selectedIdType = menu?.labelEn ?? "";
+      },
+      validator: CommonValidation().nationalityValidator,
     );
   }
 
@@ -363,7 +273,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             context.watchLang.translate(AppLanguageText.alreadyHaveAccount),
             style: AppFonts.textRegular18,
           ),
-          SizedBox(height: 5),
+          5.verticalSpace,
           InkWell(
             onTap: () => registerNotifier.navigateToLoginScreen(context),
             child: Text(

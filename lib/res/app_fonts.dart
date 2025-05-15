@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mofa/res/app_colors.dart';
 
 class AppFonts {
@@ -69,6 +70,22 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textRegularBullet14 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+    height: 1.55,
+  );
+
+  static const textBoldBullet14 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+    height: 1.55,
+  );
+
   static const textMedium12 = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w500,
@@ -95,6 +112,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textRegularGrey14 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textFieldTextColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegular17Disable = TextStyle(
     fontSize: 17,
     fontWeight: FontWeight.normal,
@@ -106,6 +130,13 @@ class AppFonts {
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegularAttachment14 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: Colors.blue,
     letterSpacing: 0.5,
   );
 
@@ -227,6 +258,14 @@ class AppFonts {
     color: AppColors.redColor,
     letterSpacing: 0.5,
   );
+
+  static const textRegular14Red = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: AppColors.redColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegular12 = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.normal,
