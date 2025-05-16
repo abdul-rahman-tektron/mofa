@@ -266,6 +266,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 ),
                 borderRadius: BorderRadius.circular(15),
               ),
+              errorStyle: TextStyle(color: AppColors.underscoreColor),
             ),
           ),
         ],

@@ -1,20 +1,32 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
+import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
+import 'package:mofa/core/model/get_file/get_file_request.dart';
+import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
+import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
+import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/res/app_strings.dart';
+import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/encrypt.dart';
 import 'package:mofa/utils/common/file_uplaod_helper.dart';
+import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
@@ -37,6 +49,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   File? _uploadedDocumentFile;
   File? _uploadedVehicleRegistrationFile;
 
+  Uint8List? _uploadedImageBytes;
+  Uint8List? _uploadedDocumentBytes;
+  Uint8List? _uploadedVehicleImageBytes;
+
   // List
   List<CountryData> _nationalityMenu = [];
   List<LocationDropdownResult> _locationDropdownData = [];
@@ -53,6 +69,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
   ];
 
+  GetByIdResult? _getByIdResult;
+  String? _applyPassCategory;
+
+  // key
+  final formKey = GlobalKey<FormState>();
 
   // Data Controller
   TextEditingController _visitorNameController = TextEditingController();
@@ -85,13 +106,26 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   TextEditingController _devicePurposeController = TextEditingController();
 
   //Functions
-  ApplyPassCategoryNotifier(BuildContext context) {
-    fetchAllDropdownData(context);
+  ApplyPassCategoryNotifier(BuildContext context, ApplyPassCategory applyPassCategory) {
+    initialize(context, applyPassCategory);
+  }
+
+  Future<void> initialize(BuildContext context, ApplyPassCategory category) async {
+    applyPassCategory = category.name;
+    await fetchAllDropdownData(context);
+    initialDataForMySelf(context);
   }
 
   Future<void> fetchAllDropdownData(BuildContext context) async {
+    final user = UserModel.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
+
+    print("reposne");
+    print(applyPassCategory);
+    print(ApplyPassCategory.myself.name);
+
     try {
       await Future.wait([
+        if(applyPassCategory == ApplyPassCategory.myself.name) apiGetById(context, user),
         apiLocationDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
@@ -104,6 +138,84 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       // Handle exceptions if needed
       debugPrint('Dropdown fetch error: $e');
     }
+  }
+
+  void initialDataForMySelf(BuildContext context) {
+    print("Response data");
+    print(getByIdResult?.user?.dTIqamaExpiry);
+    if(applyPassCategory == ApplyPassCategory.myself.name) {
+      visitorNameController.text = getByIdResult?.user?.sFullName ?? "";
+      companyNameController.text = getByIdResult?.user?.sCompanyName ?? "";
+      nationalityController.text = getByIdResult?.user?.sNationalityEn ?? "";
+      phoneNumberController.text = getByIdResult?.user?.sMobileNumber ?? "";
+      emailController.text = getByIdResult?.user?.sEmail ?? "";
+      idTypeController.text = getByIdResult?.user?.dTypeEn ?? "";
+      iqamaController.text = (getByIdResult?.user?.sIqama?.isNotEmpty ?? false)
+          ? decryptAES(getByIdResult!.user!.sIqama!)
+          : "";
+      passportNumberController.text =
+      (getByIdResult?.user?.passportNumber?.isNotEmpty ?? false)
+          ? decryptAES(getByIdResult!.user!.passportNumber!)
+          : "";
+
+      nationalityIdController.text =
+      (getByIdResult?.user?.eidNumber?.isNotEmpty ?? false)
+          ? decryptAES(getByIdResult!.user!.eidNumber!)
+          : "";
+
+      documentNameController.text =
+      (getByIdResult?.user?.sOthersDoc?.isNotEmpty ?? false)
+          ? decryptAES(getByIdResult!.user!.sOthersDoc!)
+          : "";
+
+      documentNumberController.text =
+      (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
+          ? decryptAES(getByIdResult!.user!.sOthersValue!)
+          : "";
+      expiryDateController.text = (() {
+        final rawDate = getByIdResult?.user?.dTIqamaExpiry ?? "";
+        try {
+          final parsed = DateFormat("M/d/yyyy h:mm:ss a").parse(rawDate);
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final parsedDate = DateTime(parsed.year, parsed.month, parsed.day);
+
+          if (parsedDate.isBefore(today)) {
+            return "";
+          }
+          return DateFormat("dd/MM/yyyy").format(parsed);
+        } catch (_) {
+          return "";
+        }
+      })();
+      vehicleNumberController.text = getByIdResult?.user?.sVehicleNo ?? "";
+    }
+  }
+
+  Future apiGetFile(BuildContext context, {required int type}) async {
+    await ApplyPassRepository().apiGetFile(
+      GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
+      context,
+    ).then((value) {
+      if (type == 1) {
+        uploadedImageBytes =
+            base64Decode((value as GetFileResult).photoFile ?? "");
+      } else if (type == 4) {
+        uploadedVehicleImageBytes =
+            base64Decode((value as GetFileResult).photoFile ?? "");
+      } else {
+        uploadedDocumentBytes =
+            base64Decode((value as GetFileResult).photoFile ?? "");
+      }
+    },);
+  }
+
+  //GetById Api Call
+  Future apiGetById(BuildContext context, UserModel user) async {
+    await ApplyPassRepository().apiGetById(
+        DeviceDropdownRequest(encryptedId: encryptAES(user.nExternalRegistrationId.toString())), context).then((value) {
+      getByIdResult = value as GetByIdResult;
+    },);
   }
 
   //location dropdown Api call
@@ -196,6 +308,12 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     }
   }
 
+  Future<void> launchPrivacyUrl() async {
+    if (!await launchUrl(Uri.parse(AppStrings.privacyPolicyUrl))) {
+      throw Exception('Could not launch ${AppStrings.privacyPolicyUrl}');
+    }
+  }
+
   void clearUploadedImage() {
     _uploadedImageFile = null;
     notifyListeners();
@@ -262,6 +380,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
     cancelEditing(); // reset form
     notifyListeners();
+  }
+
+  void nextButton(BuildContext context) {
+    // Navigator.pushNamed(context, AppRoutes.healthAndSafety);
+    // if (formKey.currentState!.validate()) {}
   }
 
   //Getter and Setter
@@ -603,6 +726,46 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set isEditingDevice(bool value) {
     if (_isEditingDevice == value) return;
     _isEditingDevice = value;
+    notifyListeners();
+  }
+
+  GetByIdResult? get getByIdResult => _getByIdResult;
+
+  set getByIdResult(GetByIdResult? value) {
+    if (_getByIdResult == value) return;
+    _getByIdResult = value;
+    notifyListeners();
+  }
+
+  String? get applyPassCategory => _applyPassCategory;
+
+  set applyPassCategory(String? value) {
+    if (_applyPassCategory == value) return;
+    _applyPassCategory = value;
+    notifyListeners();
+  }
+
+  Uint8List? get uploadedImageBytes => _uploadedImageBytes;
+
+  set uploadedImageBytes(Uint8List? value) {
+    if (_uploadedImageBytes == value) return;
+    _uploadedImageBytes = value;
+    notifyListeners();
+  }
+
+  Uint8List? get uploadedVehicleImageBytes => _uploadedVehicleImageBytes;
+
+  set uploadedVehicleImageBytes(Uint8List? value) {
+    if (_uploadedVehicleImageBytes == value) return;
+    _uploadedVehicleImageBytes = value;
+    notifyListeners();
+  }
+
+  Uint8List? get uploadedDocumentBytes => _uploadedDocumentBytes;
+
+  set uploadedDocumentBytes(Uint8List? value) {
+    if (_uploadedDocumentBytes == value) return;
+    _uploadedDocumentBytes = value;
     notifyListeners();
   }
 }

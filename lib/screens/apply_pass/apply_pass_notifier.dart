@@ -9,7 +9,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
   void navigateToMySelfScreen(BuildContext context) {
     Navigator.pushNamed(
       context,
-      AppRoutes.applyPassCategory,
+      AppRoutes.stepper,
       arguments: ApplyPassCategory.myself,
     );
   }
@@ -17,7 +17,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
   void navigateToMySomeoneElse(BuildContext context) {
     Navigator.pushNamed(
       context,
-      AppRoutes.applyPassCategory,
+      AppRoutes.stepper,
       arguments: ApplyPassCategory.someoneElse,
     );
   }
@@ -25,7 +25,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
   void navigateToMyGroup(BuildContext context) {
     Navigator.pushNamed(
       context,
-      AppRoutes.applyPassCategory,
+      AppRoutes.stepper,
       arguments: ApplyPassCategory.group,
     );
   }

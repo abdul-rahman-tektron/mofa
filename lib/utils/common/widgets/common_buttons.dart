@@ -6,7 +6,7 @@ import 'package:mofa/res/app_fonts.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? backgroundColor;
   final TextStyle? textFont;
   final IconData? iconData;
@@ -29,7 +29,7 @@ class CustomButton extends StatelessWidget {
   // Creates a button with only text
   Widget buttonWithText(context) {
     return ElevatedButton(
-      onPressed: onPressed,
+      onPressed: onPressed ?? () {},
       style: ElevatedButton.styleFrom(
         // textStyle: textFont ?? AppFonts.textSemiBold16,
         backgroundColor: backgroundColor ?? AppColors.buttonBgColor,

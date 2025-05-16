@@ -135,6 +135,34 @@ class CommonValidation {
     return null;
   }
 
+  String? validateNationalIdExpiryDate(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'National ID Expiry Date is required.';
+      }
+    return null;
+  }
+
+  String? validateIqamaExpiryDate(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'Iqama Expiry Date is required.';
+      }
+    return null;
+  }
+
+  String? validatePassportExpiryDate(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'Passport Expiry Date is required.';
+      }
+    return null;
+  }
+
+  String? validateDocumentExpiryDate(String? value) {
+      if (value == null || value.isEmpty) {
+        return 'Document Expiry Date is required.';
+      }
+    return null;
+  }
+
   String? validatePassport(String? value) {
       if (value == null || value.isEmpty) {
         return 'Passport Number is required.';

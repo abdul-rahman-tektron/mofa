@@ -1,8 +1,10 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_language_text.dart';
 
 class BulletList extends StatelessWidget {
   final List<String> strings;
@@ -38,7 +40,7 @@ class BulletList extends StatelessWidget {
                   child: Text.rich(
                     textAlign: TextAlign.left,
                     TextSpan(
-                      children: _buildTextSpans(text, isLast),
+                      children: _buildTextSpans(context, text, isLast),
                       style: AppFonts.textRegularBullet14,
                     ),
                   ),
@@ -51,9 +53,9 @@ class BulletList extends StatelessWidget {
     );
   }
 
-  List<TextSpan> _buildTextSpans(String text, bool isLast) {
+  List<TextSpan> _buildTextSpans(BuildContext context, String text, bool isLast) {
     // Check if 'Privacy Policy' exists in the text
-    final keyword = "Privacy Policy";
+    final keyword = context.watchLang.translate(AppLanguageText.privacyPolicyHere);
     if (text.contains(keyword)) {
       final parts = text.split(keyword);
       return [

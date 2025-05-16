@@ -55,6 +55,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textBoldWhite14 = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.bold,
+    color: AppColors.whiteColor,
+    letterSpacing: 0.5,
+  );
+
   static const textBold20 = TextStyle(
     fontSize: 20,
     fontWeight: FontWeight.bold,

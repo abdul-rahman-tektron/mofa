@@ -62,5 +62,11 @@
 
     <key>NSDocumentsFolderUsageDescription</key>
     <string>This app needs access to documents for file uploads.</string>
+
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+      <string>sms</string>
+      <string>tel</string>
+    </array>
 </dict>
 </plist>

@@ -12,4 +12,6 @@ class AppUrl {
   static final pathVisitRequestTypeDropdown = "/VisitRequestTypes/GetAll"; //POST
   static final pathDeviceDropdown = "/SystemCodes/GetAllDetailCodesDropDown"; //POST
   static final pathVisitPurposesDropdown = "/VisitPurposes/GetAllDropdown"; //POST
+  static final pathGetById = "/ExternalUser/GetById"; //POST
+  static final pathGetFile = "/Appointment/GetFile"; //POST
 }
