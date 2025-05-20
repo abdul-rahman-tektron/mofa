@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/screens/apply_pass/apply_pass_screen.dart';
 import 'package:mofa/screens/apply_pass_category/apply_pass_category_screen.dart' show ApplyPassCategoryScreen;
+import 'package:mofa/screens/bottom_bar/bottom_bar_screen.dart';
 import 'package:mofa/screens/custom_screen/network_error_screen.dart';
 import 'package:mofa/screens/custom_screen/not_found_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
@@ -17,6 +18,7 @@ class AppRoutes {
   static const String applyPass = '/apply-pass';
   static const String stepper = '/stepper';
   static const String applyPassCategory = '/apply-pass-category';
+  static const String bottomBar = '/bottom-bar';
   static const String healthAndSafety = '/health-and-safety';
   static const String finishApplyPass = '/finish-apply-pass';
   static const String networkError = '/network-error';
@@ -32,7 +34,10 @@ class AppRouter {
       case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
 
-      case AppRoutes.applyPass:
+      case AppRoutes.bottomBar:
+        return MaterialPageRoute(builder: (_) =>  BottomBarScreen());
+
+        case AppRoutes.applyPass:
         return MaterialPageRoute(builder: (_) => const ApplyPassScreen());
 
       case AppRoutes.stepper:

@@ -12,6 +12,7 @@ import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 
+import 'screens/bottom_bar/bottom_bar_screen.dart';
 import 'screens/login/login_screen.dart';
 
 void main() async {
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
                 navigatorKey: navigatorKey,
                 onGenerateRoute: AppRouter.onGenerateRoute,
                 // initialRoute: snapshot.data == true ? AppRoutes.home : AppRoutes.login,
-                home: token != null ? const ApplyPassScreen() : const LoginScreen(),
+                home: token != null ?  BottomBarScreen() : const LoginScreen(),
                 theme: AppTheme.getTheme(
                   context.watch<LanguageNotifier>().currentLang == 'ar' ? 'DroidKufi' : 'Lexend',
                 ),

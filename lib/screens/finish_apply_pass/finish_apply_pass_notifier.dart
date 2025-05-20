@@ -4,9 +4,8 @@ import 'package:mofa/utils/common/app_routes.dart';
 
 class FinishApplyPassNotifier extends BaseChangeNotifier{
 
-
   //Functions
   void closeScreen(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.applyPass, (Route<dynamic> route) => false);
+    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.bottomBar, (Route<dynamic> route) => false);
   }
 }

@@ -285,5 +285,6 @@
   "devicesDeleted": "تم حذف الأجهزة",
   "visitCancelledFromVisitor": "تم إلغاء الزيارة من الزائر",
 
-  "provideCommentsAllRequestedInfoDevices": "يرجى تقديم التعليقات لجميع أجهزة المعلومات المطلوبة."
+  "provideCommentsAllRequestedInfoDevices": "يرجى تقديم التعليقات لجميع أجهزة المعلومات المطلوبة.",
+  "dashboard" : "لوحة المعلومات"
 }

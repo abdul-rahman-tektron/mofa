@@ -4,6 +4,7 @@ import 'package:toastification/toastification.dart';
 
 class ToastHelper {
   static void showError(String message) {
+    print("Error called");
     _show(
       message,
       type: ToastificationType.error,

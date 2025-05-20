@@ -8,10 +8,19 @@ class AppUrl {
   static final pathCountryList = "/Nationalities/GetAll"; //POST
   static final pathRegister = "/ExternalRegistration/Add"; //POST
   static final pathForgetPassword = "/ExternalUser/ForgetPassword"; //POST
+
+  //Apply Pass
   static final pathLocationDropdown = "/Locations/GetAllDropdown"; //POST
   static final pathVisitRequestTypeDropdown = "/VisitRequestTypes/GetAll"; //POST
   static final pathDeviceDropdown = "/SystemCodes/GetAllDetailCodesDropDown"; //POST
   static final pathVisitPurposesDropdown = "/VisitPurposes/GetAllDropdown"; //POST
   static final pathGetById = "/ExternalUser/GetById"; //POST
   static final pathGetFile = "/Appointment/GetFile"; //POST
+  static final pathValidateEmail = "/Validation/ValidateEmail"; //POST
+  static final pathDuplicateAppointment = "/Validation/DuplicateAppointment"; //POST
+  static final pathAddAppointment = "/ExternalAppointment/Add"; //POST
+  static final pathAddAttachment = "/ExternalAppointment/AddAttachments"; //POST
+
+  //Search Pass
+  static final pathGetAllDetail = "/ExternalAppointment/GetAll"; //POST
 }

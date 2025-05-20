@@ -6,6 +6,8 @@ class AppStrings {
   static const rememberMeKey = 'remember_me';
   static const accessToken = 'access_token';
   static const languageCode = 'language_code';
+  static const appointmentData = 'appointment_data';
+  static const uploadedImageCode = 'image_data';
 
 
   //Url

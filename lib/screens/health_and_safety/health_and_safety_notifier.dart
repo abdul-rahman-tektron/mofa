@@ -1,10 +1,19 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
+import 'package:mofa/core/remote/service/apply_pass_repository.dart';
+import 'package:mofa/utils/common/extensions.dart';
+import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
 
 class HealthAndSafetyNotifier extends BaseChangeNotifier{
 
   bool _isChecked = false;
+
+  AddAppointmentRequest? _addAppointmentRequest;
 
   final List<DeclarationSection> healthDeclarationsEn = [
     DeclarationSection(
@@ -101,9 +110,109 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier{
   ];
 
   //Functions
+  HealthAndSafetyNotifier() {
+    getStoredAppointmentData();
+  }
+
   // Update User Verify checkbox state
   void userAcceptDeclarationChecked(BuildContext context, bool? value) {
     isChecked = value!;
+  }
+
+  Future<AddAppointmentRequest?> getStoredAppointmentData() async {
+    final jsonString = await SecureStorageHelper.getAppointmentData();
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final jsonMap = jsonDecode(jsonString);
+      addAppointmentRequest = AddAppointmentRequest.fromJson(jsonMap);
+      return addAppointmentRequest;
+    }
+    return null;
+  }
+
+  Future<void> getAndUploadImageData(BuildContext context) async {
+    final jsonString = await SecureStorageHelper.getUploadedImage();
+    if (jsonString == null || jsonString.isEmpty) {
+      print("No uploaded image data found in secure storage.");
+      return;
+    }
+
+    final jsonMap = jsonDecode(jsonString);
+
+    final base64Image = jsonMap["imageUploaded"] as String?;
+    final base64Doc = jsonMap["documentUploaded"] as String?;
+    final base64Vehicle = jsonMap["vehicleRegistrationUploaded"] as String?;
+
+    final imageFile = await base64Image?.toFile(fileName: "uploadedImageFile.jpg");
+    final docFile = await base64Doc?.toFile(fileName: "uploadedDocumentFile.pdf");
+    final vehicleFile = await base64Vehicle?.toFile(fileName: "uploadedVehicleFile.jpg");
+
+    print("Restored image file: ${imageFile?.path}");
+    print("Restored document file: ${docFile?.path}");
+    print("Restored vehicle registration file: ${vehicleFile?.path}");
+
+    // Build list of upload futures
+    final List<Future<bool>> uploadFutures = [];
+
+    if (imageFile != null) {
+      uploadFutures.add(uploadAttachment(context, imageFile, "S_PhotoUpload", "S_PhotoContentType"));
+    }
+
+    if (docFile != null) {
+      uploadFutures.add(uploadAttachment(context, docFile, "documentUploaded", "document"));
+    }
+
+    if (vehicleFile != null) {
+      uploadFutures.add(uploadAttachment(context, vehicleFile, "S_VehicleRegistrationFile", "S_VehicleRegistrationContentType"));
+    }
+
+    // Upload all attachments concurrently
+    if (uploadFutures.isNotEmpty) {
+      final results = await Future.wait(uploadFutures);
+
+      if (results.every((result) => result)) {
+        print("✅ All attachments uploaded successfully.");
+      } else {
+        print("⚠️ Some attachments failed to upload.");
+      }
+    } else {
+      print("No attachments to upload.");
+    }
+  }
+
+
+  Future<bool> uploadAttachment(BuildContext context, File imageFile, String fieldName, String fieldType) async {
+    try {
+      final result = await ApplyPassRepository().apiAddAttachment(
+        fieldName: fieldName,
+        imageFile: imageFile,
+        fieldType: fieldType,
+        context,
+        id: addAppointmentRequest?.nAppointmentId.toString() ?? "",
+        // fieldName:
+      );
+      return result == true;
+    } catch (e) {
+      print("image crash ${e}");
+      return false;
+    }
+  }
+
+  submitButtonPressed(BuildContext context) async {
+    getAndUploadImageData(context);
+    // if (addAppointmentRequest != null) {
+    //   apiAddAppointment(context);
+    // }
+  }
+
+  Future<void> apiAddAppointment(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiAddAppointment(
+        addAppointmentRequest ?? AddAppointmentRequest(),
+        context,
+      );
+    } catch (e) {
+      print("object crash ${e}");
+    }
   }
 
 
@@ -118,6 +227,14 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier{
   set isChecked(bool value) {
     if (_isChecked == value) return;
     _isChecked = value;
+    notifyListeners();
+  }
+
+  AddAppointmentRequest? get addAppointmentRequest => _addAppointmentRequest;
+
+  set addAppointmentRequest(AddAppointmentRequest? value) {
+    if (_addAppointmentRequest == value) return;
+    _addAppointmentRequest = value;
     notifyListeners();
   }
 }

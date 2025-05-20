@@ -1,4 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 extension BackendDateFormat on String {
   String toDisplayDateFormat() {
@@ -8,5 +13,29 @@ extension BackendDateFormat on String {
     } catch (_) {
       return "";
     }
+  }
+
+  dynamic toDateTime({String format = 'dd/MM/yyyy'}) {
+    if (trim().isEmpty) return "";
+    return DateFormat(format).parse(this);
+  }
+}
+
+extension FileBase64Extension on File {
+  /// Converts this File to a base64-encoded string
+  Future<String> toBase64() async {
+    final bytes = await readAsBytes();
+    return base64Encode(bytes);
+  }
+}
+
+extension Base64ToFileExtension on String {
+  /// Converts a base64 string back to a File at the given [fileName]
+  Future<File> toFile({required String fileName}) async {
+    final bytes = base64Decode(this);
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath = path.join(dir.path, fileName);
+    final file = File(filePath);
+    return await file.writeAsBytes(bytes);
   }
 }

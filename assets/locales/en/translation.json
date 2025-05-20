@@ -286,5 +286,6 @@
   "devicesDeleted": "Devices Deleted",
   "visitCancelledFromVisitor": "Visit Cancelled From Visitor",
 
-  "provideCommentsAllRequestedInfoDevices": "Kindly provide comments for all requested info devices."
+  "provideCommentsAllRequestedInfoDevices": "Kindly provide comments for all requested info devices.",
+  "dashboard": "Dashboard"
 }

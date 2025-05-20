@@ -28,6 +28,8 @@ class CustomTextField extends StatefulWidget {
   final bool isSmallFieldFont;
   final bool isDisable;
   final String? toolTipContent;
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   const CustomTextField({
     super.key,
@@ -50,6 +52,8 @@ class CustomTextField extends StatefulWidget {
     this.isDisable = false,
     this.isSmallFieldFont = false,
     this.toolTipContent,
+    this.startDate,
+    this.endDate,
   });
 
   @override
@@ -59,8 +63,6 @@ class CustomTextField extends StatefulWidget {
 class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscureText = true;
   DateTime? _selectedDate;
-  DateTime? _minDate;
-  DateTime? _maxDate;
 
   // Toggle password visibility
   void _toggleVisibility() {
@@ -97,8 +99,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
         );
       },
       initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: _minDate ?? DateTime(1900),
-      lastDate: _maxDate ?? DateTime(2100),
+      firstDate: widget.startDate ?? DateTime(1900),
+      lastDate: widget.endDate ?? DateTime(2100),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {

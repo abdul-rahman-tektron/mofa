@@ -137,6 +137,9 @@ class AppLanguageText {
   static const applyPass = 'applyPass';
   static const vehicleRegistrationLicense = 'vehicleRegistrationLicense';
   static const declareDevicesBroughtOnsite = 'declareDevicesBroughtOnsite';
+  static const visitingPersonEmailNotFound = 'visitingPersonEmailNotFound';
+  static const appointmentExists = 'appointmentExists';
+  static const dashboard = 'dashboard';
 
 // Add the rest of the keys here...
 }

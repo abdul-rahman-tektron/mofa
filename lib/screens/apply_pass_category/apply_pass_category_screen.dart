@@ -18,6 +18,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/apply_pass_category/apply_pass_category_notifier.dart';
 import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
@@ -136,9 +137,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           text: context.watchLang.translate(AppLanguageText.next),
           iconData: LucideIcons.chevronRight,
           smallWidth: true,
-          onPressed: !applyPassCategoryNotifier.isChecked ? null : () {
-            onNext();
-            applyPassCategoryNotifier.nextButton(context);
+          onPressed: !applyPassCategoryNotifier.isChecked ? null : () async {
+            await applyPassCategoryNotifier.nextButton(context, onNext);
           },
         ),
       ],
@@ -489,7 +489,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       itemLabel: (item) => item.sLocationNameEn ?? 'Unknown',
       isSmallFieldFont: true,
       onSelected: (LocationDropdownResult? menu) {
-        // applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
+        applyPassCategoryNotifier.selectedLocationId = menu?.nLocationId ?? 0;
         // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: CommonValidation().validateLocation,
@@ -505,7 +505,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       itemLabel: (item) => item.sDescE ?? 'Unknown',
       isSmallFieldFont: true,
       onSelected: (VisitRequestDropdownResult? menu) {
-        // applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
+        applyPassCategoryNotifier.selectedVisitRequest = menu?.nDetailedCode.toString() ?? "";
         // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: CommonValidation().validateVisitRequestType,
@@ -521,7 +521,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       itemLabel: (item) => item.sPurposeEn ?? 'Unknown',
       isSmallFieldFont: true,
       onSelected: (VisitPurposeDropdownResult? menu) {
-        // applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
+        applyPassCategoryNotifier.selectedVisitPurpose = menu?.nPurposeId.toString() ?? "";
         // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: CommonValidation().validateVisitPurpose,
@@ -553,6 +553,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.visitEndDate),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
+      startDate: applyPassCategoryNotifier.visitStartDateController.text.isEmpty
+          ? null
+          : applyPassCategoryNotifier.visitStartDateController.text
+          .toDateTime(),
       validator: CommonValidation().validateVisitEndDate,
     );
   }

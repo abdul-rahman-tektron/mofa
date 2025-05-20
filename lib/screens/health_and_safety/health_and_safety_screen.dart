@@ -172,7 +172,8 @@ class HealthAndSafetyScreen extends StatelessWidget {
           text: context.watchLang.translate(AppLanguageText.submit),
           smallWidth: true,
           onPressed: () {
-            onNext();
+            healthAndSafetyNotifier.submitButtonPressed(context);
+            // onNext();
             // Navigator.pushNamed(context, AppRoutes.finishApplyPass);
           },
         ),

@@ -80,7 +80,7 @@ class LoginNotifier extends BaseChangeNotifier {
             ),
           );
         }
-        Navigator.pushReplacementNamed(context, AppRoutes.applyPass);
+        Navigator.pushReplacementNamed(context, AppRoutes.bottomBar);
       } else {
         ToastHelper.showError("Incorrect Email or Password");
       }

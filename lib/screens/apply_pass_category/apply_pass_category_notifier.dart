@@ -5,9 +5,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
+import 'package:mofa/core/model/duplicate_appointment/duplicate_appointment_request.dart';
+import 'package:mofa/core/model/forget_password/forget_password_request.dart';
 import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
 import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
@@ -24,6 +27,7 @@ import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/encrypt.dart';
+import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/file_uplaod_helper.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -34,6 +38,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   String? _selectedNationality;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
+  int? _selectedLocationId;
+  String? _selectedVisitRequest;
+  String? _selectedVisitPurpose;
 
   //int
   int? _editDeviceIndex;
@@ -266,6 +273,101 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     },);
   }
 
+  Future<bool> apiValidateEmail(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiValidateEmail(
+        ForgetPasswordRequest(sEmail: mofaHostEmailController.text),
+        context,
+      );
+      return result == true;
+    } catch (e) {
+      // Optional: log or handle exception
+      return false;
+    }
+  }
+
+
+  Future<bool> apiDuplicateAppointment(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDuplicateAppointment(
+        DuplicateAppointmentRequest(
+          dFromDate: visitStartDateController.text.toDateTime().toString(),
+          dToDate: visitEndDateController.text.toDateTime().toString(),
+          nExternalRegistrationId: getByIdResult?.user?.nExternalRegistrationId ?? 0,
+          nLocationId: selectedLocationId.toString(),
+          sEidNumber: encryptAES(nationalityIdController.text),
+          sIqama: encryptAES(iqamaController.text),
+          sOthersValue: encryptAES(documentNumberController.text),
+          sPassportNumber: encryptAES(passportNumberController.text),
+        ),
+        context,
+      );
+      return result == true;
+    } catch (e) {
+      print("object crash ${e}");
+      return false;
+    }
+  }
+
+  void addData() async {
+    print("selectedIdType");
+    print(selectedIdType);
+    final appointmentData = AddAppointmentRequest(
+      fullName: visitorNameController.text,
+      sponsor: companyNameController.text,
+      nationality: nationalityController.text,
+      mobileNo: phoneNumberController.text,
+      email: emailController.text,
+      idType: int.parse(selectedIdValue ?? ""),
+      sIqama: encryptAES(iqamaController.text),
+      passportNumber: encryptAES(passportNumberController.text),
+      sOthersDoc: encryptAES(documentNameController.text),
+      eidNumber: encryptAES(nationalityIdController.text),
+      sOthersValue: encryptAES(documentNumberController.text),
+      dtEidExpiryDate: expiryDateController.text.toDateTime().toString(),
+      dtIqamaExpiry: expiryDateController.text.toDateTime().toString(),
+      dtPassportExpiryDate: expiryDateController.text.toDateTime().toString(),
+      dtOthersExpiry: expiryDateController.text.toDateTime().toString(),
+      dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
+      dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
+      sVehicleNo: vehicleNumberController.text,
+      nLocationId: selectedLocationId,
+      nVisitType: int.parse(selectedVisitRequest ?? ""),
+      purpose: int.parse(selectedVisitPurpose ?? ""),
+      remarks: noteController.text,
+      sVisitingPersonEmail: mofaHostEmailController.text,
+      haveEid: getByIdResult?.user?.haveEid,
+      havePassport: getByIdResult?.user?.havePassport,
+      haveIqama: getByIdResult?.user?.haveIqama,
+      havePhoto: getByIdResult?.user?.havePhoto,
+      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration,
+      haveOthers: getByIdResult?.user?.haveOthers,
+      lastAppointmentId: getByIdResult?.user?.nAppointmentId,
+    );
+
+    final imageDataFile = {
+      "imageUploaded": await uploadedImageFile?.toBase64(),
+      "documentUploaded": await uploadedDocumentFile?.toBase64(),
+      "vehicleRegistrationUploaded": await uploadedVehicleRegistrationFile?.toBase64(),
+    };
+
+    final jsonString = jsonEncode(appointmentData.toJson());
+    await SecureStorageHelper.setAppointmentData(jsonString);
+
+    final jsonImageString = jsonEncode(imageDataFile);
+    await SecureStorageHelper.setUploadedImage(jsonImageString);
+  }
+
+  Future<AddAppointmentRequest?> getStoredAppointmentData() async {
+    final jsonString = await SecureStorageHelper.getAppointmentData();
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final jsonMap = jsonDecode(jsonString);
+      return AddAppointmentRequest.fromJson(jsonMap);
+    }
+    return null;
+  }
+
+
   // Update User Verify checkbox state
   void userVerifyChecked(BuildContext context, bool? value) {
     isChecked = value!;
@@ -382,10 +484,33 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
-  void nextButton(BuildContext context) {
-    // Navigator.pushNamed(context, AppRoutes.healthAndSafety);
-    // if (formKey.currentState!.validate()) {}
+  Future<void> nextButton(BuildContext context, VoidCallback onNext) async {
+    final isValid = await validation(context);
+    if (isValid) {
+      addData();
+      onNext();
+    }
   }
+
+
+
+  Future<bool> validation(BuildContext context) async {
+    if (!formKey.currentState!.validate()) return false;
+    print("validation Check");
+
+    final isEmailValid = await apiValidateEmail(context);
+    print("validation Check email");
+    print(isEmailValid);
+    if (!isEmailValid) return false;
+
+    final hasNoDuplicates = await apiDuplicateAppointment(context);
+    print("validation Check duplicate");
+    print(hasNoDuplicates);
+    if (!hasNoDuplicates) return false;
+
+    return true;
+  }
+
 
   //Getter and Setter
   bool get isChecked => _isChecked;
@@ -506,6 +631,22 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set selectedIdValue(String? value) {
     if (_selectedIdValue == value) return;
     _selectedIdValue = value;
+    notifyListeners();
+  }
+
+  String? get selectedVisitRequest => _selectedVisitRequest;
+
+  set selectedVisitRequest(String? value) {
+    if (_selectedVisitRequest == value) return;
+    _selectedVisitRequest = value;
+    notifyListeners();
+  }
+
+  String? get selectedVisitPurpose => _selectedVisitPurpose;
+
+  set selectedVisitPurpose(String? value) {
+    if (_selectedVisitPurpose == value) return;
+    _selectedVisitPurpose = value;
     notifyListeners();
   }
 
@@ -766,6 +907,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set uploadedDocumentBytes(Uint8List? value) {
     if (_uploadedDocumentBytes == value) return;
     _uploadedDocumentBytes = value;
+    notifyListeners();
+  }
+
+  int? get selectedLocationId => _selectedLocationId;
+
+  set selectedLocationId(int? value) {
+    if (_selectedLocationId == value) return;
+    _selectedLocationId = value;
     notifyListeners();
   }
 }
