@@ -14,7 +14,6 @@ class LocalizationService implements ILocalizationService {
     final jsonStr = await rootBundle.loadString('assets/locales/$languageCode/translation.json');
     final Map<String, dynamic> jsonMap = json.decode(jsonStr);
     _localizedStrings = jsonMap.map((key, value) => MapEntry(key, value.toString()));
-    print(_localizedStrings);
     _currentLanguage = languageCode;
   }
 

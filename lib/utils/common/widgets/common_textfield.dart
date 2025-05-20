@@ -64,6 +64,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscureText = true;
   DateTime? _selectedDate;
 
+
   // Toggle password visibility
   void _toggleVisibility() {
     setState(() {
@@ -79,6 +80,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   // Display date picker and update text field with selected date
   Future<void> _selectDate(BuildContext context) async {
+    final DateTime initialDate = _selectedDate ?? widget.startDate ?? DateTime.now();
+
     final DateTime? picked = await showDatePicker(
       context: context,
       builder: (context, child) {
@@ -98,7 +101,9 @@ class _CustomTextFieldState extends State<CustomTextField> {
           child: child!,
         );
       },
-      initialDate: _selectedDate ?? DateTime.now(),
+      initialDate: initialDate.isBefore(widget.startDate ?? DateTime(1900))
+          ? (widget.startDate ?? DateTime.now())
+          : initialDate,
       firstDate: widget.startDate ?? DateTime(1900),
       lastDate: widget.endDate ?? DateTime(2100),
     );

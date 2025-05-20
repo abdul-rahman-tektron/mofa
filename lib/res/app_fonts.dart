@@ -280,6 +280,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const errorTextRegular12 = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    color: AppColors.underscoreColor,
+    letterSpacing: 0.5,
+  );
+
   static const textMedium18Black = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w500,

@@ -208,7 +208,6 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       ],
       onPrivacyPolicyTap: () {
         // Navigate or open link here
-        print("Privacy Policy tapped");
         applyPassCategoryNotifier.launchPrivacyUrl();
       },
     );
@@ -555,9 +554,9 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       keyboardType: TextInputType.datetime,
       startDate: applyPassCategoryNotifier.visitStartDateController.text.isEmpty
           ? null
-          : applyPassCategoryNotifier.visitStartDateController.text
-          .toDateTime(),
+          : applyPassCategoryNotifier.visitStartDateController.text.toDateTime(),
       validator: CommonValidation().validateVisitEndDate,
+      isEditable: applyPassCategoryNotifier.visitStartDateController.text.isEmpty,
     );
   }
 
@@ -702,7 +701,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       onPressed: () => applyPassCategoryNotifier.showDeviceFieldsAgain()
     );
   }
-  
+
   Widget saveAndCancel(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
     return Row(
       children: [
@@ -908,8 +907,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           indent: 0,
           thickness: 1,
         ),
+        if(applyPassCategoryNotifier.photoUploadValidation)
+          Text("Photo upload is required.", style: AppFonts.errorTextRegular12),
         5.verticalSpace,
-        if (applyPassCategoryNotifier.uploadedImageFile != null || applyPassCategoryNotifier.getByIdResult?.user?.havePhoto != 0)
+        if (applyPassCategoryNotifier.getByIdResult?.user?.havePhoto == 1)
           GestureDetector(
             onTap: () async {
               await applyPassCategoryNotifier.apiGetFile(context, type: 1);
@@ -1001,10 +1002,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           indent: 0,
           thickness: 1,
         ),
+        if(applyPassCategoryNotifier.documentUploadValidation)
+          Text("${applyPassCategoryNotifier.selectedIdType} upload is required.", style: AppFonts.errorTextRegular12),
         5.verticalSpace,
-        if (applyPassCategoryNotifier.uploadedDocumentFile != null || applyPassCategoryNotifier.getByIdResult?.user?.haveEid != 0
-            || applyPassCategoryNotifier.getByIdResult?.user?.haveIqama != 0 || applyPassCategoryNotifier.getByIdResult?.user?.havePassport != 0
-            || applyPassCategoryNotifier.getByIdResult?.user?.haveOthers != 0)
+        if (applyPassCategoryNotifier.getByIdResult?.user?.haveEid == 1
+            || applyPassCategoryNotifier.getByIdResult?.user?.haveIqama == 1 || applyPassCategoryNotifier.getByIdResult?.user?.havePassport == 1
+            || applyPassCategoryNotifier.getByIdResult?.user?.haveOthers == 1)
           GestureDetector(
             onTap: () async {
               int type = 1;
@@ -1057,7 +1060,65 @@ class ApplyPassCategoryScreen extends StatelessWidget {
             Flexible(
               child: CustomUploadButton(
                 text: context.watchLang.translate(AppLanguageText.uploadFile), onPressed: () async {
-                await applyPassCategoryNotifier.uploadVehicleRegistrationImage();
+                showModalBottomSheet(
+                  context: context,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  backgroundColor: Colors.white,
+                  builder: (context) {
+                    return Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            "Upload Vehicle Registration Image",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              uploadOptionCard(
+                                icon: LucideIcons.camera,
+                                label: "Camera",
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  await applyPassCategoryNotifier.uploadVehicleRegistrationImage(
+                                    fromCamera: true,
+                                    cropAfterPick: true,
+                                  );
+                                },
+                              ),
+                              uploadOptionCard(
+                                icon: LucideIcons.image,
+                                label: "Device",
+                                onTap: () async {
+                                  Navigator.pop(context);
+                                  await applyPassCategoryNotifier.uploadVehicleRegistrationImage(
+                                    fromCamera: false,
+                                    cropAfterPick: true,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                      ),
+                    );
+                  },
+                );
               },),
             )
           ],
@@ -1068,7 +1129,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           thickness: 1,
         ),
         5.verticalSpace,
-        if (applyPassCategoryNotifier.uploadedVehicleRegistrationFile != null || applyPassCategoryNotifier.getByIdResult?.user?.haveVehicleRegistration != 0)
+        if (applyPassCategoryNotifier.getByIdResult?.user?.haveVehicleRegistration == 1)
           GestureDetector(
             onTap: () async {
               await applyPassCategoryNotifier.apiGetFile(context, type: 4);

@@ -263,7 +263,7 @@ class ApplyPassRepository extends BaseRepository {
       AddAppointmentResponse addAppointmentResponse =
       addAppointmentResponseFromJson(jsonEncode(response?.data));
 
-      return addAppointmentResponse;
+      return addAppointmentResponse.result;
 
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");

@@ -1,19 +1,20 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
+import 'package:mofa/core/model/add_appointment/add_appointment_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
 
-class HealthAndSafetyNotifier extends BaseChangeNotifier{
-
+class HealthAndSafetyNotifier extends BaseChangeNotifier {
   bool _isChecked = false;
 
-  AddAppointmentRequest? _addAppointmentRequest;
+  List<AddAppointmentRequest>? _addAppointmentRequest;
 
   final List<DeclarationSection> healthDeclarationsEn = [
     DeclarationSection(
@@ -119,102 +120,217 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier{
     isChecked = value!;
   }
 
-  Future<AddAppointmentRequest?> getStoredAppointmentData() async {
+  Future<void> getStoredAppointmentData() async {
     final jsonString = await SecureStorageHelper.getAppointmentData();
+    print("jsonString");
+    print(jsonString);
     if (jsonString != null && jsonString.isNotEmpty) {
-      final jsonMap = jsonDecode(jsonString);
-      addAppointmentRequest = AddAppointmentRequest.fromJson(jsonMap);
-      return addAppointmentRequest;
+      final jsonData = jsonDecode(jsonString);
+
+      // Case 1: List of AddAppointmentRequest
+      if (jsonData is List) {
+        print("Parsed as List<AddAppointmentRequest>");
+        addAppointmentRequest = jsonData.map((e) => AddAppointmentRequest.fromJson(e)).toList();
+      }
+
+      // Case 2: Single AddAppointmentRequest
+      else if (jsonData is Map<String, dynamic>) {
+        print("Parsed as single AddAppointmentRequest");
+        final singleRequest = AddAppointmentRequest.fromJson(jsonData);
+        addAppointmentRequest = [singleRequest]; // Wrap it in a list
+      }
+
+      // If format is unexpected
+      else {
+        print("Unexpected JSON format");
+      }
     }
-    return null;
   }
 
-  Future<void> getAndUploadImageData(BuildContext context) async {
+  Future<List<Map<String, dynamic>>> _loadUploadDataFromStorage() async {
     final jsonString = await SecureStorageHelper.getUploadedImage();
     if (jsonString == null || jsonString.isEmpty) {
-      print("No uploaded image data found in secure storage.");
-      return;
+      return [];
     }
 
-    final jsonMap = jsonDecode(jsonString);
+    try {
+      final decoded = jsonDecode(jsonString);
+      if (decoded is Map<String, dynamic>) {
+        return [decoded];
+      } else if (decoded is List) {
+        return decoded.whereType<Map<String, dynamic>>().toList();
+      }
+    } catch (e) {
+      print("Error parsing uploaded image data: $e");
+    }
 
+    return [];
+  }
+
+  Future<void> _processUploadEntry(
+      BuildContext context,
+      Map<String, dynamic> jsonMap,
+      AddAppointmentResult? appointmentResult, // You can type this if you know the class
+      ) async {
     final base64Image = jsonMap["imageUploaded"] as String?;
     final base64Doc = jsonMap["documentUploaded"] as String?;
     final base64Vehicle = jsonMap["vehicleRegistrationUploaded"] as String?;
+    final selectedIdType = jsonMap["selectedIdType"] as String?;
 
-    final imageFile = await base64Image?.toFile(fileName: "uploadedImageFile.jpg");
-    final docFile = await base64Doc?.toFile(fileName: "uploadedDocumentFile.pdf");
-    final vehicleFile = await base64Vehicle?.toFile(fileName: "uploadedVehicleFile.jpg");
+    final imageFile = await _decodeBase64File(base64Image, "uploadedImageFile.jpg");
+    final docFile = await _decodeBase64File(base64Doc, "uploadedDocumentFile.pdf");
+    final vehicleFile = await _decodeBase64File(base64Vehicle, "uploadedVehicleFile.jpg");
 
-    print("Restored image file: ${imageFile?.path}");
-    print("Restored document file: ${docFile?.path}");
-    print("Restored vehicle registration file: ${vehicleFile?.path}");
+    final uploadFutures = <Future<bool>>[];
 
-    // Build list of upload futures
-    final List<Future<bool>> uploadFutures = [];
+    final appointmentId = appointmentResult?.id?.toString() ?? "";
 
-    if (imageFile != null) {
-      uploadFutures.add(uploadAttachment(context, imageFile, "S_PhotoUpload", "S_PhotoContentType"));
+    if (await _fileExists(imageFile)) {
+      uploadFutures.add(uploadAttachment(context, imageFile!, "S_PhotoUpload", "S_PhotoContentType", appointmentId));
     }
 
-    if (docFile != null) {
-      uploadFutures.add(uploadAttachment(context, docFile, "documentUploaded", "document"));
+    if (await _fileExists(docFile)) {
+      final fileKey = _getDocumentUploadKey(selectedIdType);
+      final contentType = _getDocumentContentTypeKey(selectedIdType);
+      uploadFutures.add(uploadAttachment(context, docFile!, fileKey, contentType, appointmentId));
     }
 
-    if (vehicleFile != null) {
-      uploadFutures.add(uploadAttachment(context, vehicleFile, "S_VehicleRegistrationFile", "S_VehicleRegistrationContentType"));
+    if (await _fileExists(vehicleFile)) {
+      uploadFutures.add(uploadAttachment(context, vehicleFile!, "S_VehicleRegistrationFile", "S_VehicleRegistrationContentType", appointmentId));
     }
 
-    // Upload all attachments concurrently
-    if (uploadFutures.isNotEmpty) {
-      final results = await Future.wait(uploadFutures);
+    final results = await Future.wait(uploadFutures);
+    print(results.every((r) => r)
+        ? "✅ Upload success for appointment $appointmentId"
+        : "⚠️ Partial failure for appointment $appointmentId");
+  }
 
-      if (results.every((result) => result)) {
-        print("✅ All attachments uploaded successfully.");
-      } else {
-        print("⚠️ Some attachments failed to upload.");
-      }
-    } else {
-      print("No attachments to upload.");
+  Future<File?> _decodeBase64File(String? base64Str, String fileName) async {
+    if (base64Str == null || base64Str.isEmpty) return null;
+    return await base64Str.toFile(fileName: fileName);
+  }
+
+  Future<bool> _fileExists(File? file) async {
+    return file != null && await file.exists();
+  }
+
+  String _getDocumentUploadKey(String? selectedIdType) {
+    switch (selectedIdType) {
+      case "Passport":
+        return "S_PassportFile";
+      case "Iqama":
+        return "S_IqamaUpload";
+      case "Other":
+        return "S_OthersUpload";
+      default:
+        return "S_EIDFile";
     }
   }
 
+  String _getDocumentContentTypeKey(String? selectedIdType) {
+    switch (selectedIdType) {
+      case "Passport":
+        return "S_PassportContentType";
+      case "Iqama":
+        return "S_IqamaContentType";
+      case "Other":
+        return "S_OthersContentType";
+      default:
+        return "S_EIDContentType";
+    }
+  }
 
-  Future<bool> uploadAttachment(BuildContext context, File imageFile, String fieldName, String fieldType) async {
+  Future<bool> uploadAttachment(
+      BuildContext context,
+      File imageFile,
+      String fieldName,
+      String fieldType,
+      String appointmentId,
+      ) async {
     try {
       final result = await ApplyPassRepository().apiAddAttachment(
         fieldName: fieldName,
         imageFile: imageFile,
         fieldType: fieldType,
         context,
-        id: addAppointmentRequest?.nAppointmentId.toString() ?? "",
-        // fieldName:
+        id: appointmentId,
       );
       return result == true;
     } catch (e) {
-      print("image crash ${e}");
+      print("❌ Upload failed: $e");
       return false;
     }
   }
 
-  submitButtonPressed(BuildContext context) async {
-    getAndUploadImageData(context);
-    // if (addAppointmentRequest != null) {
-    //   apiAddAppointment(context);
-    // }
+  submitButtonPressed(BuildContext context, VoidCallback onNext) async {
+    if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
+      print("No appointments to send.");
+      return;
+    }
+
+    final imageDataList = await _loadUploadDataFromStorage();
+    if (imageDataList.length != addAppointmentRequest!.length) {
+      print("Mismatch between appointments and image data.");
+      return;
+    }
+
+    // Build a list of futures
+    final futures = <Future<void>>[];
+
+    for (int i = 0; i < addAppointmentRequest!.length; i++) {
+      final appointment = addAppointmentRequest![i];
+      final imageData = imageDataList[i];
+
+      log(appointment.toString());
+
+      futures.add(() async {
+        try {
+          final result = await ApplyPassRepository().apiAddAppointment(appointment, context);
+          if (result != null) {
+            await _processUploadEntry(context, imageData, result as AddAppointmentResult);
+          } else {
+            print("❌ Failed to receive result for appointment index $i");
+          }
+        } catch (e) {
+          print("❌ Error processing appointment $i: $e");
+        }
+      }());
+    }
+
+    // Wait for all to complete
+    await Future.wait(futures);
+    onNext();
   }
 
-  Future<void> apiAddAppointment(BuildContext context) async {
+
+
+  Future<void> apiAddAppointments(BuildContext context) async {
+    if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
+      print("No appointments to send.");
+      return;
+    }
+
     try {
-      final result = await ApplyPassRepository().apiAddAppointment(
-        addAppointmentRequest ?? AddAppointmentRequest(),
-        context,
+      // Run all API calls in parallel using Future.wait
+      await Future.wait(
+        addAppointmentRequest!.map((appointment) async {
+          try {
+            final result = await ApplyPassRepository().apiAddAppointment(
+              appointment,
+              context,
+            );
+            print("Appointment added: $result");
+          } catch (e) {
+            print("Failed to add appointment: $e");
+          }
+        }),
       );
+
+      print("All API calls completed.");
     } catch (e) {
-      print("object crash ${e}");
+      print("One or more API calls failed: $e");
     }
   }
-
 
   // Use getters instead of fields
   List<DeclarationSection> get englishDeclarations => healthDeclarationsEn;
@@ -230,9 +346,9 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
-  AddAppointmentRequest? get addAppointmentRequest => _addAppointmentRequest;
+  List<AddAppointmentRequest>? get addAppointmentRequest => _addAppointmentRequest;
 
-  set addAppointmentRequest(AddAppointmentRequest? value) {
+  set addAppointmentRequest(List<AddAppointmentRequest>? value) {
     if (_addAppointmentRequest == value) return;
     _addAppointmentRequest = value;
     notifyListeners();

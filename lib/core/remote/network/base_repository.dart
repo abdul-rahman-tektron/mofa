@@ -56,8 +56,6 @@ class BaseRepository with ChangeNotifier {
   }
 
   String getFormattedToken(String token) {
-    print("token");
-    print(token);
     return 'Bearer $token';
   }
 }

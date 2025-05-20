@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
@@ -24,12 +26,14 @@ import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/encrypt.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/file_uplaod_helper.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/common/toast_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassCategoryNotifier extends BaseChangeNotifier{
@@ -38,18 +42,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   String? _selectedNationality;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
-  int? _selectedLocationId;
   String? _selectedVisitRequest;
   String? _selectedVisitPurpose;
 
   //int
   int? _editDeviceIndex;
+  int? _selectedLocationId;
 
   // bool
   bool _isChecked = false;
-  bool _isCheckedDevice = false;
+  bool _isCheckedDevice = true;
   bool _showDeviceFields = true;
   bool _isEditingDevice = false;
+  bool _photoUploadValidation = false;
+  bool _documentUploadValidation = false;
 
   //File
   File? _uploadedImageFile;
@@ -126,10 +132,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   Future<void> fetchAllDropdownData(BuildContext context) async {
     final user = UserModel.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
 
-    print("reposne");
-    print(applyPassCategory);
-    print(ApplyPassCategory.myself.name);
-
     try {
       await Future.wait([
         if(applyPassCategory == ApplyPassCategory.myself.name) apiGetById(context, user),
@@ -148,8 +150,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   void initialDataForMySelf(BuildContext context) {
-    print("Response data");
-    print(getByIdResult?.user?.dTIqamaExpiry);
     if(applyPassCategory == ApplyPassCategory.myself.name) {
       visitorNameController.text = getByIdResult?.user?.sFullName ?? "";
       companyNameController.text = getByIdResult?.user?.sCompanyName ?? "";
@@ -310,8 +310,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   void addData() async {
-    print("selectedIdType");
-    print(selectedIdType);
     final appointmentData = AddAppointmentRequest(
       fullName: visitorNameController.text,
       sponsor: companyNameController.text,
@@ -336,19 +334,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       purpose: int.parse(selectedVisitPurpose ?? ""),
       remarks: noteController.text,
       sVisitingPersonEmail: mofaHostEmailController.text,
-      haveEid: getByIdResult?.user?.haveEid,
-      havePassport: getByIdResult?.user?.havePassport,
-      haveIqama: getByIdResult?.user?.haveIqama,
-      havePhoto: getByIdResult?.user?.havePhoto,
-      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration,
-      haveOthers: getByIdResult?.user?.haveOthers,
-      lastAppointmentId: getByIdResult?.user?.nAppointmentId,
+      haveEid: getByIdResult?.user?.haveEid ?? 0,
+      havePassport: getByIdResult?.user?.havePassport ?? 0,
+      haveIqama: getByIdResult?.user?.haveIqama ?? 0,
+      havePhoto: getByIdResult?.user?.havePhoto ?? 0,
+      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration ?? 0,
+      haveOthers: getByIdResult?.user?.haveOthers ?? 0,
+      lastAppointmentId: getByIdResult?.user?.nAppointmentId ?? 0,
     );
+
+    log("appointmentData.toString()");
+    log(jsonEncode(appointmentData));
 
     final imageDataFile = {
       "imageUploaded": await uploadedImageFile?.toBase64(),
       "documentUploaded": await uploadedDocumentFile?.toBase64(),
       "vehicleRegistrationUploaded": await uploadedVehicleRegistrationFile?.toBase64(),
+      "selectedIdType": selectedIdType,
     };
 
     final jsonString = jsonEncode(appointmentData.toJson());
@@ -382,9 +384,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     File? image = await FileUploadHelper.pickImage(
       fromCamera: fromCamera,
       cropAfterPick: cropAfterPick,
+
     );
     if (image != null) {
       uploadedImageFile = image;
+      photoUploadValidation = false;
       notifyListeners();
     }
   }
@@ -402,10 +406,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
   Future<void> uploadDocument() async {
     File? doc = await FileUploadHelper.pickDocument(
-      allowedExtensions: ['pdf', 'doc', 'docx'],
+      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
     );
     if (doc != null) {
       uploadedDocumentFile = doc;
+      documentUploadValidation = false;
       notifyListeners();
     }
   }
@@ -495,17 +500,37 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
 
   Future<bool> validation(BuildContext context) async {
-    if (!formKey.currentState!.validate()) return false;
-    print("validation Check");
+    bool formValid = formKey.currentState!.validate();
 
+    final user = getByIdResult?.user;
+
+    photoUploadValidation = !(
+        (user?.havePhoto ?? 0) == 1 ||  // User already has photo on server
+            uploadedImageFile != null        // Or user uploaded locally
+    );
+
+    documentUploadValidation = !(
+        ((user?.haveIqama ?? 0) == 1 ||
+            (user?.havePassport ?? 0) == 1 ||
+            (user?.haveEid ?? 0) == 1 ||
+            (user?.haveOthers ?? 0) == 1) ||
+            uploadedDocumentFile != null
+    );
+
+    if (!formValid) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
+    }
+
+    // If any local validation fails, return false here without calling APIs
+    if (!formValid || photoUploadValidation || documentUploadValidation) {
+      return false;
+    }
+
+    // Local validations passed, now call APIs
     final isEmailValid = await apiValidateEmail(context);
-    print("validation Check email");
-    print(isEmailValid);
     if (!isEmailValid) return false;
 
     final hasNoDuplicates = await apiDuplicateAppointment(context);
-    print("validation Check duplicate");
-    print(hasNoDuplicates);
     if (!hasNoDuplicates) return false;
 
     return true;
@@ -917,4 +942,21 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     _selectedLocationId = value;
     notifyListeners();
   }
+
+  bool get photoUploadValidation => _photoUploadValidation;
+
+  set photoUploadValidation(bool value) {
+    if (_photoUploadValidation == value) return;
+    _photoUploadValidation = value;
+    notifyListeners();
+  }
+
+  bool get documentUploadValidation => _documentUploadValidation;
+
+  set documentUploadValidation(bool value) {
+    if (_documentUploadValidation == value) return;
+    _documentUploadValidation = value;
+    notifyListeners();
+  }
+
 }

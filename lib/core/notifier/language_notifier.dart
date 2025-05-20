@@ -10,7 +10,6 @@ class LanguageNotifier extends ChangeNotifier {
   String get currentLang => _localizationService.currentLanguage;
 
   Future<void> switchLanguage(String langCode) async {
-    print(langCode);
     await _localizationService.load(langCode);
     await SecureStorageHelper.setLanguageCode(langCode);
     notifyListeners();

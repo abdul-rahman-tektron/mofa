@@ -24,8 +24,15 @@ extension BackendDateFormat on String {
 extension FileBase64Extension on File {
   /// Converts this File to a base64-encoded string
   Future<String> toBase64() async {
-    final bytes = await readAsBytes();
-    return base64Encode(bytes);
+    try {
+      if (!await exists()) return "";
+      final bytes = await readAsBytes();
+      if (bytes.isEmpty) return "";
+      return base64Encode(bytes);
+    } catch (e) {
+      // In case of any read/encoding errors, return an empty string
+      return "";
+    }
   }
 }
 
