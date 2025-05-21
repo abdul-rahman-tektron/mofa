@@ -4,7 +4,6 @@ import 'package:toastification/toastification.dart';
 
 class ToastHelper {
   static void showError(String message) {
-    print("Error called");
     _show(
       message,
       type: ToastificationType.error,
@@ -43,8 +42,9 @@ class ToastHelper {
     toastification.show(
       type: type,
       style: ToastificationStyle.flat,
-      title: Text(message),
-      autoCloseDuration: const Duration(milliseconds: 2500),
+      title: Text(message, maxLines: 10, // or null for unlimited
+        overflow: TextOverflow.visible,),
+      autoCloseDuration: const Duration(milliseconds: 3000),
       alignment: Alignment.topRight,
       icon: Icon(icon, color: backgroundColor),
       backgroundColor: backgroundColor,

@@ -29,8 +29,6 @@ class ApplyPassScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        appBar: CommonAppBar(),
-        drawer: const CommonDrawer(),
         body: SingleChildScrollView(
           child: Padding(
             padding: EdgeInsets.only(

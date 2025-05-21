@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
@@ -58,6 +59,9 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   int? _selectedLocationId;
   int? _editDeviceIndex;
   int? _editVisitorsIndex;
+  int? _selectedDeviceType;
+  int? _selectedDevicePurpose;
+
 
   //String
   String? _selectedVisitRequest;
@@ -105,7 +109,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   List<CountryData> _nationalityMenu = [];
   List<DeviceDropdownResult> _deviceTypeDropdownData = [];
   List<DeviceDropdownResult> _devicePurposeDropdownData = [];
-  List<DeviceDetailModel> _addedDevices = [];
+  List<DeviceModel> _addedDevices = [];
   List<VisitorDetailModel> _addedVisitors = [];
   List<Map> _imageList = [];
 
@@ -122,6 +126,17 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
 
   Future<void> initialize(BuildContext context, ApplyPassCategory category) async {
     applyPassCategory = category.name;
+    final DateTime now = DateTime.now();
+
+// Format: 21/05/2025 ،09:57 AM
+    final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+
+// Set visit start
+    visitStartDateController.text = formatter.format(now);
+
+// Add 1 hour and set visit end
+    final DateTime oneHourLater = now.add(Duration(hours: 1));
+    visitEndDateController.text = formatter.format(oneHourLater);
     await fetchAllDropdownData(context);
   }
 
@@ -229,10 +244,10 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
     showDeviceFields = true;
 
     final device = _addedDevices[index];
-    deviceTypeController.text = device.type;
-    deviceModelController.text = device.model;
-    serialNumberController.text = device.serialNumber;
-    devicePurposeController.text = device.purpose;
+    deviceTypeController.text = device.deviceTypeString ?? "";
+    deviceModelController.text = device.deviceModel ?? "";
+    serialNumberController.text = device.serialNumber ?? "";
+    devicePurposeController.text = device.devicePurposeString ?? "";
   }
 
   void cancelDeviceEditing() {
@@ -250,11 +265,13 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
     if(deviceTypeController.text.isEmpty || deviceModelController.text.isEmpty || serialNumberController.text.isEmpty || devicePurposeController.text.isEmpty) {
       return;
     }
-    final newDevice = DeviceDetailModel(
-      type: deviceTypeController.text,
-      model: deviceModelController.text,
+    final newDevice = DeviceModel(
+      deviceTypeString: deviceTypeController.text,
+      deviceType: selectedDeviceType,
+      deviceModel: deviceModelController.text,
       serialNumber: serialNumberController.text,
-      purpose: devicePurposeController.text,
+      devicePurposeString: devicePurposeController.text,
+      devicePurpose: selectedDevicePurpose,
     );
 
     if (isEditingDevice && editDeviceIndex != null) {
@@ -328,12 +345,30 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
     clearVisitorsFields();
   }
 
-  void saveVisitors() async {
+  void saveVisitors(BuildContext context) async {
     if( visitorNameController.text.isEmpty || companyNameController.text.isEmpty || phoneNumberController.text.isEmpty || emailController.text.isEmpty ||
         nationalityController.text.isEmpty || emailController.text.isEmpty || iqamaController.text.isEmpty ||
         expiryDateController.text.isEmpty ) {
           return ;
         }
+
+    final dateFormatWithTime = DateFormat("dd/MM/yyyy '،'hh:mm a");
+    final dateFormatWithoutTime = DateFormat("dd/MM/yyyy");
+
+    try {
+      final expiryDate = dateFormatWithoutTime.parse(expiryDateController.text);
+      final visitEndDate = dateFormatWithTime.parse(visitEndDateController.text);
+
+      // Check if expiry date is before visit end date (date-only vs date-time)
+      if (expiryDate.isBefore(visitEndDate)) {
+        ToastHelper.showError(context.readLang.translate(AppLanguageText.expireVisitError));
+        return;
+      }
+    } catch (e) {
+      debugPrint("Date parsing error: $e");
+      return;
+    }
+
     final newVisitors = VisitorDetailModel(
         visitorName: visitorNameController.text,
         companyName: companyNameController.text,
@@ -387,8 +422,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
     }
 
     // If any local validation fails, return false here without calling APIs
-    if (!formValid || photoUploadValidation || documentUploadValidation) {
-      return false;
+    if (addedVisitors.isEmpty) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.kindlyAddVisitor));
     }
 
     // Local validations passed, now call APIs
@@ -442,26 +477,56 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
 
     List<AddAppointmentRequest> appointmentDataList = [];
 
+
     for (var visitor in addedVisitors) {
+      String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry;
+      String? eidNumber, sIqama, passportNumber, sOthersDoc, sOthersValue;
+
+      final expiryDate = visitor.expiryDate.toDateTime().toString();
+      final idTypeInt = int.tryParse(visitor.idType) ?? 0;
+      final encryptedDocId = encryptAES(visitor.documentId);
+
+      // Set the appropriate expiry and encrypted document ID
+      switch (idTypeInt) {
+        case 24: // National ID
+          eidExpiry = expiryDate;
+          eidNumber = encryptedDocId;
+          break;
+        case 2244: // Iqama
+          iqamaExpiry = expiryDate;
+          sIqama = encryptedDocId;
+          break;
+        case 26: // Passport
+          passportExpiry = expiryDate;
+          passportNumber = encryptedDocId;
+          break;
+        case 2245: // Other
+          othersExpiry = expiryDate;
+          sOthersDoc = encryptedDocId;
+          sOthersValue = encryptedDocId;
+          break;
+      }
+
       final appointmentData = AddAppointmentRequest(
         fullName: visitor.visitorName,
         sponsor: visitor.companyName,
         nationality: visitor.nationality,
         mobileNo: visitor.mobileNumber,
         email: visitor.email,
-        idType: int.tryParse(visitor.idType) ?? 0,
-        sIqama: encryptAES(visitor.idType),
-        passportNumber: encryptAES(visitor.idType), // You can fill this if needed
-        sOthersDoc: encryptAES(visitor.idType),
-        eidNumber: encryptAES(visitor.idType),
-        sOthersValue: encryptAES(visitor.idType),
-        dtEidExpiryDate: visitor.expiryDate.toDateTime().toString(),
-        dtIqamaExpiry: visitor.expiryDate.toDateTime().toString(),
-        dtPassportExpiryDate: visitor.expiryDate.toDateTime().toString(),
-        dtOthersExpiry: visitor.expiryDate.toDateTime().toString(),
-        dtAppointmentStartTime: visitStartDateController.text.toDateTime(), // Replace with actual start date if needed
-        dtAppointmentEndTime: visitEndDateController.text.toDateTime(), // Replace with actual end date if needed
+        idType: idTypeInt,
+        sIqama: sIqama,
+        passportNumber: passportNumber,
+        sOthersDoc: sOthersDoc,
+        eidNumber: eidNumber,
+        sOthersValue: sOthersValue,
+        dtEidExpiryDate: eidExpiry,
+        dtIqamaExpiry: iqamaExpiry,
+        dtPassportExpiryDate: passportExpiry,
+        dtOthersExpiry: othersExpiry,
+        dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
+        dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
         sVehicleNo: visitor.vehicleNumber,
+        devices: addedDevices,
         nLocationId: selectedLocationId,
         nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
         purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
@@ -513,13 +578,17 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
 
   Future<void> uploadDocument() async {
     File? doc = await FileUploadHelper.pickDocument(
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
     if (doc != null) {
       uploadedDocumentFile = doc;
       documentUploadValidation = false;
       notifyListeners();
     }
+  }
+
+  void notifyDataListeners() {
+    notifyListeners();
   }
 
   //Getter Setter
@@ -734,9 +803,9 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
     notifyListeners();
   }
 
-  List<DeviceDetailModel> get addedDevices => _addedDevices;
+  List<DeviceModel> get addedDevices => _addedDevices;
 
-  set addedDevices(List<DeviceDetailModel> value) {
+  set addedDevices(List<DeviceModel> value) {
     if (_addedDevices == value) return;
     _addedDevices = value;
     notifyListeners();
@@ -795,6 +864,22 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   set editVisitorsIndex(int? value) {
     if (_editVisitorsIndex == value) return;
     _editVisitorsIndex = value;
+    notifyListeners();
+  }
+
+  int? get selectedDeviceType => _selectedDeviceType;
+
+  set selectedDeviceType(int? value) {
+    if (_selectedDeviceType == value) return;
+    _selectedDeviceType = value;
+    notifyListeners();
+  }
+
+  int? get selectedDevicePurpose => _selectedDevicePurpose;
+
+  set selectedDevicePurpose(int? value) {
+    if (_selectedDevicePurpose == value) return;
+    _selectedDevicePurpose = value;
     notifyListeners();
   }
 

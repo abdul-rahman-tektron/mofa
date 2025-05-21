@@ -26,9 +26,6 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       centerTitle: true,
       title: Image.asset(AppImages.logo, height: 50,),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 24.0),
-      actions: [
-        LanguageButton(),
-      ],
     );
   }
 

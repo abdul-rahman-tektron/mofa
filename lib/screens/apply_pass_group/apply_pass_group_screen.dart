@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
@@ -386,6 +387,20 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.visitStartDate),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
+      startDate: DateTime.now(),
+      onChanged: (value) {
+        try {
+          final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+          final DateTime selectedStart = formatter.parse(value);
+          final DateTime oneHourLater = selectedStart.add(Duration(hours: 1));
+          applyPassGroupNotifier.visitEndDateController.text = formatter.format(oneHourLater);
+          applyPassGroupNotifier.notifyDataListeners();
+        } catch (e) {
+          // Handle parse error if needed
+          debugPrint("Invalid date format: $e");
+        }
+      },
+      needTime: true,
       validator: CommonValidation().validateVisitStartDate,
     );
   }
@@ -394,16 +409,22 @@ class ApplyPassGroupScreen extends StatelessWidget {
     BuildContext context,
     ApplyPassGroupNotifier applyPassGroupNotifier,
   ) {
+    DateTime? parsedStartDate;
+    if (applyPassGroupNotifier.visitStartDateController.text.isNotEmpty) {
+      try {
+        parsedStartDate = DateFormat("dd/MM/yyyy ،hh:mm a").parse(applyPassGroupNotifier.visitStartDateController.text);
+      } catch (e) {
+        parsedStartDate = null;
+        debugPrint("Failed to parse start date: $e");
+      }
+    }
     return CustomTextField(
       controller: applyPassGroupNotifier.visitEndDateController,
       fieldName: context.watchLang.translate(AppLanguageText.visitEndDate),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
-      startDate:
-          applyPassGroupNotifier.visitStartDateController.text.isEmpty
-              ? null
-              : applyPassGroupNotifier.visitStartDateController.text
-                  .toDateTime(),
+      needTime: true,
+      startDate: parsedStartDate,
       validator: CommonValidation().validateVisitEndDate,
     );
   }
@@ -501,10 +522,10 @@ class ApplyPassGroupScreen extends StatelessWidget {
 
                         return DataRow(
                           cells: [
-                            DataCell(Text(device.type)),
-                            DataCell(Text(device.model)),
-                            DataCell(Text(device.serialNumber)),
-                            DataCell(Text(device.purpose)),
+                            DataCell(Text(device.deviceTypeString ?? "")),
+                            DataCell(Text(device.deviceModel ?? "")),
+                            DataCell(Text(device.serialNumber ?? "")),
+                            DataCell(Text(device.devicePurposeString ?? "")),
                             DataCell(
                               Row(
                                 children: [
@@ -611,7 +632,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
         Expanded(
           child: CustomButton(
             text: context.watchLang.translate(AppLanguageText.save),
-            onPressed: () => applyPassGroupNotifier.saveVisitors(),
+            onPressed: () => applyPassGroupNotifier.saveVisitors(context),
           ),
         ),
         SizedBox(width: 10),
@@ -667,8 +688,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
-        // applyPassGroupNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassGroupNotifier.selectedDeviceType = menu?.nDetailedCode ?? 0;
       },
       validator: CommonValidation().validateDeviceType,
     );
@@ -687,8 +707,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
-        // applyPassGroupNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassGroupNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
       },
       validator: CommonValidation().validateDevicePurpose,
     );
@@ -1251,6 +1270,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
               ),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
+      startDate: DateTime.now(),
       validator:
           applyPassGroupNotifier.selectedIdType == "National ID"
               ? CommonValidation().validateNationalIdExpiryDate

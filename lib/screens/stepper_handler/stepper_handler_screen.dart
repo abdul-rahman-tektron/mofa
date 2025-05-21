@@ -22,8 +22,6 @@ class StepperHandlerScreen extends StatelessWidget {
         builder: (context, stepperHandlerNotifier, child) {
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
-            appBar: CommonAppBar(),
-            drawer: const CommonDrawer(),
             body: SingleChildScrollView(
               child: Column(
                 children: [

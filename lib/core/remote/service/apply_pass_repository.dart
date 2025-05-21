@@ -242,7 +242,6 @@ class ApplyPassRepository extends BaseRepository {
       }
 
     } else {
-      // ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return false;
     }
   }

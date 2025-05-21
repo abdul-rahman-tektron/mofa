@@ -30,6 +30,8 @@ class CustomTextField extends StatefulWidget {
   final String? toolTipContent;
   final DateTime? startDate;
   final DateTime? endDate;
+  final DateTime? initialDate;
+  final bool needTime;
 
   const CustomTextField({
     super.key,
@@ -54,6 +56,8 @@ class CustomTextField extends StatefulWidget {
     this.toolTipContent,
     this.startDate,
     this.endDate,
+    this.initialDate,
+    this.needTime = false,
   });
 
   @override
@@ -73,28 +77,37 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   // Format date to dd/mm/yyyy
-  String _formatDate(DateTime? date) {
+  String _formatDateTime(DateTime? date) {
     if (date == null) return '';
-    return DateFormat('dd/MM/yyyy').format(date);
+    if (widget.needTime) {
+      return DateFormat('dd/MM/yyyy ،hh:mm a').format(date);
+    } else {
+      return DateFormat('dd/MM/yyyy').format(date);
+    }
   }
 
   // Display date picker and update text field with selected date
   Future<void> _selectDate(BuildContext context) async {
-    final DateTime initialDate = _selectedDate ?? widget.startDate ?? DateTime.now();
+    final DateTime initialDate = _selectedDate ?? widget.initialDate ?? DateTime.now();
 
     final DateTime? picked = await showDatePicker(
       context: context,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
+            datePickerTheme: DatePickerThemeData(
+              headerBackgroundColor: AppColors.buttonBgColor,
+              headerForegroundColor: AppColors.whiteColor,
+              // locale: Locale(context.readLang.currentLang == 'ar' ? 'ar' : 'en'),
+            ),
             colorScheme: ColorScheme.light(
-              primary: AppColors.buttonBgColor, // header background color
+              primary: AppColors.buttonBgColor,
               onPrimary: Colors.white,
               onSurface: Colors.black,
             ),
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.buttonBgColor, // button text color
+                foregroundColor: AppColors.buttonBgColor,
               ),
             ),
           ),
@@ -107,10 +120,80 @@ class _CustomTextFieldState extends State<CustomTextField> {
       firstDate: widget.startDate ?? DateTime(1900),
       lastDate: widget.endDate ?? DateTime(2100),
     );
-    if (picked != null && picked != _selectedDate) {
+
+    if (picked != null) {
+      DateTime finalDateTime = picked;
+
+      // If time is needed, show time picker after date is picked
+      if (widget.needTime) {
+        final TimeOfDay? time = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.fromDateTime(
+            _selectedDate ??
+                widget.startDate?.add(Duration(hours: 1)) ??
+                DateTime.now(),
+          ),
+          builder: (context, child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                textSelectionTheme: TextSelectionThemeData(
+                  cursorColor: Colors.white,
+                  selectionHandleColor: Colors.grey,
+                ),
+                timePickerTheme: TimePickerThemeData(
+                    backgroundColor: Colors.white,
+                    hourMinuteTextColor: AppColors.whiteColor,
+                    entryModeIconColor: AppColors.buttonBgColor,
+                    dayPeriodColor: AppColors.buttonBgColor.withOpacity(0.3),
+                    dayPeriodShape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      side: const BorderSide(
+                        color: AppColors.buttonBgColor,
+                        width: 1,
+                      ),
+                    )
+                ),
+                colorScheme: ColorScheme.light(
+                  primary: AppColors.buttonBgColor,
+                  // clock dial and header
+                  onPrimary: Colors.white,
+                  // text color on header
+                  surface: AppColors.buttonBgColor.withOpacity(0.1),
+                  // dialog background
+                  onSurface: Colors.black, // default text color
+
+                ),
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.buttonBgColor,
+                  ),
+                ),
+              ),
+              child: child!,
+            );
+          },
+        );
+
+        if (time != null) {
+          finalDateTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            time.hour,
+            time.minute,
+          );
+        }
+      }
+
+      if (widget.startDate != null && finalDateTime.isBefore(widget.startDate!)) {
+        finalDateTime = widget.startDate!.add(const Duration(hours: 1));
+      }
+
       setState(() {
-        _selectedDate = picked;
-        widget.controller.text = _formatDate(_selectedDate);
+        _selectedDate = finalDateTime;
+        final formattedDate = _formatDateTime(_selectedDate);
+        widget.controller.text = formattedDate;
+        widget.onChanged?.call(formattedDate);
       });
     }
   }

@@ -13,7 +13,7 @@ class AddAppointmentRequest {
   int? nVisitType;
   int? nVisaType;
   String? sVehicleNo;
-  List<Device>? devices;
+  List<DeviceModel>? devices;
   int? nLocationId;
   int? nDepartmentId;
   int? nSectionId;
@@ -178,7 +178,11 @@ class AddAppointmentRequest {
     nVisitType: json["N_VisitType"] ?? 0,
     nVisaType: json["N_VisaType"] ?? 0,
     sVehicleNo: json["S_VehicleNo"] ?? "",
-    devices: json["Devices"] == null ? null : List<Device>.from(json["Devices"]!.map((x) => Device.fromJson(x))),
+    devices: json["Devices"] == null
+        ? []
+        : List<DeviceModel>.from(
+      json["Devices"].where((x) => x != null).map((x) => DeviceModel.fromJson(x)),
+    ),
     nLocationId: json["N_LocationID"] ?? 0,
     nDepartmentId: json["N_DepartmentID"] ?? 0,
     nSectionId: json["N_SectionID"] ?? 0,
@@ -261,7 +265,9 @@ class AddAppointmentRequest {
     "N_VisitType": nVisitType,
     "N_VisaType": nVisaType,
     "S_VehicleNo": sVehicleNo,
-    "Devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
+    "Devices": devices == null
+        ? []
+        : List<dynamic>.from(devices!.map((x) => x.toJson())),
     "N_LocationID": nLocationId,
     "N_DepartmentID": nDepartmentId,
     "N_SectionID": nSectionId,
@@ -340,33 +346,39 @@ class AddAppointmentRequest {
   };
 }
 
-class Device {
+class DeviceModel {
   int? appointmentDeviceId;
   int? deviceType;
+  String? deviceTypeString;
   String? deviceTypeOthersValue;
   String? deviceModel;
   String? serialNumber;
   int? devicePurpose;
+  String? devicePurposeString;
   String? devicePurposeOthersValue;
   int? approvalStatus;
 
-  Device({
+  DeviceModel({
     this.appointmentDeviceId = 0,
      this.deviceType,
     this.deviceTypeOthersValue = "",
     this.deviceModel = "",
     this.serialNumber = "",
      this.devicePurpose,
+    this.devicePurposeString = "",
+    this.deviceTypeString = "",
     this.devicePurposeOthersValue = "",
     this.approvalStatus = 50, // STATUS_IDS.PENDING from reference
   });
 
-  factory Device.fromJson(Map<String, dynamic> json) => Device(
+  factory DeviceModel.fromJson(Map<String, dynamic> json) => DeviceModel(
     appointmentDeviceId: json["appointmentDeviceId"] ?? 0,
     deviceType: json["DeviceType"] ?? 0,
     deviceTypeOthersValue: json["DeviceTypeOthersValue"] ?? "",
     deviceModel: json["DeviceModel"] ?? "",
     serialNumber: json["SerialNumber"] ?? "",
+    devicePurposeString: json["DevicePurposeString"] ?? "",
+    deviceTypeString: json["DeviceTypeString"] ?? "",
     devicePurpose: json["DevicePurpose"] ?? 0,
     devicePurposeOthersValue: json["DevicePurposeOthersValue"] ?? "",
     approvalStatus: json["ApprovalStatus"] ?? 50,
@@ -378,6 +390,8 @@ class Device {
     "DeviceTypeOthersValue": deviceTypeOthersValue,
     "DeviceModel": deviceModel,
     "SerialNumber": serialNumber,
+    "DevicePurposeString": devicePurposeString,
+    "DeviceTypeString": deviceTypeString,
     "DevicePurpose": devicePurpose,
     "DevicePurposeOthersValue": devicePurposeOthersValue,
     "ApprovalStatus": approvalStatus,

@@ -24,7 +24,6 @@ import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.d
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
-import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
@@ -34,6 +33,7 @@ import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/file_uplaod_helper.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:mofa/utils/common/toast_helper.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassCategoryNotifier extends BaseChangeNotifier{
@@ -48,6 +48,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   //int
   int? _editDeviceIndex;
   int? _selectedLocationId;
+  int? _selectedDeviceType;
+  int? _selectedDevicePurpose;
 
   // bool
   bool _isChecked = false;
@@ -73,7 +75,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   List<DeviceDropdownResult> _deviceTypeDropdownData = [];
   List<DeviceDropdownResult> _devicePurposeDropdownData = [];
   List<VisitPurposeDropdownResult> _visitPurposeDropdownData = [];
-  List<DeviceDetailModel> _addedDevices = [];
+  List<DeviceModel> _addedDevices = [];
 
   final List<DocumentIdModel> idTypeMenu = [
     DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
@@ -125,6 +127,17 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
   Future<void> initialize(BuildContext context, ApplyPassCategory category) async {
     applyPassCategory = category.name;
+    final DateTime now = DateTime.now();
+
+// Format: 21/05/2025 ،09:57 AM
+    final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+
+// Set visit start
+    visitStartDateController.text = formatter.format(now);
+
+// Add 1 hour and set visit end
+    final DateTime oneHourLater = now.add(Duration(hours: 1));
+    visitEndDateController.text = formatter.format(oneHourLater);
     await fetchAllDropdownData(context);
     initialDataForMySelf(context);
   }
@@ -210,12 +223,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       } else if (type == 4) {
         uploadedVehicleImageBytes =
             base64Decode((value as GetFileResult).photoFile ?? "");
+        Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: base64Decode((value).photoFile ?? ""));
       } else {
         uploadedDocumentBytes =
             base64Decode((value as GetFileResult).photoFile ?? "");
       }
     },);
   }
+
 
   //GetById Api Call
   Future apiGetById(BuildContext context, UserModel user) async {
@@ -310,6 +325,28 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   void addData() async {
+    String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry;
+
+    final expiryDate = expiryDateController.text.toDateTime().toString();
+
+    switch (selectedIdType) {
+      case 'National ID':
+        eidExpiry = expiryDate;
+        break;
+      case 'Iqama':
+        iqamaExpiry = expiryDate;
+        break;
+      case 'Passport':
+        passportExpiry = expiryDate;
+        break;
+      case 'Other':
+        othersExpiry = expiryDate;
+        break;
+    }
+
+    print("addedDevices");
+    print(addedDevices);
+
     final appointmentData = AddAppointmentRequest(
       fullName: visitorNameController.text,
       sponsor: companyNameController.text,
@@ -322,13 +359,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       sOthersDoc: encryptAES(documentNameController.text),
       eidNumber: encryptAES(nationalityIdController.text),
       sOthersValue: encryptAES(documentNumberController.text),
-      dtEidExpiryDate: expiryDateController.text.toDateTime().toString(),
-      dtIqamaExpiry: expiryDateController.text.toDateTime().toString(),
-      dtPassportExpiryDate: expiryDateController.text.toDateTime().toString(),
-      dtOthersExpiry: expiryDateController.text.toDateTime().toString(),
+      dtEidExpiryDate: eidExpiry,
+      dtIqamaExpiry: iqamaExpiry,
+      dtPassportExpiryDate: passportExpiry,
+      dtOthersExpiry: othersExpiry,
       dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
       dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
       sVehicleNo: vehicleNumberController.text,
+      devices: addedDevices,
       nLocationId: selectedLocationId,
       nVisitType: int.parse(selectedVisitRequest ?? ""),
       purpose: int.parse(selectedVisitPurpose ?? ""),
@@ -338,7 +376,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       havePassport: getByIdResult?.user?.havePassport ?? 0,
       haveIqama: getByIdResult?.user?.haveIqama ?? 0,
       havePhoto: getByIdResult?.user?.havePhoto ?? 0,
-      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration ?? 0,
+      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration ??
+          0,
       haveOthers: getByIdResult?.user?.haveOthers ?? 0,
       lastAppointmentId: getByIdResult?.user?.nAppointmentId ?? 0,
     );
@@ -406,7 +445,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 
   Future<void> uploadDocument() async {
     File? doc = await FileUploadHelper.pickDocument(
-      allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'],
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
     if (doc != null) {
       uploadedDocumentFile = doc;
@@ -449,10 +488,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     showDeviceFields = true;
 
     final device = _addedDevices[index];
-    deviceTypeController.text = device.type;
-    deviceModelController.text = device.model;
-    serialNumberController.text = device.serialNumber;
-    devicePurposeController.text = device.purpose;
+    deviceTypeController.text = device.deviceTypeString ?? "";
+    deviceModelController.text = device.deviceModel ?? "";
+    serialNumberController.text = device.serialNumber ?? "";
+    devicePurposeController.text = device.devicePurposeString ?? "";
   }
 
   void cancelEditing() {
@@ -467,14 +506,19 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   void saveDevice() {
-    if(deviceTypeController.text.isEmpty || deviceModelController.text.isEmpty || serialNumberController.text.isEmpty || devicePurposeController.text.isEmpty) {
+    if (deviceTypeController.text.isEmpty ||
+        deviceModelController.text.isEmpty ||
+        serialNumberController.text.isEmpty ||
+        devicePurposeController.text.isEmpty) {
       return;
     }
-    final newDevice = DeviceDetailModel(
-      type: deviceTypeController.text,
-      model: deviceModelController.text,
+    final newDevice = DeviceModel(
+      deviceTypeString: deviceTypeController.text,
+      deviceType: selectedDeviceType,
+      deviceModel: deviceModelController.text,
       serialNumber: serialNumberController.text,
-      purpose: devicePurposeController.text,
+      devicePurposeString: devicePurposeController.text,
+      devicePurpose: selectedDevicePurpose,
     );
 
     if (isEditingDevice && editDeviceIndex != null) {
@@ -521,7 +565,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
     }
 
-    // If any local validation fails, return false here without calling APIs
     if (!formValid || photoUploadValidation || documentUploadValidation) {
       return false;
     }
@@ -530,10 +573,31 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     final isEmailValid = await apiValidateEmail(context);
     if (!isEmailValid) return false;
 
+    final dateFormatWithTime = DateFormat("dd/MM/yyyy '،'hh:mm a");
+    final dateFormatWithoutTime = DateFormat("dd/MM/yyyy");
+
+    try {
+      final expiryDate = dateFormatWithoutTime.parse(expiryDateController.text);
+      final visitEndDate = dateFormatWithTime.parse(visitEndDateController.text);
+
+      // Check if expiry date is before visit end date (date-only vs date-time)
+      if (expiryDate.isBefore(visitEndDate)) {
+        ToastHelper.showError(context.readLang.translate(AppLanguageText.expireVisitError));
+        return false;
+      }
+    } catch (e) {
+      debugPrint("Date parsing error: $e");
+      return false;
+    }
+
     final hasNoDuplicates = await apiDuplicateAppointment(context);
     if (!hasNoDuplicates) return false;
 
     return true;
+  }
+
+  void notifyDataListeners() {
+    notifyListeners();
   }
 
 
@@ -863,9 +927,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
-  List<DeviceDetailModel> get addedDevices => _addedDevices;
+  List<DeviceModel> get addedDevices => _addedDevices;
 
-  set addedDevices(List<DeviceDetailModel> value) {
+  set addedDevices(List<DeviceModel> value) {
     if (_addedDevices == value) return;
     _addedDevices = value;
     notifyListeners();
@@ -940,6 +1004,22 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set selectedLocationId(int? value) {
     if (_selectedLocationId == value) return;
     _selectedLocationId = value;
+    notifyListeners();
+  }
+
+  int? get selectedDeviceType => _selectedDeviceType;
+
+  set selectedDeviceType(int? value) {
+    if (_selectedDeviceType == value) return;
+    _selectedDeviceType = value;
+    notifyListeners();
+  }
+
+  int? get selectedDevicePurpose => _selectedDevicePurpose;
+
+  set selectedDevicePurpose(int? value) {
+    if (_selectedDevicePurpose == value) return;
+    _selectedDevicePurpose = value;
     notifyListeners();
   }
 

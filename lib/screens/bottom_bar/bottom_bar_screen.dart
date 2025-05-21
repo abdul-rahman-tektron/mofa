@@ -5,6 +5,8 @@ import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/bottom_bar/bottom_bar_notifier.dart';
+import 'package:mofa/utils/common/widgets/common_app_bar.dart';
+import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:provider/provider.dart';
 
 class BottomBarScreen extends StatelessWidget {
@@ -24,6 +26,9 @@ class BottomBarScreen extends StatelessWidget {
 
   Widget buildBody(BuildContext context, BottomBarNotifier bottomBarNotifier) {
     return Scaffold(
+      backgroundColor: AppColors.backgroundColor,
+      appBar: CommonAppBar(),
+      drawer: CommonDrawer(),
       body: bottomBarNotifier.currentScreen,
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: AppColors.whiteColor,
@@ -35,16 +40,16 @@ class BottomBarScreen extends StatelessWidget {
         unselectedItemColor: AppColors.buttonBgColor.withOpacity(0.5),
         items: [
           BottomNavigationBarItem(
-            icon: Icon(LucideIcons.creditCard),
-            label: context.watchLang.translate(AppLanguageText.applyPass,),
+            icon: Icon(LucideIcons.layoutDashboard),
+            label: 'Dashboard',
           ),
           BottomNavigationBarItem(
             icon: Icon(LucideIcons.search),
             label: 'Search Pass',
           ),
           BottomNavigationBarItem(
-            icon: Icon(LucideIcons.layoutDashboard),
-            label: 'Dashboard',
+            icon: Icon(LucideIcons.creditCard),
+            label: context.watchLang.translate(AppLanguageText.applyPass,),
           ),
         ],
       ),

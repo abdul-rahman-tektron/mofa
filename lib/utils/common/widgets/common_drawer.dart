@@ -10,6 +10,7 @@ import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:provider/provider.dart';
 
 class CommonDrawer extends StatelessWidget {
@@ -47,16 +48,14 @@ class CommonDrawer extends StatelessWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _buildDrawerItem(context, LucideIcons.creditCard, context.watchLang.translate(AppLanguageText.applyPass), 0),
-                _buildDrawerItem(context, LucideIcons.search, context.watchLang.translate(AppLanguageText.searchPass), 1),
-                _buildDrawerItem(context, LucideIcons.user, context.watchLang.translate(AppLanguageText.editProfile), 2),
-                _buildDrawerItem(context, LucideIcons.lock, context.watchLang.translate(AppLanguageText.changePassword), 3),
-                _buildDrawerItem(context, LucideIcons.trash, context.watchLang.translate(AppLanguageText.deleteAccount), 4),
-                _buildDrawerItem(context, LucideIcons.layoutDashboard, "Dashboard", 5),
+                _buildDrawerItem(context, LucideIcons.user, context.watchLang.translate(AppLanguageText.editProfile), 0),
+                _buildDrawerItem(context, LucideIcons.lock, context.watchLang.translate(AppLanguageText.changePassword), 1),
+                _buildDrawerItem(context, LucideIcons.trash, context.watchLang.translate(AppLanguageText.deleteAccount), 2),
+                LanguageChange(),
               ],
             ),
           ),
-          _buildDrawerItem(context, LucideIcons.logOut, 'Logout', 6),
+          _buildDrawerItem(context, LucideIcons.logOut, 'Logout', 4),
           15.verticalSpace,
         ],
       ),
@@ -65,31 +64,25 @@ class CommonDrawer extends StatelessWidget {
 
   Widget _buildDrawerItem(BuildContext context, IconData icon, String title, int value) {
     return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
+      leading: Icon(icon, size: 25,),
+      title: Text(title, style: AppFonts.textMedium16,),
       onTap: () {
         Navigator.pop(context); // Close the drawer
         switch (value) {
           case 0:
-          // Navigate to Apply Pass
-            break;
-          case 1:
-          // Navigate to Search Pass
-            break;
-          case 2:
           // Navigate to Edit Profile
             break;
-          case 3:
+          case 1:
           // Navigate to Change Password
             break;
+          case 2:
+          // Navigate to Delete Account
+            break;
+          case 3:
+          // Language Change
+            break;
           case 4:
-          // Delete Account
-            break;
-          case 5:
-          // Navigate to Dashboard
-            break;
-          case 6:
-            logoutFunctionality(context);
+          // Logout
             break;
         }
       },

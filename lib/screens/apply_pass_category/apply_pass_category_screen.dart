@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
@@ -308,6 +309,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           : context.watchLang.translate(AppLanguageText.nationalIDExpiryDate),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
+      startDate: DateTime.now(),
+      initialDate: applyPassCategoryNotifier.expiryDateController.text
+          .isNotEmpty ? applyPassCategoryNotifier.expiryDateController.text
+          .toDateTime() : DateTime.now(),
       validator: applyPassCategoryNotifier.selectedIdType == "National ID"
           ? CommonValidation().validateNationalIdExpiryDate
           : applyPassCategoryNotifier.selectedIdType == "Iqama"
@@ -541,20 +546,42 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       controller: applyPassCategoryNotifier.visitStartDateController,
       fieldName: context.watchLang.translate(AppLanguageText.visitStartDate),
       isSmallFieldFont: true,
+      startDate: DateTime.now(),
       keyboardType: TextInputType.datetime,
+      onChanged: (value) {
+        try {
+          final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+          final DateTime selectedStart = formatter.parse(value);
+          final DateTime oneHourLater = selectedStart.add(Duration(hours: 1));
+          applyPassCategoryNotifier.visitEndDateController.text = formatter.format(oneHourLater);
+          applyPassCategoryNotifier.notifyDataListeners();
+        } catch (e) {
+          // Handle parse error if needed
+          debugPrint("Invalid date format: $e");
+        }
+      },
+      needTime: true,
       validator: CommonValidation().validateVisitStartDate,
     );
   }
 
   Widget visitEndDateTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    DateTime? parsedStartDate;
+    if (applyPassCategoryNotifier.visitStartDateController.text.isNotEmpty) {
+      try {
+        parsedStartDate = DateFormat("dd/MM/yyyy ،hh:mm a").parse(applyPassCategoryNotifier.visitStartDateController.text);
+      } catch (e) {
+        parsedStartDate = null;
+        debugPrint("Failed to parse start date: $e");
+      }
+    }
     return CustomTextField(
       controller: applyPassCategoryNotifier.visitEndDateController,
       fieldName: context.watchLang.translate(AppLanguageText.visitEndDate),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
-      startDate: applyPassCategoryNotifier.visitStartDateController.text.isEmpty
-          ? null
-          : applyPassCategoryNotifier.visitStartDateController.text.toDateTime(),
+      startDate: parsedStartDate,
+      needTime: true,
       validator: CommonValidation().validateVisitEndDate,
       isEditable: applyPassCategoryNotifier.visitStartDateController.text.isEmpty,
     );
@@ -652,10 +679,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
 
             return DataRow(
               cells: [
-                DataCell(Text(device.type)),
-                DataCell(Text(device.model)),
-                DataCell(Text(device.serialNumber)),
-                DataCell(Text(device.purpose)),
+                DataCell(Text(device.deviceTypeString ?? "")),
+                DataCell(Text(device.deviceModel ?? "")),
+                DataCell(Text(device.serialNumber ?? "")),
+                DataCell(Text(device.devicePurposeString ?? "")),
                 DataCell(
                   Row(
                     children: [
@@ -755,8 +782,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
-        // applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassCategoryNotifier.selectedDeviceType = menu?.nDetailedCode ?? 0;
       },
       validator: CommonValidation().validateDeviceType,
     );
@@ -772,8 +798,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
-        // applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassCategoryNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
       },
       validator: CommonValidation().validateDevicePurpose,
     );
@@ -932,7 +957,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
               );
             },
             child: Text(
-              context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14,),)
+              context.watchLang.translate(AppLanguageText.viewAttachment),
+              style: AppFonts.textRegularAttachment14,),)
       ],
     );
   }
@@ -1016,22 +1042,22 @@ class ApplyPassCategoryScreen extends StatelessWidget {
               if(applyPassCategoryNotifier.selectedIdType == "Iqama") type = 5;
               if(applyPassCategoryNotifier.selectedIdType == "Other") type = 6;
               await applyPassCategoryNotifier.apiGetFile(context, type: type);
-              showDialog(
-                context: context,
-                builder: (_) =>
-                    AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 5.w, vertical: 5.h),
-                      content: ClipRRect(
-                        borderRadius: BorderRadius.circular(6.0),
-                        child: Image.memory(
-                            applyPassCategoryNotifier.uploadedDocumentBytes!),
-                      ),
-                    ),
-              );
+              // showDialog(
+              //   context: context,
+              //   builder: (_) =>
+              //       AlertDialog(
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(10.0),
+              //         ),
+              //         contentPadding: EdgeInsets.symmetric(
+              //             horizontal: 5.w, vertical: 5.h),
+              //         content: ClipRRect(
+              //           borderRadius: BorderRadius.circular(6.0),
+              //           child: Image.memory(
+              //               applyPassCategoryNotifier.uploadedDocumentBytes!),
+              //         ),
+              //       ),
+              // );
             },
             child: Text(
               context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14,),)
@@ -1133,22 +1159,22 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           GestureDetector(
             onTap: () async {
               await applyPassCategoryNotifier.apiGetFile(context, type: 4);
-              showDialog(
-                context: context,
-                builder: (_) =>
-                    AlertDialog(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                          horizontal: 5.w, vertical: 5.h),
-                      content: ClipRRect(
-                        borderRadius: BorderRadius.circular(6.0),
-                        child: Image.memory(
-                            applyPassCategoryNotifier.uploadedVehicleImageBytes!),
-                      ),
-                    ),
-              );
+              // showDialog(
+              //   context: context,
+              //   builder: (_) =>
+              //       AlertDialog(
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(10.0),
+              //         ),
+              //         contentPadding: EdgeInsets.symmetric(
+              //             horizontal: 5.w, vertical: 5.h),
+              //         content: ClipRRect(
+              //           borderRadius: BorderRadius.circular(6.0),
+              //           child: Image.memory(
+              //               applyPassCategoryNotifier.uploadedVehicleImageBytes!),
+              //         ),
+              //       ),
+              // );
             },
             child: Text(
               context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14,),)

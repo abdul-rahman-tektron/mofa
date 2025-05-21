@@ -15,9 +15,36 @@ extension BackendDateFormat on String {
     }
   }
 
-  dynamic toDateTime({String format = 'dd/MM/yyyy'}) {
-    if (trim().isEmpty) return "";
-    return DateFormat(format).parse(this);
+  DateTime? toDateTime() {
+    final trimmed = trim();
+    if (trimmed.isEmpty) return null;
+
+    try {
+      // Try with Arabic comma format
+      return DateFormat("dd/MM/yyyy ،hh:mm a").parse(trimmed);
+    } catch (_) {
+      try {
+        // Try plain date format
+        return DateFormat("dd/MM/yyyy").parse(trimmed);
+      } catch (_) {
+        return null;
+      }
+    }
+  }
+
+  String formatDateTime() {
+    try {
+      // Step 1: Parse using the correct format
+      final inputFormat = DateFormat('M/d/yyyy h:mm:ss a');
+      final dateTime = inputFormat.parse(this);
+
+      // Step 2: Format to desired output
+      final outputFormat = DateFormat('dd/MM/yyyy h:mm a');
+      return outputFormat.format(dateTime);
+    } catch (e) {
+      print('Date parsing error: $e');
+      return "";
+    }
   }
 }
 
