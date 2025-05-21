@@ -53,6 +53,7 @@ dependencies:
   http_parser: ^4.1.2
   path_provider: ^2.1.5
   path: ^1.9.1
+  pdfx: ^2.9.0
 
 dev_dependencies:
   flutter_test:
