@@ -23,4 +23,6 @@ class AppUrl {
 
   //Search Pass
   static final pathGetAllDetail = "/ExternalAppointment/GetAll"; //POST
+  static final pathApprovalTypesDropdown = "/ApprovalTypes/GetAll"; //POST
+  static final pathCancelAppointment = "/ExternalAppointment/Cancel"; //POST
 }

@@ -15,6 +15,7 @@ class CustomTextField extends StatefulWidget {
   final bool isPassword;
   final bool skipValidation;
   final bool? isMaxLines;
+  final bool? titleVisibility;
   final TextStyle? hintStyle;
   final TextInputType? keyboardType;
   final void Function(String)? onChanged;
@@ -44,6 +45,7 @@ class CustomTextField extends StatefulWidget {
     this.hintStyle,
     this.onTapSuffix,
     this.validator,
+    this.titleVisibility = true,
     this.isMaxLines,
     this.skipValidation = false,
     this.borderColor,
@@ -203,7 +205,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        if(widget.titleVisibility ?? true) Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
@@ -255,7 +257,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             )
           ],
         ),
-        SizedBox(height: 5,),
+        if(widget.titleVisibility ?? true) SizedBox(height: 5,),
         TextFormField(
           controller: widget.controller,
           textInputAction: widget.textInputAction,

@@ -153,15 +153,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         color: AppColors.whiteColor,
         borderRadius: BorderRadius.circular(8),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5.0),
-            child: GestureDetector(
-              onTap: () {
-                applyPassCategoryNotifier.userVerifyChecked(context, !applyPassCategoryNotifier.isChecked);
-              },
+      child: GestureDetector(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 5.0),
               child: Container(
                 width: 20,
                 height: 20,
@@ -185,16 +182,16 @@ class ApplyPassCategoryScreen extends StatelessWidget {
                     : null,
               ),
             ),
-          ),
-          10.horizontalSpace,
-          Expanded(
-            child: Text(
-              context.watchLang.translate(
-                  AppLanguageText.formSubmissionCertification),
-              style: AppFonts.textRegular14,
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                context.watchLang.translate(
+                    AppLanguageText.formSubmissionCertification),
+                style: AppFonts.textRegular14,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1042,22 +1039,6 @@ class ApplyPassCategoryScreen extends StatelessWidget {
               if(applyPassCategoryNotifier.selectedIdType == "Iqama") type = 5;
               if(applyPassCategoryNotifier.selectedIdType == "Other") type = 6;
               await applyPassCategoryNotifier.apiGetFile(context, type: type);
-              // showDialog(
-              //   context: context,
-              //   builder: (_) =>
-              //       AlertDialog(
-              //         shape: RoundedRectangleBorder(
-              //           borderRadius: BorderRadius.circular(10.0),
-              //         ),
-              //         contentPadding: EdgeInsets.symmetric(
-              //             horizontal: 5.w, vertical: 5.h),
-              //         content: ClipRRect(
-              //           borderRadius: BorderRadius.circular(6.0),
-              //           child: Image.memory(
-              //               applyPassCategoryNotifier.uploadedDocumentBytes!),
-              //         ),
-              //       ),
-              // );
             },
             child: Text(
               context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14,),)
@@ -1085,67 +1066,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
             ),
             Flexible(
               child: CustomUploadButton(
-                text: context.watchLang.translate(AppLanguageText.uploadFile), onPressed: () async {
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  backgroundColor: Colors.white,
-                  builder: (context) {
-                    return Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 40,
-                            height: 4,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[300],
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            "Upload Vehicle Registration Image",
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              uploadOptionCard(
-                                icon: LucideIcons.camera,
-                                label: "Camera",
-                                onTap: () async {
-                                  Navigator.pop(context);
-                                  await applyPassCategoryNotifier.uploadVehicleRegistrationImage(
-                                    fromCamera: true,
-                                    cropAfterPick: true,
-                                  );
-                                },
-                              ),
-                              uploadOptionCard(
-                                icon: LucideIcons.image,
-                                label: "Device",
-                                onTap: () async {
-                                  Navigator.pop(context);
-                                  await applyPassCategoryNotifier.uploadVehicleRegistrationImage(
-                                    fromCamera: false,
-                                    cropAfterPick: true,
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },),
+                text: context.watchLang.translate(AppLanguageText.uploadFile),
+                onPressed: () async {
+                  await applyPassCategoryNotifier.uploadVehicleRegistrationImage();
+                },),
             )
           ],
         ),
@@ -1159,22 +1083,6 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           GestureDetector(
             onTap: () async {
               await applyPassCategoryNotifier.apiGetFile(context, type: 4);
-              // showDialog(
-              //   context: context,
-              //   builder: (_) =>
-              //       AlertDialog(
-              //         shape: RoundedRectangleBorder(
-              //           borderRadius: BorderRadius.circular(10.0),
-              //         ),
-              //         contentPadding: EdgeInsets.symmetric(
-              //             horizontal: 5.w, vertical: 5.h),
-              //         content: ClipRRect(
-              //           borderRadius: BorderRadius.circular(6.0),
-              //           child: Image.memory(
-              //               applyPassCategoryNotifier.uploadedVehicleImageBytes!),
-              //         ),
-              //       ),
-              // );
             },
             child: Text(
               context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14,),)

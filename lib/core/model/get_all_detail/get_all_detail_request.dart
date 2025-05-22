@@ -1,19 +1,11 @@
-// To parse this JSON data, do
-//
-//     final getExternalAppointmentRequest = getExternalAppointmentRequestFromJson(jsonString);
-
-import 'dart:convert';
-
-GetExternalAppointmentRequest GetExternalAppointmentRequestFromJson(String str) => GetExternalAppointmentRequest.fromJson(json.decode(str));
-
-String getExternalAppointmentRequestToJson(GetExternalAppointmentRequest data) => json.encode(data.toJson());
-
 class GetExternalAppointmentRequest {
-  DateTime? dFromDate;
+  String? dFromDate;
   String? dToDate;
   int? nPageNumber;
   int? nPageSize;
   String? sSearch;
+  int? nLocationId;       // Optional
+  int? nApprovalStatus;   // Optional
 
   GetExternalAppointmentRequest({
     this.dFromDate,
@@ -21,21 +13,37 @@ class GetExternalAppointmentRequest {
     this.nPageNumber,
     this.nPageSize,
     this.sSearch,
+    this.nLocationId,
+    this.nApprovalStatus,
   });
 
-  factory GetExternalAppointmentRequest.fromJson(Map<String, dynamic> json) => GetExternalAppointmentRequest(
-    dFromDate: json["D_FromDate"] == null ? null : DateTime.parse(json["D_FromDate"]),
-    dToDate: json["D_ToDate"],
-    nPageNumber: json["N_PageNumber"],
-    nPageSize: json["N_PageSize"],
-    sSearch: json["S_Search"],
-  );
+  factory GetExternalAppointmentRequest.fromJson(Map<String, dynamic> json) =>
+      GetExternalAppointmentRequest(
+        dFromDate: json["D_FromDate"],
+        dToDate: json["D_ToDate"],
+        nPageNumber: json["N_PageNumber"],
+        nPageSize: json["N_PageSize"],
+        sSearch: json["S_Search"],
+        nLocationId: json["N_LocationId"],
+        nApprovalStatus: json["N_ApprovalStatus"],
+      );
 
-  Map<String, dynamic> toJson() => {
-    "D_FromDate": "${dFromDate!.year.toString().padLeft(4, '0')}-${dFromDate!.month.toString().padLeft(2, '0')}-${dFromDate!.day.toString().padLeft(2, '0')}",
-    "D_ToDate": dToDate,
-    "N_PageNumber": nPageNumber,
-    "N_PageSize": nPageSize,
-    "S_Search": sSearch,
-  };
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {
+      "D_FromDate": dFromDate,
+      "D_ToDate": dToDate,
+      "N_PageNumber": nPageNumber,
+      "N_PageSize": nPageSize,
+      "S_Search": sSearch,
+    };
+
+    if (nLocationId != null) {
+      data["N_LocationId"] = nLocationId;
+    }
+    if (nApprovalStatus != null) {
+      data["N_ApprovalStatus"] = nApprovalStatus;
+    }
+
+    return data;
+  }
 }

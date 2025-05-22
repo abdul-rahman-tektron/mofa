@@ -11,6 +11,8 @@ class CustomButton extends StatelessWidget {
   final TextStyle? textFont;
   final IconData? iconData;
   final double? radius;
+  final double? height;
+  final EdgeInsets? padding;
   final Color? borderColor;
   final bool smallWidth;
 
@@ -21,7 +23,9 @@ class CustomButton extends StatelessWidget {
     this.backgroundColor,
     this.textFont,
     this.radius,
+    this.height,
     this.iconData,
+    this.padding,
     this.borderColor,
     this.smallWidth = false,
   });
@@ -36,6 +40,7 @@ class CustomButton extends StatelessWidget {
         foregroundColor: backgroundColor == AppColors.buttonBgColor
             ? Colors.white
             : AppColors.buttonBgColor,
+        padding: padding ?? null,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(
             Radius.circular(radius ?? 10),
@@ -85,7 +90,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 52,
+      height: height ?? 52,
       width: smallWidth ? null : double.infinity,
       child: iconData != null ? buttonWithIcon(context) : buttonWithText(context),
     );
@@ -116,7 +121,6 @@ class CustomUploadButton extends StatelessWidget {
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
         padding: EdgeInsets.symmetric(horizontal: 12),
-        // textStyle: textFont ?? AppFonts.textSemiBold16,
         backgroundColor: backgroundColor ?? AppColors.whiteColor,
         foregroundColor: backgroundColor == AppColors.buttonBgColor
             ? Colors.white

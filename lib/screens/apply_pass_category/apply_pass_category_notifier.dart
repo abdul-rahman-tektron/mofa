@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
@@ -223,10 +224,49 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       } else if (type == 4) {
         uploadedVehicleImageBytes =
             base64Decode((value as GetFileResult).photoFile ?? "");
-        Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: base64Decode((value).photoFile ?? ""));
+        if((value).contentType == "application/pdf") {
+          Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: uploadedVehicleImageBytes ?? "");
+        } else {
+          showDialog(
+            context: context,
+            builder: (_) =>
+                AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 5.w, vertical: 5.h),
+                  content: ClipRRect(
+                    borderRadius: BorderRadius.circular(6.0),
+                    child: Image.memory(
+                        uploadedVehicleImageBytes!),
+                  ),
+                ),
+          );
+        }
       } else {
         uploadedDocumentBytes =
             base64Decode((value as GetFileResult).photoFile ?? "");
+        if((value).contentType == "application/pdf") {
+          Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: uploadedDocumentBytes ?? "");
+        } else {
+          showDialog(
+            context: context,
+            builder: (_) =>
+                AlertDialog(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 5.w, vertical: 5.h),
+                  content: ClipRRect(
+                    borderRadius: BorderRadius.circular(6.0),
+                    child: Image.memory(
+                        uploadedDocumentBytes!),
+                  ),
+                ),
+          );
+        }
       }
     },);
   }
@@ -433,12 +473,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   Future<void> uploadVehicleRegistrationImage({bool fromCamera = false, bool cropAfterPick = true}) async {
-    File? image = await FileUploadHelper.pickImage(
-      fromCamera: fromCamera,
-      cropAfterPick: cropAfterPick,
+    File? doc = await FileUploadHelper.pickDocument(
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
     );
-    if (image != null) {
-      uploadedVehicleRegistrationFile = image;
+    if (doc != null) {
+      uploadedVehicleRegistrationFile = doc;
       notifyListeners();
     }
   }

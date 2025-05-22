@@ -129,7 +129,7 @@ class NetworkProvider {
           AppUrl.baseUrl + AppUrl.pathLogin,
         ].any(url.contains)) {
           // await SharedPreferencesMobileWeb.instance.removeParticularKey(apiToken);
-          await SecureStorageHelper.clear();
+          await SecureStorageHelper.clearExceptRememberMe();
           Provider.of<CommonNotifier>(MyApp.navigatorKey.currentContext!, listen: false).clearUser();
           MyApp.navigatorKey.currentState?.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
         }

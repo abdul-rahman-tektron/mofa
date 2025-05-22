@@ -39,32 +39,57 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
   final LayerLink _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   final FocusNode _focusNode = FocusNode();
+  bool _suppressControllerListener = false;
   List<T> filteredItems = [];
+
+  late final VoidCallback _controllerListener;
 
   @override
   void initState() {
     super.initState();
     filteredItems = widget.items;
 
-    widget.controller.addListener(() {
+    _controllerListener = () {
+      if (_suppressControllerListener) return;
+
       final query = widget.controller.text.toLowerCase();
+      if (!mounted) return;
+
       setState(() {
-        filteredItems =
-            widget.items
-                .where(
-                  (item) =>
-                      widget.itemLabel(item).toLowerCase().contains(query),
-                )
-                .toList();
+        filteredItems = widget.items
+            .where((item) => widget.itemLabel(item).toLowerCase().contains(query))
+            .toList();
       });
-      _showOverlay();
-    });
+
+      // ✅ Only show overlay if the field is focused
+      if (_focusNode.hasFocus) {
+        _showOverlay();
+      } else {
+        _removeOverlay();
+      }
+    };
+
+    widget.controller.addListener(_controllerListener);
 
     _focusNode.addListener(() {
-      if (!_focusNode.hasFocus) {
+      if (_focusNode.hasFocus) {
+        setState(() {
+          // Always show full list on focus gained, regardless of text
+          filteredItems = widget.items;
+        });
+        _showOverlay();
+      } else {
         _removeOverlay();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_controllerListener); // CLEAN UP
+    _removeOverlay();
+    _focusNode.dispose();
+    super.dispose();
   }
 
   void _showOverlay() {
@@ -143,13 +168,6 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
   }
 
   @override
-  void dispose() {
-    _removeOverlay();
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return CompositedTransformTarget(
       link: _layerLink,
@@ -187,6 +205,16 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
           TextFormField(
             controller: widget.controller,
             focusNode: _focusNode,
+            onTap: () {
+              if (_focusNode.hasFocus && filteredItems.length != widget.items.length) {
+                setState(() {
+                  filteredItems = widget.items;
+                });
+                _showOverlay();
+              } else if (_focusNode.hasFocus) {
+                _showOverlay();
+              }
+            },
             style: widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17,
             validator: widget.skipValidation ? null : widget.validator ?? CommonValidation().commonValidator,
             autovalidateMode: AutovalidateMode.onUserInteraction,
@@ -209,12 +237,19 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                     if (widget.controller.text.isNotEmpty)
                       GestureDetector(
                         onTap: () {
+                          _suppressControllerListener = true;
                           widget.controller.clear();
+                          _suppressControllerListener = false;
+
                           widget.onSelected?.call(null);
                           setState(() {
                             filteredItems = widget.items;
                           });
                           _removeOverlay();
+
+                          if (_focusNode.hasFocus) {
+                            _showOverlay();
+                          }
                         },
                         child: Icon(
                           LucideIcons.x,

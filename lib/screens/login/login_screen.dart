@@ -77,9 +77,9 @@ class LoginScreen extends StatelessWidget {
                         captchaWidget(loginNotifier),
                         16.verticalSpace,
                         captchaField(context, loginNotifier),
-                        15.verticalSpace,
+                        10.verticalSpace,
                         rememberMeWidget(context, loginNotifier),
-                        15.verticalSpace,
+                        10.verticalSpace,
                         loginButton(context, loginNotifier),
                         10.verticalSpace,
                         createAccount(context, loginNotifier),
@@ -236,42 +236,46 @@ class LoginScreen extends StatelessWidget {
 
   // Function to create the remember me widget
   Widget rememberMeWidget(BuildContext context, LoginNotifier loginNotifier) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            loginNotifier.rememberMeChecked(context, !loginNotifier.isChecked);
-          },
-          child: Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              border: Border.all(
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () {
+        loginNotifier.rememberMeChecked(context, !loginNotifier.isChecked);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 5.h),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color:
+                      loginNotifier.isChecked
+                          ? AppColors.primaryColor
+                          : AppColors.primaryColor,
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(6),
                 color:
                     loginNotifier.isChecked
-                        ? AppColors.primaryColor
-                        : AppColors.primaryColor,
-                width: 1.5,
+                        ? AppColors.whiteColor
+                        : Colors.transparent,
               ),
-              borderRadius: BorderRadius.circular(6),
-              color:
+              child:
                   loginNotifier.isChecked
-                      ? AppColors.whiteColor
-                      : Colors.transparent,
+                      ? Icon(Icons.check, size: 17, color: Colors.black)
+                      : null,
             ),
-            child:
-                loginNotifier.isChecked
-                    ? Icon(Icons.check, size: 17, color: Colors.black)
-                    : null,
-          ),
+            12.horizontalSpace,
+            Text(
+              context.watchLang.translate(AppLanguageText.rememberMe),
+              style: AppFonts.textRegular14,
+            ),
+          ],
         ),
-        12.horizontalSpace,
-        Text(
-          context.watchLang.translate(AppLanguageText.rememberMe),
-          style: AppFonts.textRegular14,
-        ),
-      ],
+      ),
     );
   }
 

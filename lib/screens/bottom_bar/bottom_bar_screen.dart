@@ -6,6 +6,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/bottom_bar/bottom_bar_notifier.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
+import 'package:mofa/utils/common/widgets/common_bottom_bar.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:provider/provider.dart';
 
@@ -30,28 +31,9 @@ class BottomBarScreen extends StatelessWidget {
       appBar: CommonAppBar(),
       drawer: CommonDrawer(),
       body: bottomBarNotifier.currentScreen,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: AppColors.whiteColor,
+      bottomNavigationBar: CustomBottomNavBar(
         currentIndex: bottomBarNotifier.currentIndex,
         onTap: bottomBarNotifier.changeTab,
-        selectedItemColor: AppColors.buttonBgColor,
-        selectedLabelStyle: AppFonts.textRegular12,
-        unselectedLabelStyle: AppFonts.textRegular12,
-        unselectedItemColor: AppColors.buttonBgColor.withOpacity(0.5),
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(LucideIcons.layoutDashboard),
-            label: 'Dashboard',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(LucideIcons.search),
-            label: 'Search Pass',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(LucideIcons.creditCard),
-            label: context.watchLang.translate(AppLanguageText.applyPass,),
-          ),
-        ],
       ),
     );
   }

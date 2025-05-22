@@ -64,5 +64,13 @@ class SecureStorageHelper {
   static Future<void> clear() async {
     await _secureStorage?.deleteAll();
   }
+
+  static Future<void> clearExceptRememberMe() async {
+    final rememberMeValue = await getRememberMe(); // Step 1: Save current rememberMe value
+    await _secureStorage?.deleteAll();             // Step 2: Clear everything
+    if (rememberMeValue != null) {                 // Step 3: Restore rememberMe value
+      await setRememberMe(rememberMeValue);
+    }
+  }
 }
 

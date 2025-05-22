@@ -15,6 +15,18 @@ extension BackendDateFormat on String {
     }
   }
 
+  String? apiDateFormat() {
+    try {
+      final inputFormat = DateFormat("dd/MM/yyyy");
+      final outputFormat = DateFormat("yyyy-MM-dd");
+      final date = inputFormat.parse(this);
+      return outputFormat.format(date);
+    } catch (_) {
+      return null; // or return "" or fallback date
+    }
+  }
+
+
   DateTime? toDateTime() {
     final trimmed = trim();
     if (trimmed.isEmpty) return null;
@@ -39,7 +51,7 @@ extension BackendDateFormat on String {
       final dateTime = inputFormat.parse(this);
 
       // Step 2: Format to desired output
-      final outputFormat = DateFormat('dd/MM/yyyy h:mm a');
+      final outputFormat = DateFormat('dd MMM yyyy, h:mm a');
       return outputFormat.format(dateTime);
     } catch (e) {
       print('Date parsing error: $e');

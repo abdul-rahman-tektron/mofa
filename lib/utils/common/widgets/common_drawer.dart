@@ -82,7 +82,7 @@ class CommonDrawer extends StatelessWidget {
           // Language Change
             break;
           case 4:
-          // Logout
+            logoutFunctionality(context);
             break;
         }
       },
@@ -90,7 +90,7 @@ class CommonDrawer extends StatelessWidget {
   }
 
   void logoutFunctionality(BuildContext context) async {
-    await SecureStorageHelper.clear();
+    await SecureStorageHelper.clearExceptRememberMe();
     Provider.of<CommonNotifier>(context, listen: false).clearUser();
     Navigator.pushNamedAndRemoveUntil(
       context,

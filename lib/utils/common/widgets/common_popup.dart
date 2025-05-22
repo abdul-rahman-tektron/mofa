@@ -4,11 +4,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/forget_password/forget_password_request.dart';
+import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/login/login_screen.dart';
+import 'package:mofa/screens/search_pass/search_pass_notifier.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 
@@ -234,6 +236,133 @@ void showForgotPasswordPopup(BuildContext context) {
                   },
                 ),
               ],
+            ),
+          ),
+        ),
+  );
+}
+
+
+void columnVisibilityPopup(BuildContext context, SearchPassNotifier searchPassNotifier) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: AppColors.primaryColor.withOpacity(0.4),
+    builder: (_) =>
+        Dialog(
+          backgroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text("Customize Columns", style: AppFonts.textBold20,),
+                      10.verticalSpace,
+                      ...searchPassNotifier.columnConfigs.map((config) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(config.label, style: AppFonts.textRegular14),
+                            Transform.scale(
+                              scale: 0.8, // Reduces size of the switch
+                              child: Switch(
+                                value: config.isVisible,
+                                onChanged: config.isMandatory
+                                    ? null
+                                    : (val) {
+                                  searchPassNotifier.updateColumnVisibility(
+                                      config.label, val);
+                                  setState(() {});
+                                },
+                                activeColor: AppColors.whiteColor, // Thumb color when ON
+                                activeTrackColor: AppColors.buttonBgColor, // Track color when ON: AppColors.whiteColor,
+                                inactiveThumbColor: config.isMandatory ? AppColors.greyColor : AppColors.whiteColor, // Thumb color when OFF
+                                inactiveTrackColor: AppColors.greyColor, // Track color when OFF
+                                trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                                // thumbColor: WidgetStateProperty.all(AppColors.whiteColor),
+                                thumbIcon: WidgetStateProperty.all(Icon(LucideIcons.toggleLeft,size: 0,)),
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                      10.verticalSpace,
+                      SizedBox(
+                        height: 35.h,
+                        child: CustomButton(
+                          text: context.watchLang.translate(AppLanguageText.close),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                    ]
+                ),
+              );
+            },
+          ),
+        ),
+  );
+}
+
+void cancelAppointmentPopup(BuildContext context, SearchPassNotifier searchPassNotifier, GetExternalAppointmentData appointmentData) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: AppColors.primaryColor.withOpacity(0.4),
+    builder: (_) =>
+        Dialog(
+          backgroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(context.readLang.translate(
+                      AppLanguageText.sureToCancelAppointment),
+                    style: AppFonts.textRegular20,
+                    textAlign: TextAlign.center,
+                  ),
+                  20.verticalSpace,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomButton(
+                        text: context.watchLang.translate(
+                            AppLanguageText.yesCancel),
+                        smallWidth: true,
+                        height: 40,
+                        onPressed: () {
+                          searchPassNotifier.apiCancelAppointment(
+                              context, appointmentData);
+                        },
+                      ),
+                      10.horizontalSpace,
+                      CustomButton(
+                        text: context.watchLang.translate(
+                            AppLanguageText.noClose),
+                        backgroundColor: AppColors.backgroundColor,
+                        borderColor: AppColors.buttonBgColor,
+                        smallWidth: true,
+                        height: 40,
+                        textFont: AppFonts.textBold14,
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  )
+                ]
             ),
           ),
         ),
