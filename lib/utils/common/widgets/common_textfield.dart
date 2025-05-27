@@ -6,7 +6,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:provider/provider.dart';
 
-import '../common_validation.dart';
+import '../../common_validation.dart';
 
 class CustomTextField extends StatefulWidget {
   final TextEditingController controller;

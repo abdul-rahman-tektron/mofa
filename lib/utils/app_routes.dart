@@ -17,7 +17,7 @@ import 'package:mofa/screens/login/login_screen.dart';
 import 'package:mofa/screens/pdf_viewer/pdf_viewer.dart';
 import 'package:mofa/screens/register/register_screen.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_screen.dart';
-import 'package:mofa/utils/common/enum_values.dart';
+import 'package:mofa/utils/enum_values.dart';
 
 class AppRoutes {
   static const String login = '/login';

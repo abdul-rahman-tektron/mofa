@@ -9,7 +9,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_images.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/register/register_notifier.dart';
-import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';

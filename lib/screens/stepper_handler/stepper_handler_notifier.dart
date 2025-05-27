@@ -5,7 +5,7 @@ import 'package:mofa/screens/apply_pass_category/apply_pass_category_screen.dart
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_screen.dart';
-import 'package:mofa/utils/common/enum_values.dart';
+import 'package:mofa/utils/enum_values.dart';
 
 class StepperHandlerNotifier extends BaseChangeNotifier {
   int _currentStep = 0;

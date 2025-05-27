@@ -8,8 +8,8 @@ import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
-import 'package:mofa/utils/common/extensions.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/extensions.dart';
+import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
 
 class HealthAndSafetyNotifier extends BaseChangeNotifier {

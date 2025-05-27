@@ -33,8 +33,8 @@ import 'package:mofa/core/remote/network/base_repository.dart';
 import 'package:mofa/core/remote/network/method.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/search_pass/search_pass_notifier.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
-import 'package:mofa/utils/common/toast_helper.dart';
+import 'package:mofa/utils/secure_storage.dart';
+import 'package:mofa/utils/toast_helper.dart';
 
 class SearchPassRepository extends BaseRepository {
   SearchPassRepository._internal();

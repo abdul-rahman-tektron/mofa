@@ -4,7 +4,7 @@ import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
-import 'package:mofa/utils/common/encrypt.dart';
+import 'package:mofa/utils/encrypt.dart';
 
 class RegisterNotifier extends BaseChangeNotifier {
 

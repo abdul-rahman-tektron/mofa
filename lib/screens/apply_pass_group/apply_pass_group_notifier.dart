@@ -24,12 +24,12 @@ import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
-import 'package:mofa/utils/common/encrypt.dart';
-import 'package:mofa/utils/common/enum_values.dart';
-import 'package:mofa/utils/common/extensions.dart';
-import 'package:mofa/utils/common/file_uplaod_helper.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
-import 'package:mofa/utils/common/toast_helper.dart';
+import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/enum_values.dart';
+import 'package:mofa/utils/extensions.dart';
+import 'package:mofa/utils/file_uplaod_helper.dart';
+import 'package:mofa/utils/secure_storage.dart';
+import 'package:mofa/utils/toast_helper.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassGroupNotifier extends BaseChangeNotifier {

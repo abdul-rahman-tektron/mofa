@@ -6,9 +6,9 @@ import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/core/notifier/language_notifier.dart';
 import 'package:mofa/res/app_theme.dart';
 import 'package:mofa/screens/apply_pass/apply_pass_screen.dart';
-import 'package:mofa/utils/common/app_routes.dart';
-import 'package:mofa/utils/common/encrypt.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/secure_storage.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
 

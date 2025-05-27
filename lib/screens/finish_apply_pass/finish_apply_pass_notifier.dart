@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
-import 'package:mofa/utils/common/app_routes.dart';
+import 'package:mofa/utils/app_routes.dart';
 
 class FinishApplyPassNotifier extends BaseChangeNotifier{
 

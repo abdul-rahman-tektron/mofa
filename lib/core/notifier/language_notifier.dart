@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mofa/core/localization/i_localization_service.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/secure_storage.dart';
 
 class LanguageNotifier extends ChangeNotifier {
   final ILocalizationService _localizationService;

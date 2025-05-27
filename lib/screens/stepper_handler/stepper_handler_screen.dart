@@ -5,7 +5,7 @@ import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
-import 'package:mofa/utils/common/enum_values.dart';
+import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:provider/provider.dart';

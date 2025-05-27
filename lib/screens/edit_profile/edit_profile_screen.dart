@@ -7,7 +7,7 @@ import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/edit_profile/edit_profile_notifier.dart';
-import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';

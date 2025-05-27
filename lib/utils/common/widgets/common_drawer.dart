@@ -8,8 +8,8 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_images.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
-import 'package:mofa/utils/common/app_routes.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
+import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:provider/provider.dart';
 

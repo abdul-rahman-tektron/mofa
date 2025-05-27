@@ -6,11 +6,11 @@ import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/login/login_request.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/remember_me/remember_me_model.dart';
-import 'package:mofa/utils/common/app_routes.dart';
-import 'package:mofa/utils/common/captcha_widget.dart';
-import 'package:mofa/utils/common/encrypt.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
-import 'package:mofa/utils/common/toast_helper.dart';
+import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/captcha_widget.dart';
+import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/secure_storage.dart';
+import 'package:mofa/utils/toast_helper.dart';
 
 class LoginNotifier extends BaseChangeNotifier {
   // Data Controller

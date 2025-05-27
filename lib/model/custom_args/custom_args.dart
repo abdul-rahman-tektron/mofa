@@ -1,5 +1,5 @@
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
-import 'package:mofa/utils/common/enum_values.dart';
+import 'package:mofa/utils/enum_values.dart';
 
 class StepperScreenArgs {
   final ApplyPassCategory category;

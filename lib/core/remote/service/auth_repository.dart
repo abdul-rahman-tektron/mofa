@@ -22,10 +22,10 @@ import 'package:mofa/core/remote/network/base_repository.dart';
 import 'package:mofa/core/remote/network/method.dart';
 import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
-import 'package:mofa/utils/common/app_routes.dart';
-import 'package:mofa/utils/common/encrypt.dart';
-import 'package:mofa/utils/common/secure_storage.dart';
-import 'package:mofa/utils/common/toast_helper.dart';
+import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/secure_storage.dart';
+import 'package:mofa/utils/toast_helper.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
 import 'package:provider/provider.dart';
 

@@ -1,5 +1,5 @@
 
-import 'package:mofa/utils/common/regex.dart';
+import 'package:mofa/utils/regex.dart';
 
 class CommonValidation {
   // Validates email input

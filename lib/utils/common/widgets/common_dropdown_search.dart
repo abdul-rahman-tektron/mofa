@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
-import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common_validation.dart';
 
 class CustomSearchDropdown<T> extends StatefulWidget {
   final List<T> items;
