@@ -83,12 +83,15 @@ class AddAppointmentRequest {
   String? dtPassportExpiryDate;
   String? dtOthersExpiry;
   String? nationality;
+  String? resubmissionComments;
   int? havePhoto;
   int? haveIqama;
   int? haveEid;
   int? havePassport;
   int? haveOthers;
   int? haveVehicleRegistration;
+  int? nVisitCreatedFrom;
+  int? nVisitUpdatedFrom;
 
   AddAppointmentRequest({
     this.gender = "",
@@ -165,12 +168,15 @@ class AddAppointmentRequest {
     this.dtPassportExpiryDate,
     this.dtOthersExpiry,
     this.nationality,
+    this.resubmissionComments,
     this.havePhoto,
     this.haveIqama,
     this.haveEid,
     this.havePassport,
     this.haveOthers,
     this.haveVehicleRegistration,
+    this.nVisitCreatedFrom,
+    this.nVisitUpdatedFrom
   });
 
   factory AddAppointmentRequest.fromJson(Map<String, dynamic> json) => AddAppointmentRequest(
@@ -252,12 +258,15 @@ class AddAppointmentRequest {
     dtPassportExpiryDate: json["Dt_PassportExpiryDate"],
     dtOthersExpiry: json["Dt_OthersExpiry"],
     nationality: json["Nationality"],
+    resubmissionComments: json["ReSubmissionComment"],
     havePhoto: json["havePhoto"],
     haveIqama: json["haveIqama"],
     haveEid: json["haveEid"],
     havePassport: json["havePassport"],
     haveOthers: json["haveOthers"],
     haveVehicleRegistration: json["haveVehicleRegistration"],
+    nVisitCreatedFrom: json["N_VisitCreatedFrom"],
+    nVisitUpdatedFrom: json["N_VisitUpdatedFrom"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -337,12 +346,15 @@ class AddAppointmentRequest {
     "Dt_PassportExpiryDate": dtPassportExpiryDate,
     "Dt_OthersExpiry": dtOthersExpiry,
     "Nationality": nationality,
+    "ReSubmissionComment" : resubmissionComments,
     "havePhoto": havePhoto,
     "haveIqama": haveIqama,
     "haveEid": haveEid,
     "havePassport": havePassport,
     "haveOthers": haveOthers,
     "haveVehicleRegistration": haveVehicleRegistration,
+    "N_VisitCreatedFrom": nVisitCreatedFrom,
+    "N_VisitUpdatedFrom": nVisitUpdatedFrom
   };
 }
 

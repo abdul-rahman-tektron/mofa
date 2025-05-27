@@ -58,15 +58,18 @@ class LoginNotifier extends BaseChangeNotifier {
     if (formKey.currentState!.validate()) {
       String encryptedPassword = encryptAES(password);
 
-      final loginRequest = LoginRequest(
-          username: email, password: encryptedPassword);
+      // final loginRequest = LoginRequest(
+      //     username: email, password: encryptedPassword);
+
+      final loginRequest = LoginTokenRequest(
+          email: email, password: encryptedPassword);
 
       loginApiCall(context, loginRequest);
     }
   }
 
   // API call for login
-  void loginApiCall(BuildContext context, LoginRequest loginRequest) async {
+  void loginApiCall(BuildContext context, LoginTokenRequest loginRequest) async {
     await AuthRepository().apiUserLogin(
         loginRequest, context).then((value) async {
       if (value == "Success") {

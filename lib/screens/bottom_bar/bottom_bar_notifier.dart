@@ -15,8 +15,8 @@ class BottomBarNotifier extends ChangeNotifier{
 
   final List<Widget> _screens = [
     DashboardScreen(),
-    SearchPassScreen(),
     ApplyPassScreen(),
+    SearchPassScreen(),
   ];
 
   Widget get currentScreen => _screens[_currentIndex];

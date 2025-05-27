@@ -37,10 +37,10 @@ class GetByIdResponse {
 }
 
 class GetByIdResult {
-  List<dynamic>? appointmentComments;
+  List<AppointmentComment>? appointmentComments;
   GetByIdUser? user;
-  Map<String, int?>? vehicle;
-  dynamic devices;
+  Vehicle? vehicle;
+  List<DeviceResult>? devices;
 
   GetByIdResult({
     this.appointmentComments,
@@ -50,17 +50,109 @@ class GetByIdResult {
   });
 
   factory GetByIdResult.fromJson(Map<String, dynamic> json) => GetByIdResult(
-    appointmentComments: json["appointmentComments"] == null ? [] : List<dynamic>.from(json["appointmentComments"]!.map((x) => x)),
+    appointmentComments: json["appointmentComments"] == null ? [] : List<AppointmentComment>.from(json["appointmentComments"]!.map((x) => AppointmentComment.fromJson(x))),
     user: json["user"] == null ? null : GetByIdUser.fromJson(json["user"]),
-    vehicle: Map.from(json["vehicle"]!).map((k, v) => MapEntry<String, int?>(k, v)),
-    devices: json["devices"],
+    vehicle: json["vehicle"] == null ? null : Vehicle.fromJson(json["vehicle"]),
+    devices: json["devices"] == null ? [] : List<DeviceResult>.from(json["devices"]!.map((x) => DeviceResult.fromJson(x))),
   );
 
   Map<String, dynamic> toJson() => {
-    "appointmentComments": appointmentComments == null ? [] : List<dynamic>.from(appointmentComments!.map((x) => x)),
+    "appointmentComments": appointmentComments == null ? [] : List<dynamic>.from(appointmentComments!.map((x) => x.toJson())),
     "user": user?.toJson(),
-    "vehicle": Map.from(vehicle!).map((k, v) => MapEntry<String, dynamic>(k, v)),
-    "devices": devices,
+    "vehicle": vehicle?.toJson(),
+    "devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
+  };
+}
+
+class AppointmentComment {
+  int? nId;
+  int? nAppointmentId;
+  int? nRoleId;
+  int? nUserId;
+  int? nCommentType;
+  String? sComment;
+
+  AppointmentComment({
+    this.nId,
+    this.nAppointmentId,
+    this.nRoleId,
+    this.nUserId,
+    this.nCommentType,
+    this.sComment,
+  });
+
+  factory AppointmentComment.fromJson(Map<String, dynamic> json) => AppointmentComment(
+    nId: json["n_ID"],
+    nAppointmentId: json["n_AppointmentID"],
+    nRoleId: json["n_RoleID"],
+    nUserId: json["n_UserID"],
+    nCommentType: json["n_CommentType"],
+    sComment: json["s_Comment"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "n_ID": nId,
+    "n_AppointmentID": nAppointmentId,
+    "n_RoleID": nRoleId,
+    "n_UserID": nUserId,
+    "n_CommentType": nCommentType,
+    "s_Comment": sComment,
+  };
+}
+
+class DeviceResult {
+  int? appointmentDeviceId;
+  int? appointmentId;
+  int? deviceType;
+  String? deviceTypeOthersValue;
+  String? deviceModel;
+  String? serialNumber;
+  int? devicePurpose;
+  String? devicePurposeOthersValue;
+  int? approvalStatus;
+  int? currentApprovalStatus;
+  dynamic comment;
+
+  DeviceResult({
+    this.appointmentDeviceId,
+    this.appointmentId,
+    this.deviceType,
+    this.deviceTypeOthersValue,
+    this.deviceModel,
+    this.serialNumber,
+    this.devicePurpose,
+    this.devicePurposeOthersValue,
+    this.approvalStatus,
+    this.currentApprovalStatus,
+    this.comment,
+  });
+
+  factory DeviceResult.fromJson(Map<String, dynamic> json) => DeviceResult(
+    appointmentDeviceId: json["appointmentDeviceId"],
+    appointmentId: json["appointmentId"],
+    deviceType: json["deviceType"],
+    deviceTypeOthersValue: json["deviceTypeOthersValue"],
+    deviceModel: json["deviceModel"],
+    serialNumber: json["serialNumber"],
+    devicePurpose: json["devicePurpose"],
+    devicePurposeOthersValue: json["devicePurposeOthersValue"],
+    approvalStatus: json["approvalStatus"],
+    currentApprovalStatus: json["currentApprovalStatus"],
+    comment: json["comment"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "appointmentDeviceId": appointmentDeviceId,
+    "appointmentId": appointmentId,
+    "deviceType": deviceType,
+    "deviceTypeOthersValue": deviceTypeOthersValue,
+    "deviceModel": deviceModel,
+    "serialNumber": serialNumber,
+    "devicePurpose": devicePurpose,
+    "devicePurposeOthersValue": devicePurposeOthersValue,
+    "approvalStatus": approvalStatus,
+    "currentApprovalStatus": currentApprovalStatus,
+    "comment": comment,
   };
 }
 
@@ -68,17 +160,17 @@ class GetByIdUser {
   int? nAppointmentId;
   int? nExternalRegistrationId;
   dynamic sAppointmentCode;
-  String? sFullName;
-  String? sCompanyName;
-  String? sMobileNumber;
-  String? sEmail;
+  dynamic sFullName;
+  dynamic sCompanyName;
+  dynamic sMobileNumber;
+  dynamic sEmail;
   String? gender;
   String? nationality;
   int? nVisaType;
   int? nDocumentType;
   String? eidNumber;
   String? passportNumber;
-  dynamic dtEidExpiryDate;
+  String? dtEidExpiryDate;
   dynamic dtPassportExpiryDate;
   int? nVisitType;
   String? sVisitorTypeAr;
@@ -91,8 +183,8 @@ class GetByIdUser {
   String? sLocationNameAr;
   String? sLocationNameEn;
   int? nDepartmentId;
-  dynamic sDepartmentNameEn;
-  dynamic sDepartmentNameAr;
+  String? sDepartmentNameEn;
+  String? sDepartmentNameAr;
   dynamic dtCovidDate;
   String? sVisitingPersonEmail;
   String? dtAppointmentStartTime;
@@ -104,7 +196,7 @@ class GetByIdUser {
   String? iso3;
   String? sNationalityAr;
   String? sNationalityEn;
-  String? expr1;
+  dynamic expr1;
   String? sHostName;
   int? nDetailedCode;
   String? sApprovalStatusAr;
@@ -112,8 +204,8 @@ class GetByIdUser {
   int? approvalStatus;
   dynamic sCovidFile;
   String? sCovidFileType;
-  dynamic sPurposeA;
-  dynamic sPurposeE;
+  String? sPurposeA;
+  String? sPurposeE;
   dynamic sPhotoUpload;
   dynamic sPhotoContentType;
   dynamic sEidFile;
@@ -130,7 +222,7 @@ class GetByIdUser {
   String? sGroupKey;
   int? nVehiclePass;
   int? nIsVehicleAllowed;
-  dynamic sVehicleNo;
+  String? sVehicleNo;
   int? nArrivingByTaxi;
   String? sDriverLicenseFile;
   String? sDriverLicenseContentType;
@@ -138,11 +230,11 @@ class GetByIdUser {
   dynamic sVehicleRegistrationContentType;
   String? sDeliveryNoteFile;
   String? sDeliveryNoteContentType;
-  dynamic sVisitorNameEn;
+  String? sVisitorNameEn;
   dynamic sVisitorName;
-  dynamic sSponsor;
-  dynamic visitorMobile;
-  dynamic visitorEmail;
+  String? sSponsor;
+  String? visitorMobile;
+  String? visitorEmail;
   String? sIqama;
   String? dTIqamaExpiry;
   String? sOthersDoc;
@@ -441,5 +533,85 @@ class GetByIdUser {
     "n_CurrentApproverOrderNo": nCurrentApproverOrderNo,
     "n_IsHostRequiredMoreInfo": nIsHostRequiredMoreInfo,
     "pseudoApprovalStatus": pseudoApprovalStatus,
+  };
+}
+
+class Vehicle {
+  int? nVehicleId;
+  int? nAppointmentId;
+  int? nPlateSource;
+  dynamic sPlateCode;
+  String? sPlateNumber;
+  dynamic sModelNumber;
+  dynamic sColor;
+  int? nCreatedBy;
+  DateTime? dtCreatedDate;
+  int? nUpdatedBy;
+  dynamic dtUpdatedDate;
+  int? nIsDeleted;
+  String? sDescA;
+  String? sDescE;
+  int? nPlateLetter1;
+  int? nPlateLetter2;
+  int? nPlateLetter3;
+
+  Vehicle({
+    this.nVehicleId,
+    this.nAppointmentId,
+    this.nPlateSource,
+    this.sPlateCode,
+    this.sPlateNumber,
+    this.sModelNumber,
+    this.sColor,
+    this.nCreatedBy,
+    this.dtCreatedDate,
+    this.nUpdatedBy,
+    this.dtUpdatedDate,
+    this.nIsDeleted,
+    this.sDescA,
+    this.sDescE,
+    this.nPlateLetter1,
+    this.nPlateLetter2,
+    this.nPlateLetter3,
+  });
+
+  factory Vehicle.fromJson(Map<String, dynamic> json) => Vehicle(
+    nVehicleId: json["n_VehicleID"],
+    nAppointmentId: json["n_AppointmentID"],
+    nPlateSource: json["n_PlateSource"],
+    sPlateCode: json["s_PlateCode"],
+    sPlateNumber: json["s_PlateNumber"],
+    sModelNumber: json["s_ModelNumber"],
+    sColor: json["s_Color"],
+    nCreatedBy: json["n_CreatedBy"],
+    dtCreatedDate: json["dt_CreatedDate"] == null ? null : DateTime.parse(json["dt_CreatedDate"]),
+    nUpdatedBy: json["n_UpdatedBy"],
+    dtUpdatedDate: json["dt_UpdatedDate"],
+    nIsDeleted: json["n_IsDeleted"],
+    sDescA: json["s_Desc_A"],
+    sDescE: json["s_Desc_E"],
+    nPlateLetter1: json["n_PlateLetter1"],
+    nPlateLetter2: json["n_PlateLetter2"],
+    nPlateLetter3: json["n_PlateLetter3"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "n_VehicleID": nVehicleId,
+    "n_AppointmentID": nAppointmentId,
+    "n_PlateSource": nPlateSource,
+    "s_PlateCode": sPlateCode,
+    "s_PlateNumber": sPlateNumber,
+    "s_ModelNumber": sModelNumber,
+    "s_Color": sColor,
+    "n_CreatedBy": nCreatedBy,
+    "dt_CreatedDate": dtCreatedDate?.toIso8601String(),
+    "n_UpdatedBy": nUpdatedBy,
+    "dt_UpdatedDate": dtUpdatedDate,
+    "n_IsDeleted": nIsDeleted,
+    "s_Desc_A": sDescA,
+    "s_Desc_E": sDescE,
+    "n_PlateLetter1": nPlateLetter1,
+    "n_PlateLetter2": nPlateLetter2,
+    "n_PlateLetter3": nPlateLetter3,
   };
 }

@@ -5,23 +5,28 @@ import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
+import 'package:mofa/utils/common/enum_values.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:provider/provider.dart';
 
 class StepperHandlerScreen extends StatelessWidget {
   final ApplyPassCategory category;
+  final bool isUpdate;
+  final int? id;
 
-  const StepperHandlerScreen({super.key, required this.category});
+  const StepperHandlerScreen({super.key, required this.category, this.isUpdate = false, this.id});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => StepperHandlerNotifier(context, category),
+      create: (context) => StepperHandlerNotifier(context, category, isUpdate, id),
       child: Consumer<StepperHandlerNotifier>(
         builder: (context, stepperHandlerNotifier, child) {
           return Scaffold(
             backgroundColor: AppColors.backgroundColor,
+            appBar: CommonAppBar(),
+            drawer: CommonDrawer(),
             body: SingleChildScrollView(
               child: Column(
                 children: [

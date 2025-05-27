@@ -1,9 +1,3 @@
-enum ApplyPassCategory {
-  myself,
-  someoneElse,
-  group,
-}
-
 class InfoSection {
   final String title;
   final List<String> bulletPoints;

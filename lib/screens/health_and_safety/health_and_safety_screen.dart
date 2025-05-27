@@ -17,7 +17,8 @@ import 'package:provider/provider.dart';
 class HealthAndSafetyScreen extends StatelessWidget {
   final VoidCallback onNext;
   final VoidCallback onPrevious;
-  const HealthAndSafetyScreen({super.key, required this.onNext, required this.onPrevious});
+  final bool isUpdate;
+  const HealthAndSafetyScreen({super.key, required this.onNext, required this.onPrevious, this.isUpdate = false});
 
   @override
   Widget build(BuildContext context) {

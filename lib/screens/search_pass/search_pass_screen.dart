@@ -5,12 +5,16 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
+import 'package:mofa/model/apply_pass/apply_pass_category.dart';
+import 'package:mofa/model/custom_args/custom_args.dart';
 import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/search_pass/search_pass_notifier.dart';
+import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common/enum_values.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
@@ -90,7 +94,7 @@ class SearchPassScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         CustomButton(
-          text: context.watchLang.translate(AppLanguageText.save),
+          text: context.watchLang.translate(AppLanguageText.search),
           smallWidth: true,
           height: 45,
           onPressed: () {
@@ -358,7 +362,7 @@ class SearchPassScreen extends StatelessWidget {
               border: TableBorder(borderRadius: BorderRadius.circular(8)),
               clipBehavior: Clip.antiAliasWithSaveLayer,
               columnSpacing: 20.w,
-              dataRowMaxHeight: 50.h,
+              dataRowMaxHeight: 55.h,
               columns:
                   visibleColumns.map((config) {
                     return DataColumn(
@@ -368,28 +372,26 @@ class SearchPassScreen extends StatelessWidget {
                               : Text(config.label),
                     );
                   }).toList(),
-              rows: searchPassNotifier.getAllDetailData.isEmpty
-                  ? [
-                DataRow(
-                  cells: [
-                    DataCell(
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Text(
-                            'No result found',
-                            style: AppFonts.textRegularGrey16,
-                          ),
+              rows:  searchPassNotifier.getAllDetailData.isEmpty
+              ? [
+              DataRow(
+                cells: [
+                  DataCell(
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        child: Text(
+                          'No result found',
+                          style: AppFonts.textRegularGrey16,
                         ),
                       ),
                     ),
-                    // Fill remaining columns with empty cells
-                    ...List.generate(visibleColumns.length - 1, (_) => const DataCell(SizedBox())),
-                  ],
-                )
-              ]
-                  :
-                  searchPassNotifier.getAllDetailData.asMap().entries.map((entry) {
+                  ),
+                  // Fill remaining columns with empty cells
+                  ...List.generate(visibleColumns.length - 1, (_) => const DataCell(SizedBox())),
+                ],
+              )
+              ] : searchPassNotifier.getAllDetailData.asMap().entries.map((entry) {
                     final index = entry.key;
                     final appointment = entry.value;
 
@@ -407,102 +409,123 @@ class SearchPassScreen extends StatelessWidget {
 
                     return DataRow(
                       color: MaterialStateProperty.resolveWith<Color?>(
-                        (states) =>
-                            isEvenRow
-                                ? AppColors.buttonBgColor.withOpacity(0.05)
-                                : null,
+                            (states) => isEvenRow
+                            ? AppColors.buttonBgColor.withOpacity(0.05)
+                            : null,
                       ),
-                      cells:
-                          visibleColumns.map((config) {
-                            switch (config.label) {
-                              case 'Ref No':
-                                return DataCell(
-                                  Text(appointment.sAppointmentCode ?? ""),
-                                );
-                              case 'Name':
-                                return DataCell(
-                                  SizedBox(
-                                    width: 140.w,
-                                    child: Text(
-                                      appointment.sVisitorName ?? "",
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
+                      cells: visibleColumns.map((config) {
+                        Widget cellContent;
+
+                        // Check if this is the "Action" column, which already has its own tap
+                        final isActionCell = config.label == 'Action';
+
+                        // Build the base content for each cell
+                        switch (config.label) {
+                          case 'Ref No':
+                            cellContent = Text(appointment.sAppointmentCode ?? "");
+                            break;
+                          case 'Name':
+                            cellContent = SizedBox(
+                              width: 140.w,
+                              child: Text(
+                                appointment.sVisitorName ?? "",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                            break;
+                          case 'Status':
+                            cellContent = buildStatusChip(appointment.sApprovalStatusEn ?? "");
+                            break;
+                          case 'Company Name':
+                            cellContent = Text(appointment.sSponsor ?? "");
+                            break;
+                          case 'Start & End Date':
+                            cellContent = Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(appointment.dtAppointmentStartTime
+                                    ?.formatDateTime() ?? "", style:
+                                AppFonts.textMediumBlueGrey12),
+                                SizedBox(height: 5),
+                                Text(appointment.dtAppointmentEndTime
+                                    ?.formatDateTime() ?? "", style:
+                                AppFonts.textMediumBlueGrey12),
+                              ],
+                            );
+                            break;
+                          case 'Email':
+                            cellContent = Text(appointment.sEmail ?? "");
+                            break;
+                          case 'Host Name':
+                            cellContent = Text(appointment.sHostName ?? "");
+                            break;
+                          case 'Location':
+                            cellContent = Text(appointment.sLocationNameEn ?? "");
+                            break;
+                          case 'Vehicle Permit':
+                            cellContent = buildVehicleChip(
+                              appointment.nIsVehicleAllowed ?? -1,
+                              appointment.sVehicleNo ?? "",
+                            );
+                            break;
+                          case 'Action':
+                            cellContent = Center(
+                              child: GestureDetector(
+                                onTap: isExpired
+                                    ? null
+                                    : () {
+                                  cancelAppointmentPopup(
+                                      context, searchPassNotifier, appointment);
+                                },
+                                child: Container(
+                                  height: 35,
+                                  width: 35,
+                                  decoration: BoxDecoration(
+                                    color: isExpired
+                                        ? Colors.grey
+                                        : AppColors.buttonBgColor,
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
-                                );
-                              case 'Status':
-                                return DataCell(
-                                  buildStatusChip(
-                                    appointment.sApprovalStatusEn ?? "",
+                                  child: Icon(
+                                    LucideIcons.x,
+                                    color: AppColors.whiteColor,
+                                    size: 20,
                                   ),
-                                );
-                              case 'Company Name':
-                                return DataCell(Text(appointment.sSponsor ?? ""));
-                              case 'Start & End Date':
-                                return DataCell(
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        appointment.dtAppointmentStartTime
-                                                ?.formatDateTime() ??
-                                            "",
-                                      ),
-                                      SizedBox(height: 5),
-                                      Text(
-                                        appointment.dtAppointmentEndTime
-                                                ?.formatDateTime() ??
-                                            "",
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              case 'Email':
-                                return DataCell(Text(appointment.sEmail ?? ""));
-                              case 'Host Name':
-                                return DataCell(Text(appointment.sHostName ?? ""));
-                              case 'Location':
-                                return DataCell(
-                                  Text(appointment.sLocationNameEn ?? ""),
-                                );
-                              case 'Vehicle Permit':
-                                return DataCell(
-                                  buildVehicleChip(
-                                    appointment.nIsVehicleAllowed ?? -1,
-                                    appointment.sVehicleNo ?? "",
-                                  ),
-                                );
-                              case 'Action':
-                                return DataCell(
-                                  Center(
-                                    child: GestureDetector(
-                                      onTap: isExpired ? null : () {
-                                        cancelAppointmentPopup(context, searchPassNotifier, appointment);
-                                      },
-                                      child: Container(
-                                        height: 35,
-                                        width: 35,
-                                        decoration: BoxDecoration(
-                                          color:
-                                              isExpired
-                                                  ? Colors.grey
-                                                  : AppColors.buttonBgColor,
-                                          borderRadius: BorderRadius.circular(10),
-                                        ),
-                                        child: Icon(
-                                          LucideIcons.x,
-                                          color: AppColors.whiteColor,
-                                          size: 20,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              default:
-                                return DataCell(Text(''));
-                            }
-                          }).toList(),
+                                ),
+                              ),
+                            );
+                            break;
+                          default:
+                            cellContent = Text('');
+                        }
+
+                        // Wrap all except "Action" cell with a tap handler to navigate
+                        return DataCell(
+                          isActionCell
+                              ? cellContent
+                              : GestureDetector(
+                            onTap: () {
+                              // Navigate to Apply Pass screen with selected appointment
+                              print("Appointment ID: ${appointment.nAppointmentId}");
+                              Navigator.pushNamed(
+                                context,
+                                AppRoutes.stepper,
+                                arguments: StepperScreenArgs(
+                                    category: ApplyPassCategory.someoneElse,
+                                    isUpdate: true,
+                                    id: appointment.nAppointmentId ?? 0),
+                              );
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: cellContent,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     );
                   }).toList(),
             ),

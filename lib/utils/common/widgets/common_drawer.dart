@@ -37,7 +37,7 @@ class CommonDrawer extends StatelessWidget {
                   Image.asset(AppImages.logo, height: 80,),
                   15 .verticalSpace,
                   Text(
-                    "${context.watchLang.translate(AppLanguageText.hello)}${user?.sFullName ?? ""}",
+                    "${context.watchLang.translate(AppLanguageText.hello)} ${user?.fullName ?? ""}",
                     style: AppFonts.textMedium18,
                   ),
                 ],
@@ -70,7 +70,7 @@ class CommonDrawer extends StatelessWidget {
         Navigator.pop(context); // Close the drawer
         switch (value) {
           case 0:
-          // Navigate to Edit Profile
+            Navigator.pushNamed(context, AppRoutes.editProfile);
             break;
           case 1:
           // Navigate to Change Password

@@ -7,12 +7,14 @@ import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
+import 'package:mofa/core/remote/service/search_pass_repository.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
 
 class HealthAndSafetyNotifier extends BaseChangeNotifier {
   bool _isChecked = false;
+  bool _isUpdate = false;
 
   List<AddAppointmentRequest>? _addAppointmentRequest;
 
@@ -285,7 +287,11 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
 
       futures.add(() async {
         try {
-          final result = await ApplyPassRepository().apiAddAppointment(appointment, context);
+          final result = isUpdate
+              ? await SearchPassRepository().apiUpdateAppointment(
+              appointment, context)
+              : await ApplyPassRepository().apiAddAppointment(
+              appointment, context);
           if (result != null) {
             await _processUploadEntry(context, imageData, result as AddAppointmentResult);
           } else {
@@ -351,6 +357,14 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
   set addAppointmentRequest(List<AddAppointmentRequest>? value) {
     if (_addAppointmentRequest == value) return;
     _addAppointmentRequest = value;
+    notifyListeners();
+  }
+
+  bool get isUpdate => _isUpdate;
+
+  set isUpdate(bool value) {
+    if (_isUpdate == value) return;
+    _isUpdate = value;
     notifyListeners();
   }
 }

@@ -27,7 +27,7 @@ class CustomTextField extends StatefulWidget {
   final bool hidePassIcon;
   final bool isEditable;
   final bool isSmallFieldFont;
-  final bool isDisable;
+  final bool isEnable;
   final String? toolTipContent;
   final DateTime? startDate;
   final DateTime? endDate;
@@ -53,7 +53,7 @@ class CustomTextField extends StatefulWidget {
     this.backgroundColor,
     this.hidePassIcon = false,
     this.isEditable = true,
-    this.isDisable = false,
+    this.isEnable = true,
     this.isSmallFieldFont = false,
     this.toolTipContent,
     this.startDate,
@@ -264,6 +264,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           obscureText: widget.isPassword && _obscureText,
           obscuringCharacter: "*",
           readOnly: !widget.isEditable,
+          enabled: widget.isEnable,
           // Disable editing directly in the text field
           enableInteractiveSelection:
           widget.keyboardType == TextInputType.datetime ? false : null,
@@ -276,12 +277,13 @@ class _CustomTextFieldState extends State<CustomTextField> {
             }
           },
           maxLines: widget.isMaxLines ?? false ? 4 : 1,
-          style: widget.isDisable ? AppFonts.textRegular17Disable : widget
-              .isSmallFieldFont ? AppFonts.textRegular14 : AppFonts
+          style: (widget.isSmallFieldFont == true && widget.isEnable == false)
+              ? AppFonts.textRegularGrey14
+              : widget.isSmallFieldFont ? AppFonts.textRegular14 : !widget.isEnable ? AppFonts.textRegularGrey17 : AppFonts
               .textRegular17,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
-            fillColor: widget.backgroundColor ?? AppColors.whiteColor,
+            fillColor: !widget.isEnable ? AppColors.disabledFieldColor : widget.backgroundColor ?? AppColors.whiteColor,
             filled: true,
             hintText: widget.hintText,
             border: OutlineInputBorder(
@@ -293,14 +295,22 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             enabledBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: widget.isDisable ? AppColors.greyColor :widget.borderColor ?? AppColors.fieldBorderColor,
+                color: !widget.isEnable ? AppColors.fieldBorderColor :widget.borderColor ?? AppColors.fieldBorderColor,
+                width: 2.5,
+              ),
+              borderRadius: BorderRadius.circular(15.0),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(
+                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
+                    .borderColor ?? AppColors.fieldBorderColor,
                 width: 2.5,
               ),
               borderRadius: BorderRadius.circular(15.0),
             ),
             errorBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: widget.isDisable ? AppColors.greyColor : widget
+                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
                     .borderColor ?? AppColors.fieldBorderColor,
                 width: 2.5,
               ),
@@ -308,21 +318,21 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             focusedBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: widget.isDisable ? AppColors.greyColor :widget.borderColor ?? AppColors.fieldBorderColor,
+                color: !widget.isEnable ? AppColors.fieldBorderColor :widget.borderColor ?? AppColors.fieldBorderColor,
                 width: 2.5,
               ),
               borderRadius: BorderRadius.circular(15.0),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderSide: BorderSide(
-                color: widget.isDisable ? AppColors.greyColor : widget
+                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
                     .borderColor ?? AppColors.fieldBorderColor,
                 width: 2.5,
               ),
               borderRadius: BorderRadius.circular(15.0),
             ),
             hintStyle: widget.hintStyle ?? AppFonts.textRegularGrey16,
-            labelStyle: widget.isDisable ? AppFonts.textRegularGrey16 :  AppFonts.textRegular17,
+            labelStyle: !widget.isEnable ? AppFonts.textRegularGrey16 :  AppFonts.textRegular17,
             errorStyle: TextStyle(color: AppColors.underscoreColor),
           ),
           validator: widget.skipValidation

@@ -248,66 +248,66 @@ void columnVisibilityPopup(BuildContext context, SearchPassNotifier searchPassNo
     context: context,
     barrierDismissible: false,
     barrierColor: AppColors.primaryColor.withOpacity(0.4),
-    builder: (_) =>
-        Dialog(
-          backgroundColor: AppColors.whiteColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              return Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                    mainAxisSize: MainAxisSize.min,
+    builder: (_) => Dialog(
+      backgroundColor: AppColors.whiteColor,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(15),
+      ),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      child: StatefulBuilder(
+        builder: (context, setState) {
+          // Filter out mandatory columns
+          final editableColumns = searchPassNotifier.columnConfigs
+              .where((config) => !config.isMandatory)
+              .toList();
+
+          return Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Customize Columns", style: AppFonts.textBold20),
+                10.verticalSpace,
+                ...editableColumns.map((config) {
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text("Customize Columns", style: AppFonts.textBold20,),
-                      10.verticalSpace,
-                      ...searchPassNotifier.columnConfigs.map((config) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(config.label, style: AppFonts.textRegular14),
-                            Transform.scale(
-                              scale: 0.8, // Reduces size of the switch
-                              child: Switch(
-                                value: config.isVisible,
-                                onChanged: config.isMandatory
-                                    ? null
-                                    : (val) {
-                                  searchPassNotifier.updateColumnVisibility(
-                                      config.label, val);
-                                  setState(() {});
-                                },
-                                activeColor: AppColors.whiteColor, // Thumb color when ON
-                                activeTrackColor: AppColors.buttonBgColor, // Track color when ON: AppColors.whiteColor,
-                                inactiveThumbColor: config.isMandatory ? AppColors.greyColor : AppColors.whiteColor, // Thumb color when OFF
-                                inactiveTrackColor: AppColors.greyColor, // Track color when OFF
-                                trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
-                                // thumbColor: WidgetStateProperty.all(AppColors.whiteColor),
-                                thumbIcon: WidgetStateProperty.all(Icon(LucideIcons.toggleLeft,size: 0,)),
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                      10.verticalSpace,
-                      SizedBox(
-                        height: 35.h,
-                        child: CustomButton(
-                          text: context.watchLang.translate(AppLanguageText.close),
-                          onPressed: () {
-                            Navigator.pop(context);
+                      Text(config.label, style: AppFonts.textRegular14),
+                      Transform.scale(
+                        scale: 0.8,
+                        child: Switch(
+                          value: config.isVisible,
+                          onChanged: (val) {
+                            searchPassNotifier.updateColumnVisibility(config.label, val);
+                            setState(() {});
                           },
+                          activeColor: AppColors.whiteColor,
+                          activeTrackColor: AppColors.buttonBgColor,
+                          inactiveThumbColor: AppColors.whiteColor,
+                          inactiveTrackColor: AppColors.greyColor,
+                          trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                          thumbIcon: WidgetStateProperty.all(
+                            Icon(LucideIcons.toggleLeft, size: 0),
+                          ),
                         ),
                       ),
-                    ]
+                    ],
+                  );
+                }),
+                10.verticalSpace,
+                SizedBox(
+                  height: 35.h,
+                  child: CustomButton(
+                    text: context.watchLang.translate(AppLanguageText.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
-              );
-            },
-          ),
-        ),
+              ],
+            ),
+          );
+        },
+      ),
+    ),
   );
 }
 

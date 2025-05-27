@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
+import 'package:mofa/model/custom_args/custom_args.dart';
 import 'package:mofa/utils/common/app_routes.dart';
+import 'package:mofa/utils/common/enum_values.dart';
 
 class ApplyPassNotifier extends BaseChangeNotifier {
 
@@ -10,7 +12,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
     Navigator.pushNamed(
       context,
       AppRoutes.stepper,
-      arguments: ApplyPassCategory.myself,
+      arguments: StepperScreenArgs(category: ApplyPassCategory.myself),
     );
   }
 
@@ -18,7 +20,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
     Navigator.pushNamed(
       context,
       AppRoutes.stepper,
-      arguments: ApplyPassCategory.someoneElse,
+      arguments: StepperScreenArgs(category: ApplyPassCategory.someoneElse),
     );
   }
 
@@ -26,7 +28,7 @@ class ApplyPassNotifier extends BaseChangeNotifier {
     Navigator.pushNamed(
       context,
       AppRoutes.stepper,
-      arguments: ApplyPassCategory.group,
+      arguments: StepperScreenArgs(category: ApplyPassCategory.group),
     );
   }
 }

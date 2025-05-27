@@ -14,6 +14,7 @@ class AppColors {
   static const Color splashBgColor = Color(0xFF232628);
   static const Color fieldBgColor = Color(0xFF1C1C1C);
   static const Color fieldBorderColor = Color(0xFFEEEEEE);
+  static const Color disabledFieldColor = Color(0xFFF3F4F6);
   static const Color greyColor = Color(0xFF9D9D9D);
   static const Color underscoreColor = Color(0xFFD45555);
   static const Color bottomBarColor = Color(0xFF1F1F1F);

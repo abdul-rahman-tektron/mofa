@@ -19,17 +19,23 @@ import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/login/login_response.dart';
+import 'package:mofa/core/model/search_comment/search_comment_request.dart';
+import 'package:mofa/core/model/search_comment/search_comment_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
+import 'package:mofa/core/remote/service/search_pass_repository.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
+import 'package:mofa/screens/search_pass/search_pass_screen.dart';
 import 'package:mofa/utils/common/app_routes.dart';
 import 'package:mofa/utils/common/encrypt.dart';
+import 'package:mofa/utils/common/enum_values.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/file_uplaod_helper.dart';
 import 'package:mofa/utils/common/secure_storage.dart';
@@ -51,14 +57,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   int? _selectedLocationId;
   int? _selectedDeviceType;
   int? _selectedDevicePurpose;
+  int _currentPage = 1;
+  int _totalPages = 1;
+  int _totalCount = 0;
+  final int _pageSize = 10;
 
   // bool
   bool _isChecked = false;
+  bool _isUpdate = false;
   bool _isCheckedDevice = true;
   bool _showDeviceFields = true;
   bool _isEditingDevice = false;
   bool _photoUploadValidation = false;
   bool _documentUploadValidation = false;
+  bool _isEnable = true;
 
   //File
   File? _uploadedImageFile;
@@ -69,6 +81,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   Uint8List? _uploadedDocumentBytes;
   Uint8List? _uploadedVehicleImageBytes;
 
+  final ScrollController scrollbarController = ScrollController();
+
   // List
   List<CountryData> _nationalityMenu = [];
   List<LocationDropdownResult> _locationDropdownData = [];
@@ -78,12 +92,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   List<VisitPurposeDropdownResult> _visitPurposeDropdownData = [];
   List<DeviceModel> _addedDevices = [];
 
+  List<SearchCommentData> _searchCommentData = [];
+
+  List<TableColumnConfig> columnConfigs = [
+    TableColumnConfig(label: 'Comment Type', isMandatory: true),
+    TableColumnConfig(label: 'Comment By', isMandatory: true),
+    TableColumnConfig(label: 'Comment', isMandatory: true),
+    TableColumnConfig(label: 'Comment Date', isVisible: true),
+  ];
+
   final List<DocumentIdModel> idTypeMenu = [
     DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
     DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
     DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
     DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
   ];
+
+  final nonEditableStatuses = ["Approved", "Expired", "Cancelled", "Rejected"];
 
   GetByIdResult? _getByIdResult;
   String? _applyPassCategory;
@@ -121,14 +146,18 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   TextEditingController _serialNumberController = TextEditingController();
   TextEditingController _devicePurposeController = TextEditingController();
 
+  //Re-submission Comment
+  TextEditingController resubmissionCommentController = TextEditingController();
+
   //Functions
-  ApplyPassCategoryNotifier(BuildContext context, ApplyPassCategory applyPassCategory) {
-    initialize(context, applyPassCategory);
+  ApplyPassCategoryNotifier(BuildContext context, ApplyPassCategory applyPassCategory, bool isUpdate, int? id) {
+    initialize(context, applyPassCategory, isUpdate, id);
   }
 
-  Future<void> initialize(BuildContext context, ApplyPassCategory category) async {
+  Future<void> initialize(BuildContext context, ApplyPassCategory category, bool isUpdate, int? id) async {
     applyPassCategory = category.name;
     final DateTime now = DateTime.now();
+    this.isUpdate = isUpdate;
 
 // Format: 21/05/2025 ،09:57 AM
     final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
@@ -139,16 +168,16 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
 // Add 1 hour and set visit end
     final DateTime oneHourLater = now.add(Duration(hours: 1));
     visitEndDateController.text = formatter.format(oneHourLater);
-    await fetchAllDropdownData(context);
-    initialDataForMySelf(context);
+    await fetchAllDropdownData(context, id);
+    initialDataForMySelf(context, id);
   }
 
-  Future<void> fetchAllDropdownData(BuildContext context) async {
-    final user = UserModel.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
+  Future<void> fetchAllDropdownData(BuildContext context, int? id) async {
+    final user = LoginTokenUserResponse.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
 
     try {
       await Future.wait([
-        if(applyPassCategory == ApplyPassCategory.myself.name) apiGetById(context, user),
+        if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, user, id),
         apiLocationDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
@@ -163,14 +192,26 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     }
   }
 
-  void initialDataForMySelf(BuildContext context) {
-    if(applyPassCategory == ApplyPassCategory.myself.name) {
-      visitorNameController.text = getByIdResult?.user?.sFullName ?? "";
-      companyNameController.text = getByIdResult?.user?.sCompanyName ?? "";
+  void initialDataForMySelf(BuildContext context, int? id) {
+    if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) {
+      if (isUpdate) {
+
+        final approvalStatus = getByIdResult?.user?.sApprovalStatusEn ?? "";
+
+        if (approvalStatus == 'Rejected' || approvalStatus == 'Cancelled' || approvalStatus == 'Expired' || approvalStatus == 'Approved') {
+          isEnable = false;
+        } else if(approvalStatus == 'Pending' || approvalStatus == 'Request Info') {
+          evaluateEditableStatus(getByIdResult?.user);
+        }
+      }
+      visitorNameController.text = isUpdate ? getByIdResult?.user?.sVisitorNameEn ?? "" : getByIdResult?.user?.sFullName ?? "";
+      companyNameController.text = isUpdate ? getByIdResult?.user?.sSponsor ?? "" : getByIdResult?.user?.sCompanyName ?? "";
       nationalityController.text = getByIdResult?.user?.sNationalityEn ?? "";
-      phoneNumberController.text = getByIdResult?.user?.sMobileNumber ?? "";
-      emailController.text = getByIdResult?.user?.sEmail ?? "";
+      phoneNumberController.text = isUpdate ? getByIdResult?.user?.visitorMobile ?? "" : getByIdResult?.user?.sMobileNumber ?? "";
+      emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" :getByIdResult?.user?.sEmail ?? "";
       idTypeController.text = getByIdResult?.user?.dTypeEn ?? "";
+      selectedIdValue = getByIdResult?.user?.nDocumentType.toString() ?? "";
+      selectedIdType = getByIdResult?.user?.dTypeEn ?? "";
       iqamaController.text = (getByIdResult?.user?.sIqama?.isNotEmpty ?? false)
           ? decryptAES(getByIdResult!.user!.sIqama!)
           : "";
@@ -193,23 +234,34 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
           ? decryptAES(getByIdResult!.user!.sOthersValue!)
           : "";
-      expiryDateController.text = (() {
-        final rawDate = getByIdResult?.user?.dTIqamaExpiry ?? "";
-        try {
-          final parsed = DateFormat("M/d/yyyy h:mm:ss a").parse(rawDate);
-          final now = DateTime.now();
-          final today = DateTime(now.year, now.month, now.day);
-          final parsedDate = DateTime(parsed.year, parsed.month, parsed.day);
-
-          if (parsedDate.isBefore(today)) {
-            return "";
-          }
-          return DateFormat("dd/MM/yyyy").format(parsed);
-        } catch (_) {
-          return "";
-        }
-      })();
+      expiryDateController.text =
+          getByIdResult?.user?.dTIqamaExpiry?.toDisplayDateOnly() ?? "";
       vehicleNumberController.text = getByIdResult?.user?.sVehicleNo ?? "";
+
+      //Update Part
+      if(isUpdate) {
+        apiGetSearchComment(context, id);
+        locationController.text = getByIdResult?.user?.sLocationNameEn ?? "";
+        visitRequestTypeController.text = getByIdResult?.user?.sVisitorTypeEn ?? "";
+        selectedVisitRequest = getByIdResult?.user?.nVisaType.toString() ?? "";
+        visitPurposeController.text = getByIdResult?.user?.sPurposeE ?? "";
+        selectedVisitPurpose = getByIdResult?.user?.purpose.toString() ?? "";
+        mofaHostEmailController.text = getByIdResult?.user?.sVisitingPersonEmail ?? "";
+        visitStartDateController.text = getByIdResult?.user?.dtAppointmentStartTime?.toDisplayDateTime() ?? "";
+        visitEndDateController.text = getByIdResult?.user?.dtAppointmentEndTime?.toDisplayDateTime() ?? "";
+        addMultipleDevicesFromResult(getByIdResult?.devices);
+      }
+    }
+  }
+
+  void evaluateEditableStatus(GetByIdUser? details) {
+    final currentOrder = details?.nCurrentApproverOrderNo ?? -1;
+    final isMoreInfoRequired = details?.nIsHostRequiredMoreInfo == 1;
+
+    if (currentOrder > 1) {
+      isEnable = isMoreInfoRequired; // true if 1, false if 0
+    } else {
+      isEnable = true; // always editable for currentOrder <= 1
     }
   }
 
@@ -217,6 +269,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     await ApplyPassRepository().apiGetFile(
       GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
       context,
+      isUpdate: isUpdate,
     ).then((value) {
       if (type == 1) {
         uploadedImageBytes =
@@ -271,11 +324,33 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     },);
   }
 
+  Future<void> apiGetSearchComment(BuildContext context, int? id, {int? page}) async {
+
+    final response = await SearchPassRepository().apiSearchComment(
+      SearchCommentRequest(
+        encryptedId: id.toString() ?? "",
+        nCommentType: 20,
+        nRoleId: 0,
+        pageNumber: page ?? 1,
+        pageSize: 10,
+        search: "",
+      ),
+      context,
+    );
+
+    final result = response as SearchCommentResult;
+    searchCommentData = List<SearchCommentData>.from(result.data ?? []);
+    _totalPages = result.pagination?.pages ?? 1;
+    _totalCount = result.pagination?.count ?? 0;
+
+    notifyListeners();
+  }
+
 
   //GetById Api Call
-  Future apiGetById(BuildContext context, UserModel user) async {
+  Future apiGetById(BuildContext context, LoginTokenUserResponse user, int? id) async {
     await ApplyPassRepository().apiGetById(
-        DeviceDropdownRequest(encryptedId: encryptAES(user.nExternalRegistrationId.toString())), context).then((value) {
+        DeviceDropdownRequest(encryptedId: encryptAES(isUpdate ? id.toString() : user.userId.toString())), context, isUpdate: isUpdate).then((value) {
       getByIdResult = value as GetByIdResult;
     },);
   }
@@ -384,9 +459,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
         break;
     }
 
-    print("addedDevices");
-    print(addedDevices);
-
     final appointmentData = AddAppointmentRequest(
       fullName: visitorNameController.text,
       sponsor: companyNameController.text,
@@ -420,6 +492,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
           0,
       haveOthers: getByIdResult?.user?.haveOthers ?? 0,
       lastAppointmentId: getByIdResult?.user?.nAppointmentId ?? 0,
+      nSelfPass: getByIdResult?.user?.nSelfPass ??
+          ((applyPassCategory == ApplyPassCategory.myself.name) ? 1 : 2),
+      nVisitCreatedFrom: 2,
+      nVisitUpdatedFrom: 2,
+      resubmissionComments: resubmissionCommentController.text,
     );
 
     log("appointmentData.toString()");
@@ -446,6 +523,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       return AddAppointmentRequest.fromJson(jsonMap);
     }
     return null;
+  }
+
+  void goToPreviousPage(BuildContext context, int? id) {
+    if (_currentPage > 1) {
+      _currentPage--;
+      apiGetSearchComment(context, id);
+    }
+  }
+
+  void goToNextPage(BuildContext context, int? id) {
+    if (_currentPage < _totalPages) {
+      _currentPage++;
+      apiGetSearchComment(context, id);
+    }
   }
 
 
@@ -572,6 +663,31 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
+  void addMultipleDevicesFromResult(List<DeviceResult>? results) {
+    if (results == null) return;
+
+    final deviceModels = results.map((r) {
+      var deviceType = r.deviceType == 2246 ? "Laptop" : r.deviceType == 2247 ? "Phone" : r.deviceType == 2248 ? "Tablet" : r.deviceType == 2249 ? "USB Drive" : "Other";
+      var devicePurpose = r.devicePurpose == 2251 ? "Presentation" : r.devicePurpose == 2252 ? "Data Collection" : r.devicePurpose == 2253 ? "General Use" : r.devicePurpose == 2254 ? "Other" : "";
+      return DeviceModel(
+        appointmentDeviceId: r.appointmentDeviceId ?? 0,
+        deviceType: r.deviceType,
+        deviceTypeString: deviceType,
+        deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
+        deviceModel: r.deviceModel ?? "",
+        serialNumber: r.serialNumber ?? "",
+        devicePurpose: r.devicePurpose,
+        devicePurposeString: devicePurpose,
+        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+        approvalStatus: r.approvalStatus ?? 50,
+      );
+    } ).toList();
+
+    addedDevices.addAll(deviceModels);
+    showDeviceFields = false;
+    notifyListeners();
+  }
+
   Future<void> nextButton(BuildContext context, VoidCallback onNext) async {
     final isValid = await validation(context);
     if (isValid) {
@@ -580,7 +696,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     }
   }
 
-
+  bool get isFormActionAllowed {
+    final status = getByIdResult?.user?.sApprovalStatusEn;
+    return isEnable || !nonEditableStatuses.contains(status);
+  }
 
   Future<bool> validation(BuildContext context) async {
     bool formValid = formKey.currentState!.validate();
@@ -629,8 +748,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       return false;
     }
 
-    final hasNoDuplicates = await apiDuplicateAppointment(context);
-    if (!hasNoDuplicates) return false;
+    if(!isUpdate) {
+      final hasNoDuplicates = await apiDuplicateAppointment(context);
+      if (!hasNoDuplicates) return false;
+    }
 
     return true;
   }
@@ -646,6 +767,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set isChecked(bool value) {
     if (_isChecked == value) return;
     _isChecked = value;
+    notifyListeners();
+  }
+
+  bool get isUpdate => _isUpdate;
+
+  set isUpdate(bool value) {
+    if (_isUpdate == value) return;
+    _isUpdate = value;
     notifyListeners();
   }
 
@@ -974,6 +1103,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
+  List<SearchCommentData> get searchCommentData => _searchCommentData;
+
+  set searchCommentData(List<SearchCommentData> value) {
+    if (_searchCommentData == value) return;
+    _searchCommentData = value;
+    notifyListeners();
+  }
+
   bool get showDeviceFields => _showDeviceFields;
 
   set showDeviceFields(bool value) {
@@ -1054,6 +1191,17 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
+  int get currentPage => _currentPage;
+
+  set currentPage(int value) {
+    if (_currentPage == value) return;
+    _currentPage = value;
+    notifyListeners();
+  }
+
+  int get totalPages => _totalPages;
+  int get totalCount => _totalCount;
+
   int? get selectedDevicePurpose => _selectedDevicePurpose;
 
   set selectedDevicePurpose(int? value) {
@@ -1075,6 +1223,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   set documentUploadValidation(bool value) {
     if (_documentUploadValidation == value) return;
     _documentUploadValidation = value;
+    notifyListeners();
+  }
+
+  bool get isEnable => _isEnable;
+
+  set isEnable(bool value) {
+    if (_isEnable == value) return;
+    _isEnable = value;
     notifyListeners();
   }
 

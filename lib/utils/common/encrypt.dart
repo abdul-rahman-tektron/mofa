@@ -19,22 +19,41 @@ String encryptAES(String plainText) {
   );
 
   final encrypted = encrypter.encrypt(plainText, iv: ivBytes);
-  return encrypted.base64;
+  return plainText;
+  // return encrypted.base64;
 }
 
 
 String decryptAES(String encryptedText) {
-  final keyBytes = encrypt.Key.fromUtf8(key);
-  final ivBytes = encrypt.IV.fromUtf8(iv);
+  // final keyBytes = encrypt.Key.fromUtf8(key);
+  // final ivBytes = encrypt.IV.fromUtf8(iv);
+  //
+  // final encrypter = encrypt.Encrypter(
+  //   encrypt.AES(
+  //     keyBytes,
+  //     mode: encrypt.AESMode.cbc,
+  //     padding: 'PKCS7',
+  //   ),
+  // );
+  //
+  // final decrypted = encrypter.decrypt64(encryptedText, iv: ivBytes);
+  // return decrypted;
+  return encryptedText;
+}
 
-  final encrypter = encrypt.Encrypter(
-    encrypt.AES(
-      keyBytes,
-      mode: encrypt.AESMode.cbc,
-      padding: 'PKCS7',
-    ),
-  );
+Map<String, dynamic> decodeJwtPayload(String token) {
+  try {
+    final parts = token.split('.');
+    if (parts.length != 3) {
+      throw Exception('Invalid JWT');
+    }
 
-  final decrypted = encrypter.decrypt64(encryptedText, iv: ivBytes);
-  return decrypted;
+    final payload = parts[1];
+    final normalized = base64.normalize(payload);
+    final decoded = utf8.decode(base64Url.decode(normalized));
+    return json.decode(decoded) as Map<String, dynamic>;
+  } catch (e) {
+    print('JWT decoding error: $e');
+    return {};
+  }
 }

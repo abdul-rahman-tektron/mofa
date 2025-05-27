@@ -15,6 +15,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_notifier.dart';
 import 'package:mofa/utils/common/common_validation.dart';
+import 'package:mofa/utils/common/enum_values.dart';
 import 'package:mofa/utils/common/extensions.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
@@ -25,11 +26,15 @@ import 'package:provider/provider.dart';
 class ApplyPassGroupScreen extends StatelessWidget {
   final ApplyPassCategory category;
   final VoidCallback onNext;
+  final bool isUpdate;
+  final int? id;
 
   const ApplyPassGroupScreen({
     super.key,
     required this.onNext,
     required this.category,
+    this.isUpdate = false,
+    this.id,
   });
 
   @override
@@ -44,10 +49,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildBody(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget buildBody(BuildContext context,
+      ApplyPassGroupNotifier applyPassGroupNotifier,) {
     return Column(children: [mainBody(context, applyPassGroupNotifier)]);
   }
 

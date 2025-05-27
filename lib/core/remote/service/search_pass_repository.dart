@@ -22,6 +22,8 @@ import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/login/login_response.dart';
+import 'package:mofa/core/model/search_comment/search_comment_request.dart';
+import 'package:mofa/core/model/search_comment/search_comment_response.dart';
 import 'package:mofa/core/model/validate_email/validate_email_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
@@ -114,6 +116,53 @@ class SearchPassRepository extends BaseRepository {
       forgetPasswordResponseFromJson(jsonEncode(response?.data));
 
       return cancelAppointmentResponse.message;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Location Dropdown
+  Future<Object?> apiSearchComment(SearchCommentRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathSearchComments,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      SearchCommentResponse searchCommentResponse =
+      searchCommentResponseFromJson(jsonEncode(response?.data));
+
+      return searchCommentResponse.result;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Add Appointment
+  Future<Object?> apiUpdateAppointment(AddAppointmentRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathUpdateAppointment,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      AddAppointmentResponse addAppointmentResponse =
+      addAppointmentResponseFromJson(jsonEncode(response?.data));
+
+      return addAppointmentResponse.result;
+
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

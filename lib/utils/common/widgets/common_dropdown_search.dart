@@ -12,6 +12,7 @@ class CustomSearchDropdown<T> extends StatefulWidget {
   final void Function(T?)? onSelected;
   final TextEditingController controller;
   final bool skipValidation;
+  final bool isEnable;
   final String? Function(String?)? validator;
   final String? toolTipContent;
   final bool isSmallFieldFont;
@@ -24,6 +25,7 @@ class CustomSearchDropdown<T> extends StatefulWidget {
     required this.hintText,
     required this.itemLabel,
     this.onSelected,
+    this.isEnable = true,
     this.skipValidation = false,
     this.validator,
     this.toolTipContent,
@@ -215,9 +217,14 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 _showOverlay();
               }
             },
-            style: widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17,
+            style: (widget.isSmallFieldFont == true && widget.isEnable == false)
+                ? AppFonts.textRegularGrey14
+                : widget.isSmallFieldFont ? AppFonts.textRegular14 : !widget
+                .isEnable ? AppFonts.textRegularGrey17 : AppFonts
+                .textRegular17,
             validator: widget.skipValidation ? null : widget.validator ?? CommonValidation().commonValidator,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            enabled: widget.isEnable,
             decoration: InputDecoration(
               hintText: widget.hintText,
               hintStyle: widget.isSmallFieldFont ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey16,
@@ -226,7 +233,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 vertical: 18,
               ),
               filled: true,
-              fillColor: AppColors.whiteColor,
+              fillColor: !widget.isEnable ? AppColors.disabledFieldColor : AppColors.whiteColor,
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: Row(
@@ -295,6 +302,13 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 borderRadius: BorderRadius.circular(15),
               ),
               focusedErrorBorder: OutlineInputBorder(
+                borderSide: const BorderSide(
+                  color: AppColors.fieldBorderColor,
+                  width: 2.5,
+                ),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              disabledBorder: OutlineInputBorder(
                 borderSide: const BorderSide(
                   color: AppColors.fieldBorderColor,
                   width: 2.5,

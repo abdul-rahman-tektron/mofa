@@ -14,12 +14,21 @@ class AppFonts {
     color: AppColors.textColor,
     letterSpacing: 0.5,
   );
+
+  static const textRegularGrey17 = TextStyle(
+    fontSize: 17,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textFieldTextColor,
+    letterSpacing: 0.5,
+  );
+
   static const textBold28 = TextStyle(
     fontSize: 28,
     fontWeight: FontWeight.bold,
     color: AppColors.textColor,
     letterSpacing: 0.5,
   );
+
   static const textBold48 = TextStyle(
     fontSize: 48,
     fontWeight: FontWeight.bold,
@@ -99,6 +108,14 @@ class AppFonts {
     color: AppColors.textColor,
     letterSpacing: 0.5,
   );
+
+  static const textMediumBlueGrey12 = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w500,
+    color: Colors.blueGrey,
+    letterSpacing: 0.5,
+  );
+
   static const textMedium12green = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w700,
@@ -114,6 +131,13 @@ class AppFonts {
 
   static const textRegularGrey16 = TextStyle(
     fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textFieldTextColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegularGrey10 = TextStyle(
+    fontSize: 10,
     fontWeight: FontWeight.normal,
     color: AppColors.textFieldTextColor,
     letterSpacing: 0.5,

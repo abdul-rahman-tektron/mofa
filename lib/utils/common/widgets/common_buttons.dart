@@ -36,8 +36,8 @@ class CustomButton extends StatelessWidget {
       onPressed: onPressed ?? () {},
       style: ElevatedButton.styleFrom(
         // textStyle: textFont ?? AppFonts.textSemiBold16,
-        backgroundColor: backgroundColor ?? AppColors.buttonBgColor,
-        foregroundColor: backgroundColor == AppColors.buttonBgColor
+        backgroundColor: onPressed == null ? AppColors.buttonBgColor.withOpacity(0.5) : backgroundColor ?? AppColors.buttonBgColor,
+        foregroundColor: onPressed == null ? AppColors.buttonBgColor.withOpacity(0.5) :backgroundColor == AppColors.buttonBgColor
             ? Colors.white
             : AppColors.buttonBgColor,
         padding: padding ?? null,
@@ -78,6 +78,7 @@ class CustomButton extends StatelessWidget {
         ),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(text, style: textFont ?? AppFonts.textButtonStyle),
           3.horizontalSpace,
@@ -99,7 +100,7 @@ class CustomButton extends StatelessWidget {
 
 class CustomUploadButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final Color? backgroundColor;
   final TextStyle? textFont;
   final IconData? buttonIcon;

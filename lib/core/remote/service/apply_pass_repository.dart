@@ -138,22 +138,27 @@ class ApplyPassRepository extends BaseRepository {
   }
 
   //api: Get by id
-  Future<Object?> apiGetById(DeviceDropdownRequest requestParams, BuildContext context) async {
+  Future<Object?> apiGetById(DeviceDropdownRequest requestParams, BuildContext context, {bool isUpdate = false}) async {
 
     final token = await SecureStorageHelper.getToken();
 
     Response? response = await networkProvider.call(
       method: Method.POST,
-      pathUrl: AppUrl.pathGetById,
+      pathUrl: isUpdate ? AppUrl.pathGetByIdAppointment : AppUrl.pathGetById,
       body: jsonEncode(requestParams),
       headers: buildDefaultHeaderWithToken(token ?? ""),
     );
 
     if (response?.statusCode == HttpStatus.ok) {
-      GetByIdResponse getByIdResponse =
-      getByIdResponseFromJson(jsonEncode(response?.data));
+      try{
+        GetByIdResponse getByIdResponse =
+        getByIdResponseFromJson(jsonEncode(response?.data));
 
-      return getByIdResponse.result;
+        return getByIdResponse.result;
+      } catch (e) {
+        print(e);
+        return null;
+      }
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;
@@ -161,13 +166,13 @@ class ApplyPassRepository extends BaseRepository {
   }
 
   //api: Device Dropdown
-  Future<Object?> apiGetFile(GetFileRequest requestParams, BuildContext context) async {
+  Future<Object?> apiGetFile(GetFileRequest requestParams, BuildContext context, {bool isUpdate = false}) async {
 
     final token = await SecureStorageHelper.getToken();
 
     Response? response = await networkProvider.call(
       method: Method.POST,
-      pathUrl: AppUrl.pathGetFile,
+      pathUrl: isUpdate ? AppUrl.pathExternalGetFile : AppUrl.pathGetFile,
       body: jsonEncode(requestParams),
       headers: buildDefaultHeaderWithToken(token ?? ""),
     );
