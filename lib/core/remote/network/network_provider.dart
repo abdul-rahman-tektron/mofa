@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
@@ -83,6 +84,7 @@ class NetworkProvider {
     try {
       logger.i("📤 Request => ${method.name} $url");
       if (body != null) logger.d("📦 Body: $body");
+      log("📦 Body: $body");
 
       Response response;
 
@@ -103,6 +105,7 @@ class NetworkProvider {
 
       logger.i("✅ Response [${response.statusCode}] from $url");
       logger.d("📨 Data: ${jsonEncode(response.data)}");
+      log("📨 Data: ${jsonEncode(response.data)}");
 
       return response;
     } on DioError catch (e) {

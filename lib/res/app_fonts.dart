@@ -86,6 +86,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textRegular16White = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: AppColors.whiteColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegularBullet14 = TextStyle(
     fontSize: 14,
     fontWeight: FontWeight.normal,
@@ -178,6 +185,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textRegular11 = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegular18 = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.normal,
@@ -205,6 +219,20 @@ class AppFonts {
     fontSize: 20,
     fontWeight: FontWeight.normal,
     color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegular24 = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegular24White = TextStyle(
+    fontSize: 24,
+    fontWeight: FontWeight.normal,
+    color: AppColors.whiteColor,
     letterSpacing: 0.5,
   );
 

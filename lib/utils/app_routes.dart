@@ -8,8 +8,10 @@ import 'package:mofa/screens/apply_pass/apply_pass_screen.dart';
 import 'package:mofa/screens/apply_pass_category/apply_pass_category_screen.dart'
     show ApplyPassCategoryScreen;
 import 'package:mofa/screens/bottom_bar/bottom_bar_screen.dart';
+import 'package:mofa/screens/change_password/change_password_screen.dart';
 import 'package:mofa/screens/custom_screen/network_error_screen.dart';
 import 'package:mofa/screens/custom_screen/not_found_screen.dart';
+import 'package:mofa/screens/delete_account/delete_account_screen.dart';
 import 'package:mofa/screens/edit_profile/edit_profile_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_screen.dart';
@@ -30,6 +32,8 @@ class AppRoutes {
   static const String finishApplyPass = '/finish-apply-pass';
   static const String pdfViewer = '/pdf_viewer';
   static const String editProfile = '/edit-profile';
+  static const String deleteAccount = '/delete-account';
+  static const String changePassword = '/change-password';
   static const String networkError = '/network-error';
   static const String notFound = '/not-found';
 }
@@ -44,7 +48,8 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
 
       case AppRoutes.bottomBar:
-        return MaterialPageRoute(builder: (_) => BottomBarScreen());
+        final args = settings.arguments as int?;
+        return MaterialPageRoute(builder: (_) => BottomBarScreen(currentIndex: args,));
 
       case AppRoutes.applyPass:
         return MaterialPageRoute(builder: (_) => const ApplyPassScreen());
@@ -58,13 +63,13 @@ class AppRouter {
       case AppRoutes.stepper:
         final args = settings.arguments as StepperScreenArgs;
         return MaterialPageRoute(
-          builder: (_) => StepperHandlerScreen(
-            category: args.category,
-            isUpdate: args.isUpdate,
-            id: args.id,
-          ),
+          builder:
+              (_) => StepperHandlerScreen(
+                category: args.category,
+                isUpdate: args.isUpdate,
+                id: args.id,
+              ),
         );
-
 
       case AppRoutes.applyPassCategory:
         final args = settings.arguments as ApplyPassCategory;
@@ -79,11 +84,14 @@ class AppRouter {
               (_) => HealthAndSafetyScreen(onNext: () {}, onPrevious: () {}),
         );
 
-        case AppRoutes.editProfile:
-        return MaterialPageRoute(
-          builder:
-              (_) => EditProfileScreen(),
-        );
+      case AppRoutes.editProfile:
+        return MaterialPageRoute(builder: (_) => EditProfileScreen());
+
+      case AppRoutes.deleteAccount:
+        return MaterialPageRoute(builder: (_) => DeleteAccountScreen());
+
+      case AppRoutes.changePassword:
+        return MaterialPageRoute(builder: (_) => ChangePasswordScreen());
 
       case AppRoutes.finishApplyPass:
         return MaterialPageRoute(

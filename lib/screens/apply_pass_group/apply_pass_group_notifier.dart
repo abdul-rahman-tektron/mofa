@@ -22,6 +22,7 @@ import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/device/device_model.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/encrypt.dart';
@@ -114,6 +115,9 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   List<VisitorDetailModel> _addedVisitors = [];
   List<Map> _imageList = [];
 
+
+  LoginTokenUserResponse? _userResponse;
+
   final List<DocumentIdModel> idTypeMenu = [
     DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
     DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
@@ -142,6 +146,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   }
 
   Future<void> fetchAllDropdownData(BuildContext context) async {
+    userResponse = LoginTokenUserResponse.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
     try {
       await Future.wait([
         apiLocationDropdown(context),
@@ -533,6 +538,9 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
         purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
         remarks: noteController.text,
         sVisitingPersonEmail: mofaHostEmailController.text,
+        userId: int.parse(userResponse?.userId ?? "0"),
+        nExternalRegistrationId: int.parse(userResponse?.userId ?? "0"),
+        nCreatedByExternal: int.parse(userResponse?.userId ?? "0"),
         haveEid: 0,
         havePassport: 0,
         haveIqama: 0,
@@ -793,6 +801,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier {
   set serialNumberController(TextEditingController value) {
     if (_serialNumberController == value) return;
     _serialNumberController = value;
+    notifyListeners();
+  }
+
+  LoginTokenUserResponse? get userResponse => _userResponse;
+
+  set userResponse(LoginTokenUserResponse? value) {
+    if (_userResponse == value) return;
+    _userResponse = value;
     notifyListeners();
   }
 

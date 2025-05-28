@@ -130,6 +130,7 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.emailAddressController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       isSmallFieldFont: true,
+      isEnable: false,
       validator: CommonValidation().validateEmail,
     );
   }

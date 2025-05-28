@@ -101,6 +101,7 @@ class GetExternalAppointmentData {
   int? nDetailedCode;
   String? sApprovalStatusAr;
   String? sApprovalStatusEn;
+  String? sQRCodeValue;
   int? approvalStatus;
   dynamic sCovidFile;
   dynamic sCovidFileType;
@@ -180,6 +181,7 @@ class GetExternalAppointmentData {
     this.sDepartmentNameEn,
     this.sDepartmentNameAr,
     this.dtCovidDate,
+    this.sQRCodeValue,
     this.sVisitingPersonEmail,
     this.dtAppointmentStartTime,
     this.dtAppointmentEndTime,
@@ -280,6 +282,7 @@ class GetExternalAppointmentData {
     dtAppointmentEndTime: json["dt_AppointmentEndTime"],
     nHostId: json["n_HostID"],
     isCheckedIn: json["is_CheckedIN"],
+    sQRCodeValue: json["s_QRCodeValue"],
     userId: json["user_id"],
     nIsDeleted: json["n_IsDeleted"],
     iso3: json["iso3"],
@@ -366,6 +369,7 @@ class GetExternalAppointmentData {
     "n_LocationID": nLocationId,
     "s_LocationName_Ar": sLocationNameAr,
     "s_LocationName_En": sLocationNameEn,
+    "s_QRCodeValue": sQRCodeValue,
     "n_DepartmentID": nDepartmentId,
     "s_DepartmentName_En": sDepartmentNameEn,
     "s_DepartmentName_Ar": sDepartmentNameAr,

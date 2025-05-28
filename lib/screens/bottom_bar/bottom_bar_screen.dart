@@ -11,12 +11,13 @@ import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:provider/provider.dart';
 
 class BottomBarScreen extends StatelessWidget {
-  const BottomBarScreen({super.key});
+  final int? currentIndex;
+  const BottomBarScreen({super.key, this.currentIndex = 0});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => BottomBarNotifier(),
+      create: (context) => BottomBarNotifier(currentIndex),
       child: Consumer<BottomBarNotifier>(
         builder: (context, bottomBarNotifier, child) {
           return buildBody(context, bottomBarNotifier);

@@ -25,10 +25,10 @@ class CommonValidation {
   // Validates password input
   String? validateConfirmPassword(String? oldValue, String? newValue) {
     if (newValue == null || newValue.isEmpty) {
-      return 'Required confirm password';
+      return 'Confirm Password is required';
     }
     if (oldValue != newValue) {
-      return 'Passwords do not match';
+      return 'Passwords must match';
     }
     return null;
   }

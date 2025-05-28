@@ -21,9 +21,11 @@ import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dar
 import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/search_comment/search_comment_request.dart';
 import 'package:mofa/core/model/search_comment/search_comment_response.dart';
+import 'package:mofa/core/model/validate_photo_config/validate_photo_config_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
+import 'package:mofa/core/model/visiting_hours_config/visiting_hours_config_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
@@ -34,6 +36,7 @@ import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/search_pass/search_pass_screen.dart';
 import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/encrypt.dart';
 import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/extensions.dart';
@@ -43,7 +46,7 @@ import 'package:mofa/utils/toast_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ApplyPassCategoryNotifier extends BaseChangeNotifier{
+class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
 
   // String
   String? _selectedNationality;
@@ -71,6 +74,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   bool _photoUploadValidation = false;
   bool _documentUploadValidation = false;
   bool _isEnable = true;
+  bool _isValidatePhotoFromFR = false;
 
   //File
   File? _uploadedImageFile;
@@ -80,6 +84,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   Uint8List? _uploadedImageBytes;
   Uint8List? _uploadedDocumentBytes;
   Uint8List? _uploadedVehicleImageBytes;
+
+  TimeOfDay? _apiVisitStartTime;
+  TimeOfDay? _apiVisitEndTime;
 
   final ScrollController scrollbarController = ScrollController();
 
@@ -149,6 +156,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   //Re-submission Comment
   TextEditingController resubmissionCommentController = TextEditingController();
 
+  LoginTokenUserResponse? _userResponse;
+
   //Functions
   ApplyPassCategoryNotifier(BuildContext context, ApplyPassCategory applyPassCategory, bool isUpdate, int? id) {
     initialize(context, applyPassCategory, isUpdate, id);
@@ -173,17 +182,18 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   Future<void> fetchAllDropdownData(BuildContext context, int? id) async {
-    final user = LoginTokenUserResponse.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
+    userResponse = LoginTokenUserResponse.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
 
     try {
       await Future.wait([
-        if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, user, id),
+        if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, userResponse!, id),
         apiLocationDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
         apiVisitPurposeDropdown(context),
         apiDeviceTypeDropdown(context),
         apiDevicePurposeDropdown(context),
+        apiVisitingHoursConfig(context),
       ]);
       // notifyListeners(); // if any UI depends on dropdowns
     } catch (e) {
@@ -207,6 +217,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       visitorNameController.text = isUpdate ? getByIdResult?.user?.sVisitorNameEn ?? "" : getByIdResult?.user?.sFullName ?? "";
       companyNameController.text = isUpdate ? getByIdResult?.user?.sSponsor ?? "" : getByIdResult?.user?.sCompanyName ?? "";
       nationalityController.text = getByIdResult?.user?.sNationalityEn ?? "";
+      selectedNationality = getByIdResult?.user?.iso3 ?? "";
       phoneNumberController.text = isUpdate ? getByIdResult?.user?.visitorMobile ?? "" : getByIdResult?.user?.sMobileNumber ?? "";
       emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" :getByIdResult?.user?.sEmail ?? "";
       idTypeController.text = getByIdResult?.user?.dTypeEn ?? "";
@@ -259,7 +270,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     final isMoreInfoRequired = details?.nIsHostRequiredMoreInfo == 1;
 
     if (currentOrder > 1) {
-      isEnable = isMoreInfoRequired; // true if 1, false if 0
+      isEnable = isMoreInifoRequired; // true if 1, false if 0
     } else {
       isEnable = true; // always editable for currentOrder <= 1
     }
@@ -269,7 +280,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     await ApplyPassRepository().apiGetFile(
       GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
       context,
-      isUpdate: isUpdate,
     ).then((value) {
       if (type == 1) {
         uploadedImageBytes =
@@ -403,6 +413,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     },);
   }
 
+  Future apiVisitingHoursConfig(BuildContext context) async {
+    await ApplyPassRepository().apiVisitingHoursConfig(
+        {}, context).then((value) {
+          final result = value as VisitingHoursConfigResult;
+      apiVisitStartTime = parseTimeStringToTimeOfDay(result.visitorsStartTime ?? "");
+      apiVisitEndTime = parseTimeStringToTimeOfDay(result.visitorsEndTime ?? "");
+    },);
+  }
+
+  Future apiValidatePhotoConfig(BuildContext context) async {
+    await ApplyPassRepository().apiValidatePhotoConfig(
+        {}, context).then((value) {
+      var validatePhotoConfigData = value as ValidatePhotoConfigResult;
+      isValidatePhotoFromFR = validatePhotoConfigData.isValidatePhotoFromFr ?? false;
+    },);
+  }
+
   Future<bool> apiValidateEmail(BuildContext context) async {
     try {
       final result = await ApplyPassRepository().apiValidateEmail(
@@ -462,7 +489,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     final appointmentData = AddAppointmentRequest(
       fullName: visitorNameController.text,
       sponsor: companyNameController.text,
-      nationality: nationalityController.text,
+      nationality: selectedNationality,
       mobileNo: phoneNumberController.text,
       email: emailController.text,
       idType: int.parse(selectedIdValue ?? ""),
@@ -488,6 +515,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
       havePassport: getByIdResult?.user?.havePassport ?? 0,
       haveIqama: getByIdResult?.user?.haveIqama ?? 0,
       havePhoto: getByIdResult?.user?.havePhoto ?? 0,
+      userId: int.parse(userResponse!.userId ?? "0"),
+      nExternalRegistrationId: int.parse(userResponse!.userId ?? "0"),
+      nCreatedByExternal: int.parse(userResponse!.userId ?? "0"),
       haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration ??
           0,
       haveOthers: getByIdResult?.user?.haveOthers ?? 0,
@@ -702,58 +732,105 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
   }
 
   Future<bool> validation(BuildContext context) async {
-    bool formValid = formKey.currentState!.validate();
-
-    final user = getByIdResult?.user;
-
-    photoUploadValidation = !(
-        (user?.havePhoto ?? 0) == 1 ||  // User already has photo on server
-            uploadedImageFile != null        // Or user uploaded locally
-    );
-
-    documentUploadValidation = !(
-        ((user?.haveIqama ?? 0) == 1 ||
-            (user?.havePassport ?? 0) == 1 ||
-            (user?.haveEid ?? 0) == 1 ||
-            (user?.haveOthers ?? 0) == 1) ||
-            uploadedDocumentFile != null
-    );
-
-    if (!formValid) {
+    if (!formKey.currentState!.validate()) {
       ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
-    }
-
-    if (!formValid || photoUploadValidation || documentUploadValidation) {
       return false;
     }
 
-    // Local validations passed, now call APIs
-    final isEmailValid = await apiValidateEmail(context);
-    if (!isEmailValid) return false;
+    if (!_isPhotoValid(context) || !_isDocumentValid(context)) {
+      return false;
+    }
 
-    final dateFormatWithTime = DateFormat("dd/MM/yyyy '،'hh:mm a");
-    final dateFormatWithoutTime = DateFormat("dd/MM/yyyy");
+    if (!_isVisitTimeWithinApiRange(context)) {
+      return false;
+    }
 
+    if (!await _isEmailValid(context)) {
+      return false;
+    }
+
+    if (!_isExpiryAfterVisitEnd(context)) {
+      return false;
+    }
+
+    if (!isUpdate && !await _hasNoDuplicates(context)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  bool _isPhotoValid(BuildContext context) {
+    final user = getByIdResult?.user;
+    final isValid = (user?.havePhoto ?? 0) == 1 || uploadedImageFile != null;
+    if (!isValid) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
+    }
+    return isValid;
+  }
+
+  bool _isDocumentValid(BuildContext context) {
+    final user = getByIdResult?.user;
+    final isValid = ((user?.haveIqama ?? 0) == 1 ||
+        (user?.havePassport ?? 0) == 1 ||
+        (user?.haveEid ?? 0) == 1 ||
+        (user?.haveOthers ?? 0) == 1) ||
+        uploadedDocumentFile != null;
+    if (!isValid) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
+    }
+    return isValid;
+  }
+
+  bool _isVisitTimeWithinApiRange(BuildContext context) {
+    final visitStart = parseFullDateStringToTimeOfDay(visitStartDateController.text);
+    final visitEnd = parseFullDateStringToTimeOfDay(visitEndDateController.text);
+
+    if (apiVisitStartTime != null && apiVisitEndTime != null &&
+        visitStart != null && visitEnd != null) {
+
+      final isVisitStartValid = !isBeforeTimeOfDay(visitStart, apiVisitStartTime!);
+      final isVisitEndValid = !isAfterTimeOfDay(visitEnd, apiVisitEndTime!);
+
+      if (!isVisitStartValid || !isVisitEndValid) {
+        final startTimeFormatted = apiVisitStartTime!.format(context);
+        final endTimeFormatted = apiVisitEndTime!.format(context);
+
+        ToastHelper.showError(
+            "Visit time should be between $startTimeFormatted - $endTimeFormatted"
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  Future<bool> _isEmailValid(BuildContext context) async {
+    return await apiValidateEmail(context);
+  }
+
+  bool _isExpiryAfterVisitEnd(BuildContext context) {
     try {
+      final dateFormatWithTime = DateFormat("dd/MM/yyyy '،'hh:mm a");
+      final dateFormatWithoutTime = DateFormat("dd/MM/yyyy");
+
       final expiryDate = dateFormatWithoutTime.parse(expiryDateController.text);
       final visitEndDate = dateFormatWithTime.parse(visitEndDateController.text);
 
-      // Check if expiry date is before visit end date (date-only vs date-time)
       if (expiryDate.isBefore(visitEndDate)) {
         ToastHelper.showError(context.readLang.translate(AppLanguageText.expireVisitError));
         return false;
       }
+      return true;
     } catch (e) {
       debugPrint("Date parsing error: $e");
       return false;
     }
+  }
 
-    if(!isUpdate) {
-      final hasNoDuplicates = await apiDuplicateAppointment(context);
-      if (!hasNoDuplicates) return false;
-    }
-
-    return true;
+  Future<bool> _hasNoDuplicates(BuildContext context) async {
+    return await apiDuplicateAppointment(context);
   }
 
   void notifyDataListeners() {
@@ -1183,11 +1260,43 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier{
     notifyListeners();
   }
 
+  TimeOfDay? get apiVisitStartTime => _apiVisitStartTime;
+
+  set apiVisitStartTime(TimeOfDay? value) {
+    if (_apiVisitStartTime == value) return;
+    _apiVisitStartTime = value;
+    notifyListeners();
+  }
+
+  TimeOfDay? get apiVisitEndTime => _apiVisitEndTime;
+
+  set apiVisitEndTime(TimeOfDay? value) {
+    if (_apiVisitEndTime == value) return;
+    _apiVisitEndTime = value;
+    notifyListeners();
+  }
+
+  LoginTokenUserResponse? get userResponse => _userResponse;
+
+  set userResponse(LoginTokenUserResponse? value) {
+    if (_userResponse == value) return;
+    _userResponse = value;
+    notifyListeners();
+  }
+
   int? get selectedDeviceType => _selectedDeviceType;
 
   set selectedDeviceType(int? value) {
     if (_selectedDeviceType == value) return;
     _selectedDeviceType = value;
+    notifyListeners();
+  }
+
+  bool get isValidatePhotoFromFR => _isValidatePhotoFromFR;
+
+  set isValidatePhotoFromFR(bool value) {
+    if (_isValidatePhotoFromFR == value) return;
+    _isValidatePhotoFromFR = value;
     notifyListeners();
   }
 

@@ -38,55 +38,57 @@ class EditProfileNotifier extends BaseChangeNotifier {
 
   //Functions
   EditProfileNotifier(BuildContext context) {
-    apiGetProfile(context).then((value) {
-      apiNationalityDropdown(context);
-    },);
+    _init(context);
   }
 
-  //Get Profile Api call
-  Future apiGetProfile(BuildContext context) async {
-    await AuthRepository().apiGetProfile({}, context).then((value) {
-      getProfileData = value as GetProfileResult;
-    },);
+  Future<void> _init(BuildContext context) async {
+    await _fetchProfileAndNationality(context);
+    initializeData();
   }
 
-  //Nationality dropdown Api call
-  Future apiNationalityDropdown(BuildContext context) async {
-    await AuthRepository().apiCountryList({}, context).then((value) {
-      var countryData = value as List<CountryData>;
-      nationalityMenu = List<CountryData>.from(countryData);
-      initializeData();
-    },);
+  Future<void> _fetchProfileAndNationality(BuildContext context) async {
+    try {
+      final profileResult = await AuthRepository().apiGetProfile({}, context);
+      final countryList = await AuthRepository().apiCountryList({}, context);
+
+      getProfileData = profileResult as GetProfileResult;
+      nationalityMenu = List<CountryData>.from(countryList as List<CountryData>);
+    } catch (e) {
+      // Handle error if needed
+    }
   }
 
   void initializeData() {
-    fullNameController.text = getProfileData?.sFullName ?? "";
-    visitorCompanyController.text = getProfileData?.sCompanyName ?? "";
-    nationalityController.text = getProfileData?.iso3 ?? "";
-    mobileNumberController.text = getProfileData?.sMobileNumber ?? "";
-    emailAddressController.text = getProfileData?.sEmail ?? "";
-    // Match the n_DocumentType to idTypeMenu
+    final data = getProfileData;
+    fullNameController.text = data?.sFullName ?? "";
+    visitorCompanyController.text = data?.sCompanyName ?? "";
+    nationalityController.text = data?.iso3 ?? "";
+    mobileNumberController.text = data?.sMobileNumber ?? "";
+    emailAddressController.text = data?.sEmail ?? "";
+    iqamaController.text = data?.sIqama ?? "";
+    passportNumberController.text = data?.passportNumber ?? "";
+    nationalityIdController.text = data?.eidNumber ?? "";
+    documentNameController.text = data?.sOthersDoc ?? "";
+    documentNumberController.text = data?.sOthersValue ?? "";
+
+    // Match ID type
     final matchedIdType = idTypeMenu.firstWhere(
-          (item) => item.value == getProfileData?.nDocumentType,
+          (item) => item.value == data?.nDocumentType,
       orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
     );
     selectedIdType = matchedIdType.labelEn;
-    selectedIdValue = getProfileData?.nDocumentType.toString();
+    selectedIdValue = data?.nDocumentType.toString();
     idTypeController.text = matchedIdType.labelEn;
 
+    // Match nationality
     final matchedNationality = nationalityMenu.firstWhere(
-          (country) => country.iso3 == getProfileData?.iso3,
+          (country) => country.iso3 == data?.iso3,
       orElse: () => CountryData(name: "", iso3: ""),
     );
-
-    selectedNationality = getProfileData?.iso3;
+    selectedNationality = data?.iso3;
     nationalityController.text = matchedNationality.name ?? "";
-    iqamaController.text = getProfileData?.sIqama ?? "";
-    passportNumberController.text = getProfileData?.passportNumber ?? "";
-    nationalityIdController.text = getProfileData?.eidNumber ?? "";
-    documentNameController.text = getProfileData?.sOthersDoc ?? "";
-    documentNumberController.text = getProfileData?.sOthersValue ?? "";
   }
+
 
   Future<void> saveData(BuildContext context) async {
     // Set values based on selected ID type

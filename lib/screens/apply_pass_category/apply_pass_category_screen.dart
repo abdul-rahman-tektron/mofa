@@ -60,7 +60,9 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       children.add(section);
     }
 
-    addSection(commentWidgetSection(context, applyPassCategoryNotifier));
+    if(applyPassCategoryNotifier.isUpdate) {
+      addSection(commentWidgetSection(context, applyPassCategoryNotifier));
+    }
 
     addSection(
       buildExpansionTile(
@@ -70,14 +72,13 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       ),
     );
 
-    if(applyPassCategoryNotifier.isUpdate) {
-      addSection(
-        buildExpansionTile(
-          title: buildStepTitle(2, AppLanguageText.visitDetails),
-          children: visitDetailsChildren(context, applyPassCategoryNotifier),
-        ),
-      );
-    }
+
+    addSection(
+      buildExpansionTile(
+        title: buildStepTitle(2, AppLanguageText.visitDetails),
+        children: visitDetailsChildren(context, applyPassCategoryNotifier),
+      ),
+    );
 
     if (applyPassCategoryNotifier.isCheckedDevice) {
       addSection(

@@ -14,6 +14,7 @@ import 'package:mofa/core/model/login/login_request.dart';
 import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
 import 'package:mofa/core/model/register/register_response.dart';
+import 'package:mofa/core/model/update_password/update_password_request.dart';
 import 'package:mofa/core/model/update_profile/update_profile_request.dart';
 import 'package:mofa/core/model/update_profile/update_profile_response.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
@@ -202,6 +203,65 @@ class AuthRepository extends BaseRepository {
       getProfileResponseFromJson(jsonEncode(response?.data));
 
       return getProfileResponse.result;
+    }
+    return null;
+  }
+
+  //api: Delete Account
+  Future<Object?> apiDeleteAccount(ForgetPasswordRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathDeleteAccount,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      ForgetPasswordResponse deleteAccountResponse =
+      forgetPasswordResponseFromJson(jsonEncode(response?.data));
+
+      if(deleteAccountResponse.statusCode == HttpStatus.ok){
+        ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.accountDeleted) ?? "");
+        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (Route<dynamic> route) => false);
+      }
+
+      return deleteAccountResponse.result;
+    }
+    return null;
+  }
+
+  //api: Update Password
+  Future<Object?> apiUpdatePassword(UpdatePasswordRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathUpdatePassword,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    ForgetPasswordResponse deleteAccountResponse =
+    forgetPasswordResponseFromJson(jsonEncode(response?.data));
+
+    if (response?.statusCode == HttpStatus.ok) {
+
+      if(deleteAccountResponse.statusCode == HttpStatus.ok){
+        ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.passwordUpdated) ?? "");
+        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.bottomBar, (Route<dynamic> route) => false);
+      }
+
+      return deleteAccountResponse.result;
+    } else {
+      if(deleteAccountResponse.statusCode == HttpStatus.notFound){
+        ToastHelper.showError(context.readLang.translate(AppLanguageText.incorrectCurrentPassword) ?? "");
+      } else {
+        ToastHelper.showError(deleteAccountResponse.message ?? "");
+      }
     }
     return null;
   }

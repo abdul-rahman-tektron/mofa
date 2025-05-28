@@ -7,7 +7,9 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/apply_pass/apply_pass_notifier.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
+import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
+import 'package:mofa/utils/enum_values.dart';
 import 'package:provider/provider.dart';
 
 class ApplyPassScreen extends StatelessWidget {
@@ -40,6 +42,8 @@ class ApplyPassScreen extends StatelessWidget {
             child: Column(
               children: [
                 welcomeHeading(context),
+                35.verticalSpace,
+                Text(context.watchLang.translate(AppLanguageText.applyingVisitFor), style: AppFonts.textBold16,),
                 15.verticalSpace,
                 categoryList(context, applyPassNotifier),
               ],
@@ -85,76 +89,73 @@ class ApplyPassScreen extends StatelessWidget {
     );
   }
 
-  Widget categoryList(
-    BuildContext context,
-    ApplyPassNotifier applyPassNotifier,
-  ) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            context.watchLang.translate(AppLanguageText.applyingVisitFor),
-            style: AppFonts.textMedium18,
-          ),
-          categoryWidget(
-            context,
-            () {
-              applyPassNotifier.navigateToMySelfScreen(context);
-            },
-            LucideIcons.user,
-            context.watchLang.translate(AppLanguageText.myself),
-          ),
-          10.verticalSpace,
-          categoryWidget(
-            context,
-            () {
-              applyPassNotifier.navigateToMySomeoneElse(context);
-            },
-            LucideIcons.userSquare,
-            context.watchLang.translate(AppLanguageText.someoneElse),
-          ),
-          10.verticalSpace,
-          categoryWidget(
-            context,
-            () {
-              applyPassNotifier.navigateToMyGroup(context);
-            },
-            LucideIcons.users,
-            context.watchLang.translate(AppLanguageText.group),
-          ),
-        ],
-      ),
+  Widget categoryList(BuildContext context, ApplyPassNotifier notifier) {
+    return Wrap(
+      spacing: 10.w,
+      runSpacing: 20.h,
+      alignment: WrapAlignment.center,
+      children: [
+        categoryWidget(
+          context,
+          notifier,
+          LucideIcons.user,
+          context.watchLang.translate(AppLanguageText.myself),
+          ApplyPassCategory.myself,
+        ),
+        15.verticalSpace,
+        categoryWidget(
+          context,
+          notifier,
+          LucideIcons.userSquare,
+          context.watchLang.translate(AppLanguageText.someoneElse),
+          ApplyPassCategory.someoneElse,
+        ),
+        15.verticalSpace,
+        categoryWidget(
+          context,
+          notifier,
+          LucideIcons.users,
+          context.watchLang.translate(AppLanguageText.group),
+          ApplyPassCategory.group,
+        ),
+      ],
     );
   }
 
-  Widget categoryWidget(
-    BuildContext context,
-    VoidCallback onTap,
-    IconData icons,
-    String title,
-  ) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            height: 200.w,
-            margin: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: AppColors.purpleOpacityColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icons, size: 100, color: AppColors.whiteColor),
-          ),
-          Text(title, style: AppFonts.textMedium18),
-        ],
+  Widget categoryWidget(BuildContext context,
+      ApplyPassNotifier notifier,
+      IconData icon,
+      String title,
+      ApplyPassCategory category,) {
+
+    return InkWell(
+      onTap: () {
+        notifier.selectedCategory = category;
+        notifier.navigateToSelectedCategory(context);
+      },
+      child: Container(
+        height: 150.h,
+        width: 150.w,
+        padding: EdgeInsets.all(20),
+        decoration: BoxDecoration(
+            color: AppColors.whiteColor,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+                color: AppColors.buttonBgColor),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 4,
+                offset: const Offset(0, 4),
+              )
+            ]
+        ),
+        child: Column(
+          children: [
+            Expanded(child: Icon(icon, size: 45, color: AppColors.buttonBgColor,)),
+            Text(title, style: AppFonts.textMedium16),
+          ],
+        ),
       ),
     );
   }

@@ -8,6 +8,10 @@ class BottomBarNotifier extends ChangeNotifier{
 
   int get currentIndex => _currentIndex;
 
+  BottomBarNotifier(int? currentIndex) {
+    _currentIndex = currentIndex ?? 0;
+  }
+
   void changeTab(int index) {
     _currentIndex = index;
     notifyListeners();

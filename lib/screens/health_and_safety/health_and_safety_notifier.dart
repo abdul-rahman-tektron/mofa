@@ -123,29 +123,33 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
   }
 
   Future<void> getStoredAppointmentData() async {
-    final jsonString = await SecureStorageHelper.getAppointmentData();
-    print("jsonString");
-    print(jsonString);
-    if (jsonString != null && jsonString.isNotEmpty) {
-      final jsonData = jsonDecode(jsonString);
+    try {
+      final jsonString = await SecureStorageHelper.getAppointmentData();
+      print("jsonString");
+      print(jsonString);
+      if (jsonString != null && jsonString.isNotEmpty) {
+        final jsonData = jsonDecode(jsonString);
 
-      // Case 1: List of AddAppointmentRequest
-      if (jsonData is List) {
-        print("Parsed as List<AddAppointmentRequest>");
-        addAppointmentRequest = jsonData.map((e) => AddAppointmentRequest.fromJson(e)).toList();
-      }
+        // Case 1: List of AddAppointmentRequest
+        if (jsonData is List) {
+          print("Parsed as List<AddAppointmentRequest>");
+          addAppointmentRequest = jsonData.map((e) => AddAppointmentRequest.fromJson(e)).toList();
+        }
 
-      // Case 2: Single AddAppointmentRequest
-      else if (jsonData is Map<String, dynamic>) {
-        print("Parsed as single AddAppointmentRequest");
-        final singleRequest = AddAppointmentRequest.fromJson(jsonData);
-        addAppointmentRequest = [singleRequest]; // Wrap it in a list
-      }
+        // Case 2: Single AddAppointmentRequest
+        else if (jsonData is Map<String, dynamic>) {
+          print("Parsed as single AddAppointmentRequest");
+          final singleRequest = AddAppointmentRequest.fromJson(jsonData);
+          addAppointmentRequest = [singleRequest]; // Wrap it in a list
+        }
 
-      // If format is unexpected
-      else {
-        print("Unexpected JSON format");
+        // If format is unexpected
+        else {
+          print("Unexpected JSON format");
+        }
       }
+    } catch (e) {
+      print(e.toString());
     }
   }
 

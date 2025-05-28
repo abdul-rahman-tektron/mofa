@@ -18,9 +18,13 @@ import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/validate_email/validate_email_response.dart';
+import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
+import 'package:mofa/core/model/validate_photo/validate_photo_response.dart';
+import 'package:mofa/core/model/validate_photo_config/validate_photo_config_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
+import 'package:mofa/core/model/visiting_hours_config/visiting_hours_config_response.dart';
 import 'package:mofa/core/remote/network/app_url.dart';
 import 'package:mofa/core/remote/network/base_repository.dart';
 import 'package:mofa/core/remote/network/method.dart';
@@ -166,13 +170,13 @@ class ApplyPassRepository extends BaseRepository {
   }
 
   //api: Device Dropdown
-  Future<Object?> apiGetFile(GetFileRequest requestParams, BuildContext context, {bool isUpdate = false}) async {
+  Future<Object?> apiGetFile(GetFileRequest requestParams, BuildContext context) async {
 
     final token = await SecureStorageHelper.getToken();
 
     Response? response = await networkProvider.call(
       method: Method.POST,
-      pathUrl: isUpdate ? AppUrl.pathExternalGetFile : AppUrl.pathGetFile,
+      pathUrl: AppUrl.pathExternalGetFile,
       body: jsonEncode(requestParams),
       headers: buildDefaultHeaderWithToken(token ?? ""),
     );
@@ -268,6 +272,78 @@ class ApplyPassRepository extends BaseRepository {
       addAppointmentResponseFromJson(jsonEncode(response?.data));
 
       return addAppointmentResponse.result;
+
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Visiting Hours Config
+  Future<Object?> apiVisitingHoursConfig(Map requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathVisitingHoursConfig,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      VisitingHoursConfigResponse visitingHoursConfigResponse =
+      visitingHoursConfigResponseFromJson(jsonEncode(response?.data));
+
+      return visitingHoursConfigResponse.result;
+
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Validate Photo Config
+  Future<Object?> apiValidatePhotoConfig(Map requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathValidatePhotoConfig,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      ValidatePhotoConfigResponse validatePhotoConfigResponse =
+      validatePhotoConfigResponseFromJson(jsonEncode(response?.data));
+
+      return validatePhotoConfigResponse.result;
+
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Validate Photo
+  Future<Object?> apiValidatePhoto(ValidatePhotoRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathValidatePhoto,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      ValidatePhotoResponse validatePhotoResponse =
+      validatePhotoResponseFromJson(jsonEncode(response?.data));
+
+      return validatePhotoResponse.result;
 
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");

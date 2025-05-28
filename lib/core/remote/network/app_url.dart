@@ -11,6 +11,8 @@ class AppUrl {
   static final pathForgetPassword = "/ExternalUser/ForgetPassword"; //POST
   static final pathUpdateProfile = "/ExternalUser/UpdateProfile"; //POST
   static final pathGetProfile = "/ExternalUser/GetProfile"; //POST
+  static final pathDeleteAccount = "/ExternalUser/Delete"; //POST
+  static final pathUpdatePassword = "/ExternalUser/UpdatePassword"; //POST
 
   //Apply Pass
   static final pathLocationDropdown = "/Locations/GetAllDropdown"; //POST
@@ -33,5 +35,11 @@ class AppUrl {
   static final pathCancelAppointment = "/ExternalAppointment/Cancel"; //POST
   static final pathSearchComments = "/Appointment/SearchComments"; //POST
   static final pathUpdateAppointment = "/ExternalAppointment/Update"; //POST
+
+  //Dashboard
+  static final pathDashboardKpi = "/ExternalDashboard/Kpi"; //POST
+  static final pathVisitingHoursConfig = "/Configs/GetVisitingHoursConfig"; //POST
+  static final pathValidatePhotoConfig = "/Configs/GetValidatePhotoConfig"; //POST
+  static final pathValidatePhoto = "FR/ValidatePhoto"; //POST
 
 }

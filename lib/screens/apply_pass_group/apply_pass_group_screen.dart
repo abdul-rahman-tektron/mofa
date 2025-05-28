@@ -8,19 +8,17 @@ import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
-import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_notifier.dart';
-import 'package:mofa/utils/common_validation.dart';
-import 'package:mofa/utils/enum_values.dart';
-import 'package:mofa/utils/extensions.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
+import 'package:mofa/utils/common_validation.dart';
+import 'package:mofa/utils/enum_values.dart';
 import 'package:provider/provider.dart';
 
 class ApplyPassGroupScreen extends StatelessWidget {
