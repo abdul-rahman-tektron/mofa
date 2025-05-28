@@ -270,7 +270,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     final isMoreInfoRequired = details?.nIsHostRequiredMoreInfo == 1;
 
     if (currentOrder > 1) {
-      isEnable = isMoreInifoRequired; // true if 1, false if 0
+      isEnable = isMoreInfoRequired; // true if 1, false if 0
     } else {
       isEnable = true; // always editable for currentOrder <= 1
     }
