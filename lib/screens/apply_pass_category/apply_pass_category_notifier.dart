@@ -190,6 +190,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions 
 
     await fetchAllDropdownData(context, id);
     initialDataForMySelf(context, id);
+    initializePreviousData(context, id);
   }
 
   Future<void> fetchAllDropdownData(BuildContext context, int? id) async {
@@ -315,6 +316,88 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions 
         visitEndDateController.text = getByIdResult?.user?.dtAppointmentEndTime?.toDisplayDateTime() ?? "";
         addMultipleDevicesFromResult(getByIdResult?.devices);
       }
+    }
+  }
+
+  void initializePreviousData(BuildContext context, int? id) async {
+    final jsonString = await SecureStorageHelper.getAppointmentData();
+    print("Stored appointment JSON string: $jsonString");
+
+    if (jsonString != null && jsonString.isNotEmpty) {
+      final userData = AddAppointmentRequest.fromJson(jsonDecode(jsonString));
+      visitorNameController.text = userData.fullName ?? "";
+      companyNameController.text = userData.sponsor ?? "";
+      nationalityController.text =
+          nationalityMenu
+              .firstWhere((item) => item.iso3 == userData.nationality, orElse: () => CountryData())
+              .name ??
+              "";
+      selectedNationality = getByIdResult?.user?.nationality ?? "";
+      phoneNumberController.text =
+          userData.mobileNo ?? "";
+      emailController.text = userData.email ?? "";
+      idTypeController.text =
+          idTypeMenu
+              .firstWhere(
+                (item) => item.value == userData.idType,
+            orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+          )
+              .labelEn;
+      selectedIdValue = userData.idType.toString() ?? "";
+      selectedIdType = idTypeController.text ?? "";
+      iqamaController.text = userData.sIqama ?? "";
+      passportNumberController.text = userData.passportNumber ?? "";
+
+      nationalityIdController.text = userData.eidNumber ?? "";
+
+      documentNameController.text = userData.sOthersDoc ?? "";
+
+      documentNumberController.text = userData.sOthersValue ?? "";
+      expiryDateController.text = userData.dtIqamaExpiry?.toDisplayDateOnly() ?? "";
+      vehicleNumberController.text = userData.sVehicleNo ?? "";
+
+      selectedPlateType = userData.nPlateSource ?? 0;
+      plateTypeController.text =
+          plateTypeDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateType, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+              "";
+      selectedPlateLetter1 = userData.nPlateLetter1 ?? 0;
+      plateLetter1Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter1, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+              "";
+      selectedPlateLetter2 = userData.nPlateLetter2 ?? 0;
+      plateLetter2Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter2, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+              "";
+      selectedPlateLetter3 = userData.nPlateLetter3 ?? 0;
+      plateLetter3Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter3, orElse: () => DeviceDropdownResult())
+              .sDescE ?? "";
+
+      plateNumberController.text = userData.sPlateNumber ?? "";
+      locationController.text = locationDropdownData
+          .firstWhere((item) => item.nLocationId == userData.nLocationId, orElse: () => LocationDropdownResult())
+          .sLocationNameEn ?? "";
+
+      visitRequestTypeController.text = visitRequestTypesDropdownData
+          .firstWhere((item) => item.nDetailedCode == userData.nVisitType, orElse: () => VisitRequestDropdownResult())
+          .sDescE ?? "";
+
+        selectedVisitRequest = userData.nVisaType.toString() ?? "";
+        visitPurposeController.text = visitPurposeDropdownData
+            .firstWhere((item) => item.nPurposeId == userData.purpose, orElse: () => VisitPurposeDropdownResult())
+            .sPurposeEn ?? "";
+        selectedVisitPurpose = userData.purpose.toString() ?? "";
+        mofaHostEmailController.text = userData.sVisitingPersonEmail ?? "";
+        visitStartDateController.text = userData.dtAppointmentStartTime.toString() ?? "";
+        visitEndDateController.text = userData.dtAppointmentEndTime?.toString() ?? "";
+        addMultipleDevicesFromResult(userData.devices?.cast<DeviceResult>());
     }
   }
 
