@@ -286,5 +286,53 @@
   "visitCancelledFromVisitor": "تم إلغاء الزيارة من الزائر",
 
   "provideCommentsAllRequestedInfoDevices": "يرجى تقديم التعليقات لجميع أجهزة المعلومات المطلوبة.",
-  "dashboard" : "لوحة المعلومات"
+  "dashboard" : "لوحة المعلومات",
+  "photoValidationFailed": "فشل التحقق من صحة الصورة.",
+  "errorValidatingPhoto": "خطأ في التحقق من صحة الصورة التي تم تحميلها!",
+  "photoSizeIncorrect": "حجم الصورة المرفوعة غير صحيح. يُرجى تحميل صورة بالأبعاد الصحيحة.",
+  "photoTooSmall": "الصورة المرفوعة صغيرة جدًا. يُرجى تحميل صورة بدقة أعلى.",
+  "photoResolutionNotSupported.": "لا يتم دعم دقة الصورة التي تم تحميلها.",
+  "noPhotoUploaded": "لم يتم تحميل أي صورة.",
+  "noFaceDetectedPhoto": "لم يتم رصد أي وجه في الصورة المرفوعة. يُرجى التأكد من وضوح الوجه.",
+  "multipleFacesDetected": "تم اكتشاف وجوه متعددة في الصورة التي تم تحميلها.",
+  "faceTooSmallPhoto": "يبدو الوجه صغيرًا جدًا في الصورة التي تم تحميلها.",
+  "photoTooBright": "الصورة مشرقة جدًا.",
+  "photoTooDark": "الصورة مظلمة جدًا. يُرجى تحسين الإضاءة.",
+  "faceTooBlurry": "الوجه غير واضح للغاية في الصورة التي تم تحميلها.",
+  "faceNotProperlyAligned": "الوجه غير محاذي بشكل صحيح في الصورة التي تم تحميلها.",
+  "photoAlreadyUsed": "الصورة التي تم تحميلها تم استخدامها بالفعل.",
+  "photoFaceAlreadyExists": "توجد صورة لوجه هذا الشخص بالفعل.",
+  "faceAlreadyRegisteredSameName.": "لقد تم تسجيل هذا الوجه بنفس الاسم.",
+
+  "ok": "نعم",
+
+  "accountIsLocked": "تم قفل حسابك!",
+
+  "otpVerification": "التحقق من OTP",
+  "enterOTP": "الرجاء إدخال كلمة المرور لمرة واحدة (OTP) المرسلة إلى بريدك الإلكتروني المسجل لتسجيل الدخول.",
+  "remainingTime": "الوقت المتبقي",
+  "didntGetCode": "لم تحصل على الرمز؟",
+  "resend": "إعادة الإرسال",
+  "verify": "يؤكد",
+  "goToLogin": "اذهب إلى تسجيل الدخول",
+
+  "yourAccountWillUnlockAt": "سيتم فتح حسابك في",
+
+  "youHave": "لديك",
+  "attempt": "محاولة",
+  "attempts": "محاولات",
+  "remaining": "متبقي!",
+
+  "otpResentSuccessfully": "تم إرسال OTP بنجاح!",
+
+  "invalidOTP": "OTP غير صالح!",
+  "invalidExpiredOtpTryAgain": "كلمة المرور لمرة واحدة (OTP) التي أدخلتها غير صحيحة أو انتهت صلاحيتها. يُرجى المحاولة مرة أخرى.",
+
+  "vistingHoursAreFrom": " ساعات الزيارة من",
+  "to": " ل ",
+
+  "enterPlateNumberUpto6Digits": "أدخل رقم اللوحة المكون من ما يصل إلى ٦ أرقام.",
+
+  "tooManyRequestsTryAgainLater": "طلبات كثيرة جدًا. حاول مرة أخرى لاحقًا.",
+  "notAuthorizedToPerformAction": "ليس لديك الحق في تنفيذ هذا الإجراء!"
 }

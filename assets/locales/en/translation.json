@@ -287,5 +287,51 @@
   "visitCancelledFromVisitor": "Visit Cancelled From Visitor",
 
   "provideCommentsAllRequestedInfoDevices": "Kindly provide comments for all requested info devices.",
-  "dashboard": "Dashboard"
+  "dashboard": "Dashboard",
+  "photoValidationFailed": "Photo validation failed.",
+  "errorValidatingPhoto": "Error validating uploaded photo!",
+  "photoSizeIncorrect": "The uploaded photo size is incorrect. Please upload a photo with the correct dimensions.",
+  "photoTooSmall": "The uploaded photo is too small. Please upload a higher-resolution photo.",
+  "photoResolutionNotSupported.": "Uploaded photo resolution is not supported.",
+  "noPhotoUploaded": "No photo was uploaded.",
+  "noFaceDetectedPhoto": "No face was detected in the uploaded photo. Please ensure face is clearly visible.",
+  "multipleFacesDetected": "Multiple faces were detected in the uploaded photo.",
+  "faceTooSmallPhoto": "Face appears too small in the uploaded photo.",
+  "photoTooBright": "The photo is too bright.",
+  "photoTooDark": "The photo is too dark. Please improve the lighting.",
+  "faceTooBlurry": "The face is too blurry in the uploaded photo.",
+  "faceNotProperlyAligned": "Face is not properly aligned in the uploaded photo.",
+  "photoAlreadyUsed": "Uploaded photo has already been used.",
+  "photoFaceAlreadyExists": "A photo with this person’s face already exists.",
+  "faceAlreadyRegisteredSameName.": "This face has already been registered with the same name.",
+  "ok": "OK",
+
+  "accountIsLocked": "Your account is locked!",
+
+  "otpVerification": "OTP Verification",
+  "enterOTP": "Please enter the OTP (One-Time Password) sent to your registered email to login.",
+  "remainingTime": "Remaining time",
+  "didntGetCode": "Didn't get the code?",
+  "resend": "Resend",
+  "verify": "Verify",
+  "goToLogin": "Go to Login",
+
+  "yourAccountWillUnlockAt": "Your account will unlock at",
+
+  "youHave": "You have",
+  "attempt": "attempt",
+  "attempts": "attempts",
+  "remaining": "remaining!",
+
+  "otpResentSuccessfully": "OTP resent successfully!",
+  "invalidOTP": "Invalid OTP!",
+  "invalidExpiredOtpTryAgain": "The OTP you entered is incorrect or has expired. Please try again.",
+
+  "vistingHoursAreFrom": "Visting hours are from ",
+  "to": " to ",
+
+  "enterPlateNumberUpto6Digits": "Enter a plate number with up to 6 digits.",
+
+  "tooManyRequestsTryAgainLater": "Too many requests. Try again later.",
+  "notAuthorizedToPerformAction": "You are not authorized to perform this action!"
 }
