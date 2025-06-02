@@ -119,39 +119,32 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
 
   // Update User Verify checkbox state
   void userAcceptDeclarationChecked(BuildContext context, bool? value) {
-    isChecked = value!;
+    isChecked = value ?? false;
+    notifyListeners();
   }
 
   Future<void> getStoredAppointmentData() async {
     try {
       final jsonString = await SecureStorageHelper.getAppointmentData();
-      print("jsonString");
-      print(jsonString);
+      print("Stored appointment JSON string: $jsonString");
+
       if (jsonString != null && jsonString.isNotEmpty) {
         final jsonData = jsonDecode(jsonString);
 
-        // Case 1: List of AddAppointmentRequest
         if (jsonData is List) {
-          print("Parsed as List<AddAppointmentRequest>");
-          addAppointmentRequest = jsonData.map((e) => AddAppointmentRequest.fromJson(e)).toList();
-        }
-
-        // Case 2: Single AddAppointmentRequest
-        else if (jsonData is Map<String, dynamic>) {
-          print("Parsed as single AddAppointmentRequest");
-          final singleRequest = AddAppointmentRequest.fromJson(jsonData);
-          addAppointmentRequest = [singleRequest]; // Wrap it in a list
-        }
-
-        // If format is unexpected
-        else {
-          print("Unexpected JSON format");
+          addAppointmentRequest = jsonData
+              .map<AddAppointmentRequest>((e) => AddAppointmentRequest.fromJson(e))
+              .toList();
+        } else if (jsonData is Map<String, dynamic>) {
+          addAppointmentRequest = [AddAppointmentRequest.fromJson(jsonData)];
+        } else {
         }
       }
     } catch (e) {
-      print(e.toString());
+      print("Error retrieving appointment data: $e");
     }
   }
+
 
   Future<List<Map<String, dynamic>>> _loadUploadDataFromStorage() async {
     final jsonString = await SecureStorageHelper.getUploadedImage();
@@ -268,7 +261,28 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     }
   }
 
-  submitButtonPressed(BuildContext context, VoidCallback onNext) async {
+  Future<void> _processSingleAppointment(
+      BuildContext context,
+      AddAppointmentRequest appointment,
+      Map<String, dynamic> imageData,
+      int index,
+      ) async {
+    try {
+      final result = isUpdate
+          ? await SearchPassRepository().apiUpdateAppointment(appointment, context)
+          : await ApplyPassRepository().apiAddAppointment(appointment, context);
+
+      if (result is AddAppointmentResult) {
+        await _processUploadEntry(context, imageData, result);
+      } else {
+        print("❌ Failed to receive valid result for appointment index $index");
+      }
+    } catch (e) {
+      print("❌ Error processing appointment $index: $e");
+    }
+  }
+
+  Future<void> submitButtonPressed(BuildContext context, VoidCallback onNext) async {
     if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
       print("No appointments to send.");
       return;
@@ -280,38 +294,15 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
       return;
     }
 
-    // Build a list of futures
     final futures = <Future<void>>[];
 
-    for (int i = 0; i < addAppointmentRequest!.length; i++) {
-      final appointment = addAppointmentRequest![i];
-      final imageData = imageDataList[i];
-
-      log(appointment.toString());
-
-      futures.add(() async {
-        try {
-          final result = isUpdate
-              ? await SearchPassRepository().apiUpdateAppointment(
-              appointment, context)
-              : await ApplyPassRepository().apiAddAppointment(
-              appointment, context);
-          if (result != null) {
-            await _processUploadEntry(context, imageData, result as AddAppointmentResult);
-          } else {
-            print("❌ Failed to receive result for appointment index $i");
-          }
-        } catch (e) {
-          print("❌ Error processing appointment $i: $e");
-        }
-      }());
+    for (var i = 0; i < addAppointmentRequest!.length; i++) {
+      futures.add(_processSingleAppointment(context, addAppointmentRequest![i], imageDataList[i], i));
     }
 
-    // Wait for all to complete
     await Future.wait(futures);
     onNext();
   }
-
 
 
   Future<void> apiAddAppointments(BuildContext context) async {

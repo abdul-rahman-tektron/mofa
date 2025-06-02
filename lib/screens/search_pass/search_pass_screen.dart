@@ -37,10 +37,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget buildBody(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget buildBody(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return SafeArea(
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
@@ -69,10 +66,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> expandableSearchChildren(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  List<Widget> expandableSearchChildren(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return [
       visitStartDateTextField(context, searchPassNotifier),
       15.verticalSpace,
@@ -86,10 +80,7 @@ class SearchPassScreen extends StatelessWidget {
     ];
   }
 
-  Widget saveAndClearButton(
-      BuildContext context,
-      SearchPassNotifier searchPassNotifier,
-      ) {
+  Widget saveAndClearButton(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -119,10 +110,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget visitStartDateTextField(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget visitStartDateTextField(BuildContext context, SearchPassNotifier searchPassNotifier) {
     final now = DateTime.now();
     return CustomTextField(
       controller: searchPassNotifier.visitStartDateController,
@@ -134,10 +122,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget visitEndDateTextField(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget visitEndDateTextField(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return CustomTextField(
       controller: searchPassNotifier.visitEndDateController,
       fieldName: context.watchLang.translate(AppLanguageText.visitEndDate),
@@ -147,10 +132,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget locationTextField(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget locationTextField(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return CustomSearchDropdown<LocationDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.location),
       hintText: 'Select...',
@@ -166,10 +148,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget statusTextField(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget statusTextField(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.status),
       hintText: 'Select...',
@@ -184,18 +163,12 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget buildExpansionTile({
-    required String title,
-    required List<Widget> children,
-    isVisitorDetails = false,
-  }) {
+  Widget buildExpansionTile({required String title, required List<Widget> children, isVisitorDetails = false}) {
     return ExpansionTile(
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       collapsedBackgroundColor: AppColors.whiteColor,
-      collapsedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       childrenPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
       initiallyExpanded: false,
       title: Text(title, style: AppFonts.textRegular20),
@@ -203,10 +176,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget searchTableDataField(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget searchTableDataField(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return Expanded(
       child: TextFormField(
         controller: searchPassNotifier.searchController,
@@ -233,10 +203,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  Widget columnNameVisibility(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  Widget columnNameVisibility(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return SizedBox(
       height: 30.h,
       child: Row(
@@ -256,10 +223,7 @@ class SearchPassScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> paginationDetails(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
+  List<Widget> paginationDetails(BuildContext context, SearchPassNotifier searchPassNotifier) {
     return [
       Text(
         "${context.watchLang.translate(AppLanguageText.totalRecords)} : ${searchPassNotifier.totalCount}",
@@ -279,25 +243,13 @@ class SearchPassScreen extends StatelessWidget {
                   Radius.circular(10),
                   // Set custom radius here
                 ),
-                side: BorderSide(
-                  color: Colors.transparent,
-                  width: 1,
-                ), // Border color and width
+                side: BorderSide(color: Colors.transparent, width: 1), // Border color and width
               ),
             ),
-            onPressed:
-                searchPassNotifier.currentPage > 1
-                    ? () => searchPassNotifier.goToPreviousPage(context)
-                    : null,
-            child: Icon(
-              LucideIcons.chevronLeft,
-              size: 25,
-              color: AppColors.whiteColor,
-            ),
+            onPressed: searchPassNotifier.currentPage > 1 ? () => searchPassNotifier.goToPreviousPage(context) : null,
+            child: Icon(LucideIcons.chevronLeft, size: 25, color: AppColors.whiteColor),
           ),
-          Text(
-            "Page ${searchPassNotifier.currentPage} of ${searchPassNotifier.totalPages}",
-          ),
+          Text("Page ${searchPassNotifier.currentPage} of ${searchPassNotifier.totalPages}"),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               padding: EdgeInsets.zero,
@@ -309,33 +261,22 @@ class SearchPassScreen extends StatelessWidget {
                   Radius.circular(10),
                   // Set custom radius here
                 ),
-                side: BorderSide(
-                  color: Colors.transparent,
-                  width: 1,
-                ), // Border color and width
+                side: BorderSide(color: Colors.transparent, width: 1), // Border color and width
               ),
             ),
             onPressed:
                 searchPassNotifier.currentPage < searchPassNotifier.totalPages
                     ? () => searchPassNotifier.goToNextPage(context)
                     : null,
-            child: Icon(
-              LucideIcons.chevronRight,
-              size: 25,
-              color: AppColors.whiteColor,
-            ),
+            child: Icon(LucideIcons.chevronRight, size: 25, color: AppColors.whiteColor),
           ),
         ],
       ),
     ];
   }
 
-  Widget _buildDataTable(
-    BuildContext context,
-    SearchPassNotifier searchPassNotifier,
-  ) {
-    final visibleColumns =
-        searchPassNotifier.columnConfigs.where((c) => c.isVisible).toList();
+  Widget _buildDataTable(BuildContext context, SearchPassNotifier searchPassNotifier) {
+    final visibleColumns = searchPassNotifier.columnConfigs.where((c) => c.isVisible).toList();
     return Container(
       decoration: BoxDecoration(
         color: AppColors.whiteColor,
@@ -355,9 +296,7 @@ class SearchPassScreen extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             controller: searchPassNotifier.scrollbarController,
             child: DataTable(
-              headingRowColor: MaterialStateColor.resolveWith(
-                (states) => AppColors.buttonBgColor,
-              ),
+              headingRowColor: MaterialStateColor.resolveWith((states) => AppColors.buttonBgColor),
               headingTextStyle: AppFonts.textBoldWhite14,
               border: TableBorder(borderRadius: BorderRadius.circular(8)),
               clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -372,162 +311,157 @@ class SearchPassScreen extends StatelessWidget {
                               : Text(config.label),
                     );
                   }).toList(),
-              rows:  searchPassNotifier.getAllDetailData.isEmpty
-              ? [
-              DataRow(
-                cells: [
-                  DataCell(
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: Text(
-                          'No result found',
-                          style: AppFonts.textRegularGrey16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Fill remaining columns with empty cells
-                  ...List.generate(visibleColumns.length - 1, (_) => const DataCell(SizedBox())),
-                ],
-              )
-              ] : searchPassNotifier.getAllDetailData.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final appointment = entry.value;
-
-                    final endTime = DateFormat(
-                      "M/d/yyyy h:mm:ss a",
-                    ).parse(appointment.dtAppointmentEndTime.toString());
-                    final now = DateTime.now();
-                    final isExpired =
-                        endTime.isBefore(now) ||
-                        appointment.sApprovalStatusEn == "Rejected" ||
-                        appointment.sApprovalStatusEn == "Cancelled" ||
-                        appointment.sApprovalStatusEn == "Expired";
-
-                    final isEvenRow = index % 2 == 0;
-
-                    return DataRow(
-                      color: MaterialStateProperty.resolveWith<Color?>(
-                            (states) => isEvenRow
-                            ? AppColors.buttonBgColor.withOpacity(0.05)
-                            : null,
-                      ),
-                      cells: visibleColumns.map((config) {
-                        Widget cellContent;
-
-                        // Check if this is the "Action" column, which already has its own tap
-                        final isActionCell = config.label == 'Action';
-
-                        // Build the base content for each cell
-                        switch (config.label) {
-                          case 'Ref No':
-                            cellContent = Text(appointment.sAppointmentCode ?? "");
-                            break;
-                          case 'Name':
-                            cellContent = SizedBox(
-                              width: 140.w,
-                              child: Text(
-                                appointment.sVisitorName ?? "",
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            );
-                            break;
-                          case 'Status':
-                            cellContent = buildStatusChip(appointment.sApprovalStatusEn ?? "");
-                            break;
-                          case 'Company Name':
-                            cellContent = Text(appointment.sSponsor ?? "");
-                            break;
-                          case 'Start & End Date':
-                            cellContent = Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(appointment.dtAppointmentStartTime
-                                    ?.formatDateTime() ?? "", style:
-                                AppFonts.textMediumBlueGrey12),
-                                SizedBox(height: 5),
-                                Text(appointment.dtAppointmentEndTime
-                                    ?.formatDateTime() ?? "", style:
-                                AppFonts.textMediumBlueGrey12),
-                              ],
-                            );
-                            break;
-                          case 'Email':
-                            cellContent = Text(appointment.sEmail ?? "");
-                            break;
-                          case 'Host Name':
-                            cellContent = Text(appointment.sHostName ?? "");
-                            break;
-                          case 'Location':
-                            cellContent = Text(appointment.sLocationNameEn ?? "");
-                            break;
-                          case 'Vehicle Permit':
-                            cellContent = buildVehicleChip(
-                              appointment.nIsVehicleAllowed ?? -1,
-                              appointment.sVehicleNo ?? "",
-                            );
-                            break;
-                          case 'Action':
-                            cellContent = Center(
-                              child: GestureDetector(
-                                onTap: isExpired
-                                    ? null
-                                    : () {
-                                  cancelAppointmentPopup(
-                                      context, searchPassNotifier, appointment);
-                                },
-                                child: Container(
-                                  height: 35,
-                                  width: 35,
-                                  decoration: BoxDecoration(
-                                    color: isExpired
-                                        ? Colors.grey
-                                        : AppColors.buttonBgColor,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Icon(
-                                    LucideIcons.x,
-                                    color: AppColors.whiteColor,
-                                    size: 20,
-                                  ),
+              rows:
+                  searchPassNotifier.getAllDetailData.isEmpty
+                      ? [
+                        DataRow(
+                          cells: [
+                            DataCell(
+                              Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  child: Text('No result found', style: AppFonts.textRegularGrey16),
                                 ),
                               ),
-                            );
-                            break;
-                          default:
-                            cellContent = Text('');
-                        }
-
-                        // Wrap all except "Action" cell with a tap handler to navigate
-                        return DataCell(
-                          isActionCell
-                              ? cellContent
-                              : GestureDetector(
-                            onTap: () {
-                              // Navigate to Apply Pass screen with selected appointment
-                              print("Appointment ID: ${appointment.nAppointmentId}");
-                              Navigator.pushNamed(
-                                context,
-                                AppRoutes.stepper,
-                                arguments: StepperScreenArgs(
-                                    category: ApplyPassCategory.someoneElse,
-                                    isUpdate: true,
-                                    id: appointment.nAppointmentId ?? 0),
-                              );
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: cellContent,
                             ),
+                            // Fill remaining columns with empty cells
+                            ...List.generate(visibleColumns.length - 1, (_) => const DataCell(SizedBox())),
+                          ],
+                        ),
+                      ]
+                      : searchPassNotifier.getAllDetailData.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final appointment = entry.value;
+
+                        final endTime = DateFormat(
+                          "M/d/yyyy h:mm:ss a",
+                        ).parse(appointment.dtAppointmentEndTime.toString());
+                        final now = DateTime.now();
+                        final isExpired =
+                            endTime.isBefore(now) ||
+                            appointment.sApprovalStatusEn == "Rejected" ||
+                            appointment.sApprovalStatusEn == "Cancelled" ||
+                            appointment.sApprovalStatusEn == "Expired";
+
+                        final isEvenRow = index % 2 == 0;
+
+                        return DataRow(
+                          color: MaterialStateProperty.resolveWith<Color?>(
+                            (states) => isEvenRow ? AppColors.buttonBgColor.withOpacity(0.05) : null,
                           ),
+                          cells:
+                              visibleColumns.map((config) {
+                                Widget cellContent;
+
+                                // Check if this is the "Action" column, which already has its own tap
+                                final isActionCell = config.label == 'Action';
+
+                                // Build the base content for each cell
+                                switch (config.label) {
+                                  case 'Ref No':
+                                    cellContent = Text(appointment.sAppointmentCode ?? "");
+                                    break;
+                                  case 'Name':
+                                    cellContent = SizedBox(
+                                      width: 140.w,
+                                      child: Text(
+                                        appointment.sVisitorName ?? "",
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                    break;
+                                  case 'Status':
+                                    cellContent = buildStatusChip(appointment.sApprovalStatusEn ?? "");
+                                    break;
+                                  case 'Company Name':
+                                    cellContent = Text(appointment.sSponsor ?? "");
+                                    break;
+                                  case 'Start & End Date':
+                                    cellContent = Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          appointment.dtAppointmentStartTime?.formatDateTime() ?? "",
+                                          style: AppFonts.textMediumBlueGrey12,
+                                        ),
+                                        SizedBox(height: 5),
+                                        Text(
+                                          appointment.dtAppointmentEndTime?.formatDateTime() ?? "",
+                                          style: AppFonts.textMediumBlueGrey12,
+                                        ),
+                                      ],
+                                    );
+                                    break;
+                                  case 'Email':
+                                    cellContent = Text(appointment.sEmail ?? "");
+                                    break;
+                                  case 'Host Name':
+                                    cellContent = Text(appointment.sHostName ?? "");
+                                    break;
+                                  case 'Location':
+                                    cellContent = Text(appointment.sLocationNameEn ?? "");
+                                    break;
+                                  case 'Vehicle Permit':
+                                    cellContent = buildVehicleChip(
+                                      appointment.nIsVehicleAllowed ?? -1,
+                                      appointment.sVehicleNo ?? "",
+                                    );
+                                    break;
+                                  case 'Action':
+                                    cellContent = Center(
+                                      child: GestureDetector(
+                                        onTap:
+                                            isExpired
+                                                ? null
+                                                : () {
+                                                  cancelAppointmentPopup(context, searchPassNotifier, appointment);
+                                                },
+                                        child: Container(
+                                          height: 35,
+                                          width: 35,
+                                          decoration: BoxDecoration(
+                                            color: isExpired ? Colors.grey : AppColors.buttonBgColor,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(LucideIcons.x, color: AppColors.whiteColor, size: 20),
+                                        ),
+                                      ),
+                                    );
+                                    break;
+                                  default:
+                                    cellContent = Text('');
+                                }
+
+                                // Wrap all except "Action" cell with a tap handler to navigate
+                                return DataCell(
+                                  isActionCell
+                                      ? cellContent
+                                      : GestureDetector(
+                                        onTap: () {
+                                          // Navigate to Apply Pass screen with selected appointment
+                                          print("Appointment ID: ${appointment.nAppointmentId}");
+                                          Navigator.pushNamed(
+                                            context,
+                                            AppRoutes.stepper,
+                                            arguments: StepperScreenArgs(
+                                              category: ApplyPassCategory.someoneElse,
+                                              isUpdate: true,
+                                              id: appointment.nAppointmentId ?? 0,
+                                            ),
+                                          );
+                                        },
+                                        behavior: HitTestBehavior.opaque,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(vertical: 8),
+                                          child: cellContent,
+                                        ),
+                                      ),
+                                );
+                              }).toList(),
                         );
                       }).toList(),
-                    );
-                  }).toList(),
             ),
           ),
         ),
@@ -564,18 +498,11 @@ class SearchPassScreen extends StatelessWidget {
     return Container(
       width: 105,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(8)),
       child: Text(
         status,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -609,18 +536,11 @@ class SearchPassScreen extends StatelessWidget {
     return Container(
       width: 105,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: backgroundColor, borderRadius: BorderRadius.circular(8)),
       child: Text(
         label,
         textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -631,9 +551,5 @@ class TableColumnConfig {
   final bool isMandatory;
   bool isVisible;
 
-  TableColumnConfig({
-    required this.label,
-    this.isMandatory = false,
-    this.isVisible = true,
-  });
+  TableColumnConfig({required this.label, this.isMandatory = false, this.isVisible = true});
 }

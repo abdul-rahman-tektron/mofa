@@ -275,5 +275,44 @@ class AppLanguageText {
   static const devicesDeleted = 'devicesDeleted';
   static const visitCancelledFromVisitor = 'visitCancelledFromVisitor';
   static const provideCommentsAllRequestedInfoDevices = 'provideCommentsAllRequestedInfoDevices';
+  static const photoValidationFailed = 'photoValidationFailed';
+  static const errorValidatingPhoto = 'errorValidatingPhoto';
+  static const photoSizeIncorrect = 'photoSizeIncorrect';
+  static const photoTooSmall = 'photoTooSmall';
+  static const photoResolutionNotSupported = 'photoResolutionNotSupported';
+  static const noPhotoUploaded = 'noPhotoUploaded';
+  static const noFaceDetectedPhoto = 'noFaceDetectedPhoto';
+  static const multipleFacesDetected = 'multipleFacesDetected';
+  static const faceTooSmallPhoto = 'faceTooSmallPhoto';
+  static const photoTooBright = 'photoTooBright';
+  static const photoTooDark = 'photoTooDark';
+  static const faceTooBlurry = 'faceTooBlurry';
+  static const faceNotProperlyAligned = 'faceNotProperlyAligned';
+  static const photoAlreadyUsed = 'photoAlreadyUsed';
+  static const photoFaceAlreadyExists = 'photoFaceAlreadyExists';
+  static const faceAlreadyRegisteredSameName = 'faceAlreadyRegisteredSameName';
+  static const ok = 'ok';
+  static const accountIsLocked = 'accountIsLocked';
+  static const otpVerification = 'otpVerification';
+  static const enterOTP = 'enterOTP';
+  static const remainingTime = 'remainingTime';
+  static const didntGetCode = 'didntGetCode';
+  static const resend = 'resend';
+  static const verify = 'verify';
+  static const goToLogin = 'goToLogin';
+  static const yourAccountWillUnlockAt = 'yourAccountWillUnlockAt';
+  static const youHave = 'youHave';
+  static const attempt = 'attempt';
+  static const attempts = 'attempts';
+  static const remaining = 'remaining';
+  static const otpResentSuccessfully = 'otpResentSuccessfully';
+  static const invalidOTP = 'invalidOTP';
+  static const invalidExpiredOtpTryAgain = 'invalidExpiredOtpTryAgain';
+  static const vistingHoursAreFrom = 'vistingHoursAreFrom';
+  static const to = 'to';
+  static const enterPlateNumberUpto6Digits = 'enterPlateNumberUpto6Digits';
+  static const tooManyRequestsTryAgainLater = 'tooManyRequestsTryAgainLater';
+  static const notAuthorizedToPerformAction = 'notAuthorizedToPerformAction';
+
 // Add the rest of the keys here...
 }

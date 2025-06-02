@@ -57,6 +57,14 @@ class SecureStorageHelper {
     return await _secureStorage?.read(key: AppStrings.uploadedImageCode);
   }
 
+  static Future<void> setCaptchaData(String value) async {
+    await _secureStorage?.write(key: AppStrings.uploadedImageCode, value: value);
+  }
+
+  static Future<String?> getCaptchaData() async {
+    return await _secureStorage?.read(key: AppStrings.uploadedImageCode);
+  }
+
   static Future<void> removeParticularKey(String key) async {
     await _secureStorage?.delete(key: key);
   }

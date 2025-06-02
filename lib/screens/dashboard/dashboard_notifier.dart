@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
-import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_request.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/core/model/kpi/kpi_response.dart';
 import 'package:mofa/core/remote/service/dashboard_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
-import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/dashboard/dashboard_screen.dart';
 
 class DashboardNotifier extends BaseChangeNotifier {
@@ -25,71 +23,82 @@ class DashboardNotifier extends BaseChangeNotifier {
     _init(context);
   }
 
-  void _init(BuildContext context) async {
+  Future<void> _init(BuildContext context) async {
     await apiDashboardKpi(context);
     await apiGetAllExternalAppointment(context, true);
   }
 
-  //Dashboard Kpi Api call
-  Future apiDashboardKpi(BuildContext context) async {
-    await DashboardRepository().apiDashboardKpi({}, context).then((value) {
+  Future<void> apiDashboardKpi(BuildContext context) async {
+    try {
+      final value = await DashboardRepository().apiDashboardKpi({}, context);
       kpiData = value as KpiResult;
 
-      // ⬇ Move cardData assignment here
       cardData = [
         DashboardCardData(
           icon: LucideIcons.calendar,
-          // title: context.readLang.translate(AppLanguageText.totalPassesToday),
           title: "Total Visits (Today)",
           count: kpiData?.totalPassToday ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.calendarDays,
-          // title: context.readLang.translate(AppLanguageText.totalPassesMonth),
           title: "Total Visits (Month)",
           count: kpiData?.totalPassMonth ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.calendarCheck,
-          // title: context.readLang.translate(AppLanguageText.totalPassesYear),
           title: "Total Visits (Year)",
           count: kpiData?.totalPassYear ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.ticket,
-          // title: context.readLang.translate(AppLanguageText.totalPasses),
           title: "Total Visits",
           count: kpiData?.totalPasses ?? 0,
         ),
       ];
-    });
+
+      notifyListeners();  // Important to update UI
+    } catch (e) {
+      debugPrint('Error fetching dashboard KPI: $e');
+      // Optionally show error Toast or handle gracefully
+    }
   }
 
   Future<void> apiGetAllExternalAppointment(BuildContext context, bool isUpcoming, {int? page}) async {
-
     final today = DateTime.now();
 
-    final response = await SearchPassRepository().apiGetExternalAppointment(
-      GetExternalAppointmentRequest(
-        dFromDate: isUpcoming ? today.toString() : DateTime(today.year, today.month - 1, today.day).toString(),
-        dToDate: isUpcoming ? null : today.toString(),
-        nApprovalStatus: isUpcoming ? 49 : null,
-        nPageNumber: 1,
-        nPageSize: 100,
-        sSearch: "",
-      ),
-      context,
-    );
+    // Calculate fromDate for past appointments safely
+    final fromDate = isUpcoming
+        ? today
+        : DateTime(today.year, today.month - 1, today.day); // Last month same day
 
-    final result = response as GetExternalAppointmentResult;
-    if (isUpcoming) {
-      upcomingAppointments = List<GetExternalAppointmentData>.from(
-        (result.data ?? []).where((item) => item.sQRCodeValue != null),
+    try {
+      final response = await SearchPassRepository().apiGetExternalAppointment(
+        GetExternalAppointmentRequest(
+          dFromDate: fromDate.toIso8601String(),
+          dToDate: isUpcoming ? null : today.toIso8601String(),
+          nApprovalStatus: isUpcoming ? 49 : null,
+          nPageNumber: page ?? 1,
+          nPageSize: 100,
+          sSearch: "",
+        ),
+        context,
       );
-    } else {
-      pastAppointments = List<GetExternalAppointmentData>.from(result.data ?? []);
+
+      final result = response as GetExternalAppointmentResult;
+
+      if (isUpcoming) {
+        upcomingAppointments = (result.data ?? [])
+            .where((item) => item.sQRCodeValue != null)
+            .toList();
+      } else {
+        pastAppointments = List<GetExternalAppointmentData>.from(result.data ?? []);
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching external appointments: $e');
+      // Optionally show toast or error handling here
     }
-    notifyListeners();
   }
 
 

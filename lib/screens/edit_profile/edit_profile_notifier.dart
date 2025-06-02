@@ -43,7 +43,7 @@ class EditProfileNotifier extends BaseChangeNotifier {
 
   Future<void> _init(BuildContext context) async {
     await _fetchProfileAndNationality(context);
-    initializeData();
+    _initializeData();
   }
 
   Future<void> _fetchProfileAndNationality(BuildContext context) async {
@@ -51,15 +51,16 @@ class EditProfileNotifier extends BaseChangeNotifier {
       final profileResult = await AuthRepository().apiGetProfile({}, context);
       final countryList = await AuthRepository().apiCountryList({}, context);
 
-      getProfileData = profileResult as GetProfileResult;
-      nationalityMenu = List<CountryData>.from(countryList as List<CountryData>);
+      _getProfileData = profileResult as GetProfileResult;
+      _nationalityMenu = List<CountryData>.from(countryList as List<CountryData>);
+      notifyListeners();
     } catch (e) {
-      // Handle error if needed
+      // handle error
     }
   }
 
-  void initializeData() {
-    final data = getProfileData;
+  void _initializeData() {
+    final data = _getProfileData;
     fullNameController.text = data?.sFullName ?? "";
     visitorCompanyController.text = data?.sCompanyName ?? "";
     nationalityController.text = data?.iso3 ?? "";
@@ -71,34 +72,32 @@ class EditProfileNotifier extends BaseChangeNotifier {
     documentNameController.text = data?.sOthersDoc ?? "";
     documentNumberController.text = data?.sOthersValue ?? "";
 
-    // Match ID type
     final matchedIdType = idTypeMenu.firstWhere(
           (item) => item.value == data?.nDocumentType,
-      orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+      orElse: () => DocumentIdModel(labelEn: "Unknown", labelAr: "", value: 0),
     );
-    selectedIdType = matchedIdType.labelEn;
-    selectedIdValue = data?.nDocumentType.toString();
+    _selectedIdType = matchedIdType.labelEn;
+    _selectedIdValue = data?.nDocumentType.toString();
     idTypeController.text = matchedIdType.labelEn;
 
-    // Match nationality
-    final matchedNationality = nationalityMenu.firstWhere(
+    final matchedNationality = _nationalityMenu.firstWhere(
           (country) => country.iso3 == data?.iso3,
-      orElse: () => CountryData(name: "", iso3: ""),
+      orElse: () => CountryData(name: "Unknown", iso3: ""),
     );
-    selectedNationality = data?.iso3;
+    _selectedNationality = data?.iso3;
     nationalityController.text = matchedNationality.name ?? "";
+
+    notifyListeners();
   }
 
-
   Future<void> saveData(BuildContext context) async {
-    // Set values based on selected ID type
     String? iqama;
     String? eidNumber;
     String? passportNumber;
     String? othersDoc;
     String? othersValue;
 
-    switch (selectedIdType) {
+    switch (_selectedIdType) {
       case "Iqama":
         iqama = iqamaController.text;
         break;
@@ -120,8 +119,8 @@ class EditProfileNotifier extends BaseChangeNotifier {
       sMobileNumber: mobileNumberController.text,
       sUserName: emailAddressController.text,
       sCompanyName: visitorCompanyController.text,
-      iso3: selectedNationality,
-      nDocumentType: int.tryParse(selectedIdValue ?? "") ?? 0,
+      iso3: _selectedNationality,
+      nDocumentType: int.tryParse(_selectedIdValue ?? "") ?? 0,
       sIqama: iqama,
       eidNumber: eidNumber,
       passportNumber: passportNumber,
@@ -174,4 +173,20 @@ class EditProfileNotifier extends BaseChangeNotifier {
     notifyListeners();
   }
 
+
+  @override
+  void dispose() {
+    fullNameController.dispose();
+    visitorCompanyController.dispose();
+    nationalityController.dispose();
+    mobileNumberController.dispose();
+    emailAddressController.dispose();
+    idTypeController.dispose();
+    nationalityIdController.dispose();
+    documentNameController.dispose();
+    documentNumberController.dispose();
+    iqamaController.dispose();
+    passportNumberController.dispose();
+    super.dispose();
+  }
 }

@@ -6,7 +6,7 @@ import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/utils/encrypt.dart';
 
-class RegisterNotifier extends BaseChangeNotifier {
+class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
 
   // Data Controller
   TextEditingController _fullNameController = TextEditingController();

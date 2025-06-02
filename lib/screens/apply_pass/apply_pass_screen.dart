@@ -33,17 +33,12 @@ class ApplyPassScreen extends StatelessWidget {
         backgroundColor: AppColors.backgroundColor,
         body: SingleChildScrollView(
           child: Padding(
-            padding: EdgeInsets.only(
-              bottom: 25.h,
-              right: 25.w,
-              left: 25.w,
-              top: 15.h,
-            ),
+            padding: EdgeInsets.only(bottom: 25.h, right: 25.w, left: 25.w, top: 15.h),
             child: Column(
               children: [
                 welcomeHeading(context),
                 35.verticalSpace,
-                Text(context.watchLang.translate(AppLanguageText.applyingVisitFor), style: AppFonts.textBold16,),
+                Text(context.watchLang.translate(AppLanguageText.applyingVisitFor), style: AppFonts.textBold16),
                 15.verticalSpace,
                 categoryList(context, applyPassNotifier),
               ],
@@ -62,17 +57,12 @@ class ApplyPassScreen extends StatelessWidget {
           Text.rich(
             textAlign: TextAlign.center,
             TextSpan(
-              text:
-                  "${context.watchLang.translate(AppLanguageText.welcomeTo)} ",
+              text: "${context.watchLang.translate(AppLanguageText.welcomeTo)} ",
               style: AppFonts.textMedium16,
               children: [
+                TextSpan(text: context.watchLang.translate(AppLanguageText.mofa), style: AppFonts.textBold16),
                 TextSpan(
-                  text: context.watchLang.translate(AppLanguageText.mofa),
-                  style: AppFonts.textBold16,
-                ),
-                TextSpan(
-                  text:
-                      " ${context.watchLang.translate(AppLanguageText.visitorAccessRequest)}",
+                  text: " ${context.watchLang.translate(AppLanguageText.visitorAccessRequest)}",
                   style: AppFonts.textMedium16,
                 ),
               ],
@@ -122,12 +112,13 @@ class ApplyPassScreen extends StatelessWidget {
     );
   }
 
-  Widget categoryWidget(BuildContext context,
-      ApplyPassNotifier notifier,
-      IconData icon,
-      String title,
-      ApplyPassCategory category,) {
-
+  Widget categoryWidget(
+    BuildContext context,
+    ApplyPassNotifier notifier,
+    IconData icon,
+    String title,
+    ApplyPassCategory category,
+  ) {
     return InkWell(
       onTap: () {
         notifier.selectedCategory = category;
@@ -138,21 +129,14 @@ class ApplyPassScreen extends StatelessWidget {
         width: 150.w,
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
-            color: AppColors.whiteColor,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-                color: AppColors.buttonBgColor),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 4,
-                offset: const Offset(0, 4),
-              )
-            ]
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.buttonBgColor),
+          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: const Offset(0, 4))],
         ),
         child: Column(
           children: [
-            Expanded(child: Icon(icon, size: 45, color: AppColors.buttonBgColor,)),
+            Expanded(child: Icon(icon, size: 45, color: AppColors.buttonBgColor)),
             Text(title, style: AppFonts.textMedium16),
           ],
         ),

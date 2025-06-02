@@ -92,20 +92,25 @@ class AddAppointmentRequest {
   int? haveVehicleRegistration;
   int? nVisitCreatedFrom;
   int? nVisitUpdatedFrom;
+  int? nPlateLetter1;
+  int? nPlateLetter2;
+  int? nPlateLetter3;
+  int? nPlateSource;
+  String? sPlateNumber;
 
   AddAppointmentRequest({
     this.gender = "",
-     this.nVisitType,
+    this.nVisitType,
     this.nVisaType = 0,
     this.sVehicleNo = "",
     this.devices,
-     this.nLocationId,
+    this.nLocationId,
     this.nDepartmentId = 0,
     this.nSectionId = 0,
-     this.sVisitingPersonEmail,
+    this.sVisitingPersonEmail,
     this.sAppointmentTitle = "",
-     this.dtAppointmentStartTime,
-     this.dtAppointmentEndTime,
+    this.dtAppointmentStartTime,
+    this.dtAppointmentEndTime,
     this.dtCovidDate = "",
     this.nHostId = 0,
     this.sHostComments = "",
@@ -124,13 +129,13 @@ class AddAppointmentRequest {
     this.sVisaContentType = "",
     this.sServiceProviderFile = "",
     this.sSpContentType = "",
-     this.userId = 0,
-     this.nExternalRegistrationId = 0,
+    this.userId = 0,
+    this.nExternalRegistrationId = 0,
     this.nAppointmentId = 0,
     this.nIsExternalAppointment = 1,
     this.nCreatedByStaff = 0,
     this.nUpdatedByStaff = 0,
-     this.nCreatedByExternal,
+    this.nCreatedByExternal,
     this.nUpdatedByExternal = 0,
     this.dtUpdatedDateExternal = "",
     this.icaEidPhoto = "",
@@ -176,7 +181,12 @@ class AddAppointmentRequest {
     this.haveOthers,
     this.haveVehicleRegistration,
     this.nVisitCreatedFrom,
-    this.nVisitUpdatedFrom
+    this.nVisitUpdatedFrom,
+    this.nPlateLetter1,
+    this.nPlateLetter2,
+    this.nPlateLetter3,
+    this.nPlateSource,
+    this.sPlateNumber,
   });
 
   factory AddAppointmentRequest.fromJson(Map<String, dynamic> json) => AddAppointmentRequest(
@@ -184,18 +194,19 @@ class AddAppointmentRequest {
     nVisitType: json["N_VisitType"] ?? 0,
     nVisaType: json["N_VisaType"] ?? 0,
     sVehicleNo: json["S_VehicleNo"] ?? "",
-    devices: json["Devices"] == null
-        ? []
-        : List<DeviceModel>.from(
-      json["Devices"].where((x) => x != null).map((x) => DeviceModel.fromJson(x)),
-    ),
+    devices:
+        json["Devices"] == null
+            ? []
+            : List<DeviceModel>.from(json["Devices"].where((x) => x != null).map((x) => DeviceModel.fromJson(x))),
     nLocationId: json["N_LocationID"] ?? 0,
     nDepartmentId: json["N_DepartmentID"] ?? 0,
     nSectionId: json["N_SectionID"] ?? 0,
     sVisitingPersonEmail: json["S_VisitingPersonEmail"] ?? "",
     sAppointmentTitle: json["S_AppointmentTitle"] ?? "",
-    dtAppointmentStartTime: json["Dt_AppointmentStartTime"] == null ? DateTime.now() : DateTime.parse(json["Dt_AppointmentStartTime"]),
-    dtAppointmentEndTime: json["Dt_AppointmentEndTime"] == null ? DateTime.now() : DateTime.parse(json["Dt_AppointmentEndTime"]),
+    dtAppointmentStartTime:
+        json["Dt_AppointmentStartTime"] == null ? DateTime.now() : DateTime.parse(json["Dt_AppointmentStartTime"]),
+    dtAppointmentEndTime:
+        json["Dt_AppointmentEndTime"] == null ? DateTime.now() : DateTime.parse(json["Dt_AppointmentEndTime"]),
     dtCovidDate: json["Dt_CovidDate"] ?? "",
     nHostId: json["N_HostID"] ?? 0,
     sHostComments: json["S_HostComments"] ?? "",
@@ -235,7 +246,8 @@ class AddAppointmentRequest {
     nProcessId: json["N_ProcessID"] ?? 1,
     tblApprovals: json["tblApprovals"] == null ? [] : List<dynamic>.from(json["tblApprovals"]!.map((x) => x)),
     nVehiclePass: json["N_VehiclePass"] ?? 0,
-    tblVehicleDetails: json["tblVehicleDetails"] == null ? [] : List<dynamic>.from(json["tblVehicleDetails"]!.map((x) => x)),
+    tblVehicleDetails:
+        json["tblVehicleDetails"] == null ? [] : List<dynamic>.from(json["tblVehicleDetails"]!.map((x) => x)),
     nArrivingByTaxi: json["N_ArrivingByTaxi"] ?? true,
     sDriverLicenseFile: json["S_DriverLicenseFile"] ?? "",
     sDriverLicenseContentType: json["S_DriverLicenseContentType"] ?? "",
@@ -267,6 +279,11 @@ class AddAppointmentRequest {
     haveVehicleRegistration: json["haveVehicleRegistration"],
     nVisitCreatedFrom: json["N_VisitCreatedFrom"],
     nVisitUpdatedFrom: json["N_VisitUpdatedFrom"],
+    nPlateLetter1: json['N_PlateLetter1'],
+    nPlateLetter2: json['N_PlateLetter2'],
+    nPlateLetter3: json['N_PlateLetter3'],
+    nPlateSource: json['N_PlateSource'],
+    sPlateNumber: json['S_PlateNumber'],
   );
 
   Map<String, dynamic> toJson() => {
@@ -274,9 +291,7 @@ class AddAppointmentRequest {
     "N_VisitType": nVisitType,
     "N_VisaType": nVisaType,
     "S_VehicleNo": sVehicleNo,
-    "Devices": devices == null
-        ? []
-        : List<dynamic>.from(devices!.map((x) => x.toJson())),
+    "Devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
     "N_LocationID": nLocationId,
     "N_DepartmentID": nDepartmentId,
     "N_SectionID": nSectionId,
@@ -346,7 +361,7 @@ class AddAppointmentRequest {
     "Dt_PassportExpiryDate": dtPassportExpiryDate,
     "Dt_OthersExpiry": dtOthersExpiry,
     "Nationality": nationality,
-    "ReSubmissionComment" : resubmissionComments,
+    "ReSubmissionComment": resubmissionComments,
     "havePhoto": havePhoto,
     "haveIqama": haveIqama,
     "haveEid": haveEid,
@@ -354,7 +369,12 @@ class AddAppointmentRequest {
     "haveOthers": haveOthers,
     "haveVehicleRegistration": haveVehicleRegistration,
     "N_VisitCreatedFrom": nVisitCreatedFrom,
-    "N_VisitUpdatedFrom": nVisitUpdatedFrom
+    "N_VisitUpdatedFrom": nVisitUpdatedFrom,
+    'N_PlateLetter1': nPlateLetter1,
+    'N_PlateLetter2': nPlateLetter2,
+    'N_PlateLetter3': nPlateLetter3,
+    'N_PlateSource': nPlateSource,
+    'S_PlateNumber': sPlateNumber,
   };
 }
 
@@ -372,11 +392,11 @@ class DeviceModel {
 
   DeviceModel({
     this.appointmentDeviceId = 0,
-     this.deviceType,
+    this.deviceType,
     this.deviceTypeOthersValue = "",
     this.deviceModel = "",
     this.serialNumber = "",
-     this.devicePurpose,
+    this.devicePurpose,
     this.devicePurposeString = "",
     this.deviceTypeString = "",
     this.devicePurposeOthersValue = "",

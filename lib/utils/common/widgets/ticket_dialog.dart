@@ -39,7 +39,7 @@ class TicketDialogWrapper extends StatelessWidget {
             color: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(width: 1.5, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
+              side: BorderSide(width: 2, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
             ),
             child: SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
@@ -53,7 +53,7 @@ class TicketDialogWrapper extends StatelessWidget {
         Positioned.fill(
           child: IgnorePointer(
             child: CustomPaint(
-              painter: ArcBorderPainter(top: 255.w, holeRadius: 15, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
+              painter: ArcBorderPainter(top: 255.w, holeRadius: 15, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""), strokeWidth: 2),
             ),
           ),
         ),
@@ -245,7 +245,7 @@ class HorizontalDottedLinePainter extends CustomPainter {
     double dashWidth = 5, dashSpace = 4, startX = 0;
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 2;
 
     while (startX < size.width) {
       canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);

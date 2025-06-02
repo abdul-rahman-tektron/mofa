@@ -23,7 +23,7 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => LoginNotifier(),
+      create: (context) => LoginNotifier(context),
       child: Consumer<LoginNotifier>(
         builder: (context, loginNotifier, child) {
           return buildBody(context, loginNotifier);
@@ -72,9 +72,11 @@ class LoginScreen extends StatelessWidget {
                         20.verticalSpace,
                         passwordField(context, loginNotifier),
                         3.verticalSpace,
+                        if(loginNotifier.loginError.isNotEmpty) loginErrorText(context, loginNotifier),
+                        3.verticalSpace,
                         forgotPassword(context, loginNotifier),
                         15.verticalSpace,
-                        captchaWidget(loginNotifier),
+                        captchaWidget(context, loginNotifier),
                         16.verticalSpace,
                         captchaField(context, loginNotifier),
                         10.verticalSpace,
@@ -159,6 +161,13 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
+  Widget loginErrorText(BuildContext context, LoginNotifier loginNotifier) {
+    return Text(
+      loginNotifier.loginError,
+      style: AppFonts.textRegular14ErrorRed,
+    );
+  }
+
   // Function to create the captcha field widget
   Widget captchaField(BuildContext context, LoginNotifier loginNotifier) {
     return SizedBox(
@@ -198,24 +207,22 @@ class LoginScreen extends StatelessWidget {
           if (value == null || value.isEmpty) {
             return 'Please enter the CAPTCHA';
           }
-          if (value != loginNotifier.generatedCaptcha) {
-            return 'Incorrect CAPTCHA';
-          }
           return null;
         },
       ),
     );
   }
 
-  Widget captchaWidget(LoginNotifier loginNotifier) {
+  Widget captchaWidget(BuildContext context, LoginNotifier loginNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CaptchaWidget(renderData: loginNotifier.renderData),
+        // CaptchaWidget(renderData: loginNotifier.renderData),
+        if(loginNotifier.captchaImage != null) Image.network(loginNotifier.captchaImage ?? "", height: 70,  fit: BoxFit.fill,),
         IconButton(
           icon: Icon(LucideIcons.refreshCcw),
-          onPressed: loginNotifier.generateCaptcha,
+          onPressed: ()=> loginNotifier.apiGetCaptcha(context),
         ),
       ],
     );
@@ -283,12 +290,7 @@ class LoginScreen extends StatelessWidget {
   Widget loginButton(BuildContext context, LoginNotifier loginNotifier) {
     return Center(
       child: CustomButton(
-        onPressed:
-            () => loginNotifier.performLogin(
-              context,
-              email: loginNotifier.userNameController.text,
-              password: loginNotifier.passwordNameController.text,
-            ),
+        onPressed: () => loginNotifier.performLogin(context),
         text: context.watchLang.translate(AppLanguageText.login),
         backgroundColor: AppColors.buttonBgColor,
       ),

@@ -14,12 +14,7 @@ class GetByIdResponse {
   String? message;
   bool? status;
 
-  GetByIdResponse({
-    this.result,
-    this.statusCode,
-    this.message,
-    this.status,
-  });
+  GetByIdResponse({this.result, this.statusCode, this.message, this.status});
 
   factory GetByIdResponse.fromJson(Map<String, dynamic> json) => GetByIdResponse(
     result: json["result"] == null ? null : GetByIdResult.fromJson(json["result"]),
@@ -42,22 +37,22 @@ class GetByIdResult {
   Vehicle? vehicle;
   List<DeviceResult>? devices;
 
-  GetByIdResult({
-    this.appointmentComments,
-    this.user,
-    this.vehicle,
-    this.devices,
-  });
+  GetByIdResult({this.appointmentComments, this.user, this.vehicle, this.devices});
 
   factory GetByIdResult.fromJson(Map<String, dynamic> json) => GetByIdResult(
-    appointmentComments: json["appointmentComments"] == null ? [] : List<AppointmentComment>.from(json["appointmentComments"]!.map((x) => AppointmentComment.fromJson(x))),
+    appointmentComments:
+        json["appointmentComments"] == null
+            ? []
+            : List<AppointmentComment>.from(json["appointmentComments"]!.map((x) => AppointmentComment.fromJson(x))),
     user: json["user"] == null ? null : GetByIdUser.fromJson(json["user"]),
     vehicle: json["vehicle"] == null ? null : Vehicle.fromJson(json["vehicle"]),
-    devices: json["devices"] == null ? [] : List<DeviceResult>.from(json["devices"]!.map((x) => DeviceResult.fromJson(x))),
+    devices:
+        json["devices"] == null ? [] : List<DeviceResult>.from(json["devices"]!.map((x) => DeviceResult.fromJson(x))),
   );
 
   Map<String, dynamic> toJson() => {
-    "appointmentComments": appointmentComments == null ? [] : List<dynamic>.from(appointmentComments!.map((x) => x.toJson())),
+    "appointmentComments":
+        appointmentComments == null ? [] : List<dynamic>.from(appointmentComments!.map((x) => x.toJson())),
     "user": user?.toJson(),
     "vehicle": vehicle?.toJson(),
     "devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
@@ -72,14 +67,7 @@ class AppointmentComment {
   int? nCommentType;
   String? sComment;
 
-  AppointmentComment({
-    this.nId,
-    this.nAppointmentId,
-    this.nRoleId,
-    this.nUserId,
-    this.nCommentType,
-    this.sComment,
-  });
+  AppointmentComment({this.nId, this.nAppointmentId, this.nRoleId, this.nUserId, this.nCommentType, this.sComment});
 
   factory AppointmentComment.fromJson(Map<String, dynamic> json) => AppointmentComment(
     nId: json["n_ID"],

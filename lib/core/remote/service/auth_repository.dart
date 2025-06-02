@@ -5,11 +5,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
+import 'package:mofa/core/model/captcha/captcha_login_response.dart';
+import 'package:mofa/core/model/captcha/get_captcha_response.dart';
+import 'package:mofa/core/model/captcha/resend_otp_request.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/error/error_response.dart';
 import 'package:mofa/core/model/forget_password/forget_password_request.dart';
 import 'package:mofa/core/model/forget_password/forget_password_response.dart';
 import 'package:mofa/core/model/get_profile/get_profile_response.dart';
+import 'package:mofa/core/model/captcha/captcha_login_request.dart';
 import 'package:mofa/core/model/login/login_request.dart';
 import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
@@ -30,7 +34,7 @@ import 'package:mofa/utils/toast_helper.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
 import 'package:provider/provider.dart';
 
-class AuthRepository extends BaseRepository {
+class AuthRepository extends BaseRepository with CommonFunctions {
   AuthRepository._internal();
 
   static final AuthRepository _singleInstance = AuthRepository._internal();
@@ -79,6 +83,89 @@ class AuthRepository extends BaseRepository {
     return null;
   }
 
+  String urlEncodedBody(Map<String, dynamic> data) {
+    return data.entries.map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}').join('&');
+  }
+
+  //api: Logins
+  Future<Object?> apiUserCaptchaLogin(CaptchaLoginRequest requestParams, BuildContext context) async {
+
+    // Convert to x-www-form-urlencoded
+    final encodedBody = requestParams.toJson().entries.map((e) {
+      return '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent('${e.value}')}' ;
+    }).join('&');
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathCaptchaLogin,
+      body: encodedBody,
+      headers: headerUrlEncodedWithCredentials,
+    );
+
+    print("Data status code");
+    print(response?.statusCode);
+    print("Data");
+    if (response?.statusCode == HttpStatus.ok) {
+      final result = response?.data['result'];
+      if (result.containsKey('token')) {
+        // Token login
+        LoginTokenResponse loginTokenResponse = loginTokenResponseFromJson(jsonEncode(response?.data));
+        await SecureStorageHelper.setToken(loginTokenResponse.result?.token ?? "");
+
+        await SecureStorageHelper.setUser(
+          loginTokenUserResponseToJson(
+            LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")),
+          ),
+        );
+
+        final commonNotifier = Provider.of<CommonNotifier>(context, listen: false);
+        commonNotifier.updateUser(
+          LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")),
+        );
+
+        return loginTokenResponse.result;
+      } else if (result.containsKey('accountLockoutStatus')) {
+        // OTP login required
+        CaptchaLoginOtpResponse otpResponse = captchaLoginOtpResponseFromJson(jsonEncode(response?.data));
+        return otpResponse.result;
+      }
+    } else if(response?.statusCode == HttpStatus.unauthorized) {
+      LoginTokenFailureResponse loginTokenFailureResponse = loginTokenFailureResponseFromJson(jsonEncode(response?.data));
+
+      return loginTokenFailureResponse.result;
+    } else{
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+    return null;
+  }
+
+  //api: Logins
+  Future<Object?> apiGetCaptcha(Map requestParams, BuildContext context) async {
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathGetCaptcha,
+      body: jsonEncode(requestParams),
+      headers: headerContentTypeAndAcceptWithCredentials,
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      GetCaptchaResponse getCaptchaResponse =
+      getCaptchaResponseFromJson(jsonEncode(response?.data));
+
+      print("getCaptchaResponse.dntCaptchaTextValue");
+      print(getCaptchaResponse.dntCaptchaTextValue);
+
+      return getCaptchaResponse; //Success message
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+    return null;
+  }
+
+
 
   //api: Country List
   Future<Object?> apiCountryList(Map requestParams, BuildContext context) async {
@@ -119,6 +206,73 @@ class AuthRepository extends BaseRepository {
 
       registerSuccessPopup(context, "Registered Successfully",
           "An account activation link has been sent to your email address. Please check your inbox and follow the instructions to activate your account.");
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+    return null;
+  }
+
+  //api: Registration
+  Future<Object?> apiResendOtp(ResendOtpRequest requestParams, BuildContext context) async {
+
+    // final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathResendOTP,
+      body: jsonEncode(requestParams),
+      headers: headerContentTypeAndAccept,
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      CaptchaLoginOtpResponse captchaLoginOtpResponse =
+      captchaLoginOtpResponseFromJson(jsonEncode(response?.data));
+
+      ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.otpResentSuccessfully) ?? "");
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+    return null;
+  }
+
+  //api: Validate OTP
+  Future<Object?> apiValidateOtp(ValidateOtpRequest requestParams, BuildContext context) async {
+
+    // final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathValidateOTP,
+      body: jsonEncode(requestParams),
+      headers: headerContentTypeAndAccept,
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      LoginTokenResponse loginTokenResponse =
+      loginTokenResponseFromJson(jsonEncode(response?.data));
+
+      await SecureStorageHelper.setToken(loginTokenResponse.result?.token ?? "");
+
+      await SecureStorageHelper.setUser(
+        loginTokenUserResponseToJson(
+          LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")),
+        ),
+      );
+
+      final commonNotifier = Provider.of<CommonNotifier>(context, listen: false);
+      commonNotifier.updateUser(
+        LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")),
+      );
+
+      Navigator.pushReplacementNamed(context, AppRoutes.bottomBar);
+    } else if (response?.statusCode == HttpStatus.badRequest) {
+      ValidateOtpFailureRequest validateOtpFailureRequest =
+      validateOtpFailureRequestFromJson(jsonEncode(response?.data));
+      if(validateOtpFailureRequest.result?.isOtpExpired ?? false) {
+        ToastHelper.showError(context.readLang.translate(AppLanguageText.invalidExpiredOtpTryAgain) ?? "");
+      }
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

@@ -141,6 +141,52 @@ class ApplyPassRepository extends BaseRepository {
     }
   }
 
+  //api: Plate Source Dropdown
+  Future<Object?> apiPlateSourceDropDown(Map requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathPlateSourceDropdown,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      DeviceDropdownResponse plateSourceDropdownResponse =
+      deviceDropdownResponseFromJson(jsonEncode(response?.data));
+
+      return plateSourceDropdownResponse.result;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Plate Letter Dropdown
+  Future<Object?> apiPlateLetterDropDown(Map requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathPlateLetterDropdown,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      DeviceDropdownResponse plateLetterDropdownResponse =
+      deviceDropdownResponseFromJson(jsonEncode(response?.data));
+
+      return plateLetterDropdownResponse.result;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
   //api: Get by id
   Future<Object?> apiGetById(DeviceDropdownRequest requestParams, BuildContext context, {bool isUpdate = false}) async {
 
@@ -338,16 +384,16 @@ class ApplyPassRepository extends BaseRepository {
       body: jsonEncode(requestParams),
       headers: buildDefaultHeaderWithToken(token ?? ""),
     );
+    ValidatePhotoResponse validatePhotoResponse =
+    validatePhotoResponseFromJson(jsonEncode(response?.data));
 
     if (response?.statusCode == HttpStatus.ok) {
-      ValidatePhotoResponse validatePhotoResponse =
-      validatePhotoResponseFromJson(jsonEncode(response?.data));
+
 
       return validatePhotoResponse.result;
 
     } else {
-      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
-      return errorString.title;
+      return validatePhotoResponse.result;
     }
   }
 

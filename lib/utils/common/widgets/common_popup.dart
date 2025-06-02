@@ -367,4 +367,45 @@ void cancelAppointmentPopup(BuildContext context, SearchPassNotifier searchPassN
           ),
         ),
   );
+
+
+}void accountLockedPopup(BuildContext context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    barrierColor: AppColors.primaryColor.withOpacity(0.4),
+    builder: (_) =>
+        Dialog(
+          backgroundColor: AppColors.whiteColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.lock, size: 60, color: AppColors.textRedColor),
+                  20.verticalSpace,
+                  Text(context.readLang.translate(
+                      AppLanguageText.accountIsLocked),
+                    style: AppFonts.textRegular20,
+                    textAlign: TextAlign.center,
+                  ),
+                  20.verticalSpace,
+                  CustomButton(
+                    text: context.watchLang.translate(
+                        AppLanguageText.ok),
+                    smallWidth: true,
+                    height: 40,
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ]
+            ),
+          ),
+        ),
+  );
 }

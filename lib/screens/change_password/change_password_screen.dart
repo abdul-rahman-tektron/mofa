@@ -133,7 +133,10 @@ class ChangePasswordScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.confirmPassword),
       isSmallFieldFont: true,
       isPassword: true,
-      validator: (value) => CommonValidation().validateConfirmPassword(changePasswordNotifier.newPasswordController.text, changePasswordNotifier.confirmPasswordController.text),
+      validator: (value) =>
+          CommonValidation().validateConfirmPassword(
+              changePasswordNotifier.newPasswordController.text,
+              changePasswordNotifier.confirmPasswordController.text),
     );
   }
 

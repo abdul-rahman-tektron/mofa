@@ -4,7 +4,6 @@ import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
-import 'package:provider/provider.dart';
 
 import '../../common_validation.dart';
 
@@ -70,52 +69,38 @@ class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscureText = true;
   DateTime? _selectedDate;
 
+  void _toggleVisibility() => setState(() => _obscureText = !_obscureText);
 
-  // Toggle password visibility
-  void _toggleVisibility() {
-    setState(() {
-      _obscureText = !_obscureText;
-    });
-  }
-
-  // Format date to dd/mm/yyyy
   String _formatDateTime(DateTime? date) {
     if (date == null) return '';
-    if (widget.needTime) {
-      return DateFormat('dd/MM/yyyy ،hh:mm a').format(date);
-    } else {
-      return DateFormat('dd/MM/yyyy').format(date);
-    }
+    return DateFormat(widget.needTime ? 'dd/MM/yyyy ،hh:mm a' : 'dd/MM/yyyy').format(date);
   }
 
-  // Display date picker and update text field with selected date
+  OutlineInputBorder _buildBorder(Color color) => OutlineInputBorder(
+    borderSide: BorderSide(color: color, width: 2.5),
+    borderRadius: BorderRadius.circular(15.0),
+  );
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime initialDate = _selectedDate ?? widget.initialDate ?? DateTime.now();
 
-    final DateTime? picked = await showDatePicker(
+    final picked = await showDatePicker(
       context: context,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            datePickerTheme: DatePickerThemeData(
-              headerBackgroundColor: AppColors.buttonBgColor,
-              headerForegroundColor: AppColors.whiteColor,
-              // locale: Locale(context.readLang.currentLang == 'ar' ? 'ar' : 'en'),
-            ),
-            colorScheme: ColorScheme.light(
-              primary: AppColors.buttonBgColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-            textButtonTheme: TextButtonThemeData(
-              style: TextButton.styleFrom(
-                foregroundColor: AppColors.buttonBgColor,
-              ),
-            ),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          datePickerTheme: DatePickerThemeData(
+            headerBackgroundColor: AppColors.buttonBgColor,
+            headerForegroundColor: AppColors.whiteColor,
           ),
-          child: child!,
-        );
-      },
+          colorScheme: ColorScheme.light(
+            primary: AppColors.buttonBgColor,
+            onPrimary: Colors.white,
+            onSurface: Colors.black,
+          ),
+          textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.buttonBgColor)),
+        ),
+        child: child!,
+      ),
       initialDate: initialDate.isBefore(widget.startDate ?? DateTime(1900))
           ? (widget.startDate ?? DateTime.now())
           : initialDate,
@@ -126,64 +111,38 @@ class _CustomTextFieldState extends State<CustomTextField> {
     if (picked != null) {
       DateTime finalDateTime = picked;
 
-      // If time is needed, show time picker after date is picked
       if (widget.needTime) {
-        final TimeOfDay? time = await showTimePicker(
+        final time = await showTimePicker(
           context: context,
-          initialTime: TimeOfDay.fromDateTime(
-            _selectedDate ??
-                widget.startDate?.add(Duration(hours: 1)) ??
-                DateTime.now(),
-          ),
-          builder: (context, child) {
-            return Theme(
-              data: Theme.of(context).copyWith(
-                textSelectionTheme: TextSelectionThemeData(
-                  cursorColor: Colors.white,
-                  selectionHandleColor: Colors.grey,
-                ),
-                timePickerTheme: TimePickerThemeData(
-                    backgroundColor: Colors.white,
-                    hourMinuteTextColor: AppColors.whiteColor,
-                    entryModeIconColor: AppColors.buttonBgColor,
-                    dayPeriodColor: AppColors.buttonBgColor.withOpacity(0.3),
-                    dayPeriodShape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(5),
-                      side: const BorderSide(
-                        color: AppColors.buttonBgColor,
-                        width: 1,
-                      ),
-                    )
-                ),
-                colorScheme: ColorScheme.light(
-                  primary: AppColors.buttonBgColor,
-                  // clock dial and header
-                  onPrimary: Colors.white,
-                  // text color on header
-                  surface: AppColors.buttonBgColor.withOpacity(0.1),
-                  // dialog background
-                  onSurface: Colors.black, // default text color
-
-                ),
-                textButtonTheme: TextButtonThemeData(
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.buttonBgColor,
-                  ),
+          initialTime: TimeOfDay.fromDateTime(_selectedDate ?? DateTime.now()),
+          builder: (context, child) => Theme(
+            data: Theme.of(context).copyWith(
+              timePickerTheme: TimePickerThemeData(
+                backgroundColor: Colors.white,
+                hourMinuteTextColor: AppColors.whiteColor,
+                entryModeIconColor: AppColors.buttonBgColor,
+                dayPeriodColor: AppColors.buttonBgColor.withOpacity(0.3),
+                dayPeriodShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(5),
+                  side: const BorderSide(color: AppColors.buttonBgColor, width: 1),
                 ),
               ),
-              child: child!,
-            );
-          },
+              colorScheme: ColorScheme.light(
+                primary: AppColors.buttonBgColor,
+                onPrimary: Colors.white,
+                surface: AppColors.buttonBgColor.withOpacity(0.1),
+                onSurface: Colors.black,
+              ),
+              textButtonTheme: TextButtonThemeData(
+                style: TextButton.styleFrom(foregroundColor: AppColors.buttonBgColor),
+              ),
+            ),
+            child: child!,
+          ),
         );
 
         if (time != null) {
-          finalDateTime = DateTime(
-            picked.year,
-            picked.month,
-            picked.day,
-            time.hour,
-            time.minute,
-          );
+          finalDateTime = DateTime(picked.year, picked.month, picked.day, time.hour, time.minute);
         }
       }
 
@@ -202,144 +161,91 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final showTitle = widget.titleVisibility ?? true;
+    final textColor = !widget.isEnable
+        ? (widget.isSmallFieldFont ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey17)
+        : (widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if(widget.titleVisibility ?? true) Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Text(widget.fieldName, style: widget.isSmallFieldFont
-                    ? AppFonts.textRegular14
-                    : AppFonts.textRegular18,),
-                SizedBox(width: 3,),
-                if(!widget.skipValidation) Text("*",
-                  style: TextStyle(
-                    fontSize: 15, color: AppColors.textRedColor,
-                  ),
-                ),
-                if(widget.toolTipContent != null) SizedBox(width: 3,),
-                if(widget.toolTipContent != null) Tooltip(
-                  message: widget.toolTipContent,
-                  textAlign: TextAlign.center,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryColor,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Icon(Icons.info_outline, size: 20,
-                    color: AppColors.primaryColor,),
-                ),
-              ],
-            ),
-            if(widget.isPassword) Row(
-              children: [
-                 GestureDetector(
+        if (showTitle)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Text(widget.fieldName, style: textColor),
+                  if (!widget.skipValidation)
+                    const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
+                  if (widget.toolTipContent != null) ...[
+                    const SizedBox(width: 3),
+                    Tooltip(
+                      message: widget.toolTipContent!,
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryColor,
+                        borderRadius: BorderRadius.circular(5),
+                      ),
+                      child: const Icon(Icons.info_outline, size: 20, color: AppColors.primaryColor),
+                    ),
+                  ],
+                ],
+              ),
+              if (widget.isPassword && !widget.hidePassIcon)
+                GestureDetector(
                   onTap: _toggleVisibility,
-                  child:
-                  widget.isPassword && _obscureText
-                      ? Icon(Icons.visibility_outlined, size: 24,)
-                      : Icon(Icons.visibility_off_outlined, size: 24,),
+                  child: Row(
+                    children: [
+                      Icon(
+                        _obscureText ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        context.watchLang.translate(
+                          _obscureText ? AppLanguageText.show : AppLanguageText.hide,
+                        ),
+                        style: AppFonts.textRegular18,
+                      ),
+                    ],
+                  ),
                 ),
-                  SizedBox(width: 5,),
-                  GestureDetector(
-                    onTap: _toggleVisibility,
-                    child:
-                    widget.isPassword && _obscureText
-                        ? Text(
-                      context.watchLang.translate(AppLanguageText.show),
-                      style: AppFonts.textRegular18,)
-                        : Text(
-                      context.watchLang.translate(AppLanguageText.hide),
-                      style: AppFonts.textRegular18,),
-                  )
-              ],
-            )
-          ],
-        ),
-        if(widget.titleVisibility ?? true) SizedBox(height: 5,),
+            ],
+          ),
+        if (showTitle) const SizedBox(height: 5),
         TextFormField(
           controller: widget.controller,
           textInputAction: widget.textInputAction,
           obscureText: widget.isPassword && _obscureText,
           obscuringCharacter: "*",
-          readOnly: !widget.isEditable,
+          readOnly: !widget.isEditable || widget.keyboardType == TextInputType.datetime,
           enabled: widget.isEnable,
-          // Disable editing directly in the text field
-          enableInteractiveSelection:
-          widget.keyboardType == TextInputType.datetime ? false : null,
+          enableInteractiveSelection: widget.keyboardType != TextInputType.datetime,
           enableSuggestions: false,
           keyboardType: widget.keyboardType,
           onChanged: widget.onChanged,
-          onTap: () {
-            if (widget.keyboardType == TextInputType.datetime) {
-              _selectDate(context); // Only call the date picker function
-            }
-          },
-          maxLines: widget.isMaxLines ?? false ? 4 : 1,
-          style: (widget.isSmallFieldFont == true && widget.isEnable == false)
-              ? AppFonts.textRegularGrey14
-              : widget.isSmallFieldFont ? AppFonts.textRegular14 : !widget.isEnable ? AppFonts.textRegularGrey17 : AppFonts
-              .textRegular17,
+          onTap: widget.keyboardType == TextInputType.datetime ? () => _selectDate(context) : null,
+          maxLines: widget.isMaxLines == true ? 4 : 1,
+          style: textColor,
           autovalidateMode: AutovalidateMode.onUserInteraction,
+          validator: widget.skipValidation ? null : widget.validator ?? CommonValidation().commonValidator,
           decoration: InputDecoration(
-            fillColor: !widget.isEnable ? AppColors.disabledFieldColor : widget.backgroundColor ?? AppColors.whiteColor,
+            fillColor: widget.isEnable ? (widget.backgroundColor ?? AppColors.whiteColor) : AppColors.disabledFieldColor,
             filled: true,
             hintText: widget.hintText,
-            border: OutlineInputBorder(
-              borderSide: BorderSide(
-                color:  widget.borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: !widget.isEnable ? AppColors.fieldBorderColor :widget.borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
-                    .borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
-                    .borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: !widget.isEnable ? AppColors.fieldBorderColor :widget.borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
-            focusedErrorBorder: OutlineInputBorder(
-              borderSide: BorderSide(
-                color: !widget.isEnable ? AppColors.fieldBorderColor : widget
-                    .borderColor ?? AppColors.fieldBorderColor,
-                width: 2.5,
-              ),
-              borderRadius: BorderRadius.circular(15.0),
-            ),
             hintStyle: widget.hintStyle ?? AppFonts.textRegularGrey16,
-            labelStyle: !widget.isEnable ? AppFonts.textRegularGrey16 :  AppFonts.textRegular17,
-            errorStyle: TextStyle(color: AppColors.underscoreColor),
+            labelStyle: widget.isEnable ? AppFonts.textRegular17 : AppFonts.textRegularGrey16,
+            errorStyle: const TextStyle(color: AppColors.underscoreColor),
+            border: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
+            enabledBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
+            disabledBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
+            errorBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
+            focusedBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
+            focusedErrorBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
           ),
-          validator: widget.skipValidation
-              ? null
-              : widget.validator ?? CommonValidation().commonValidator,
         ),
       ],
     );
   }
 }
+

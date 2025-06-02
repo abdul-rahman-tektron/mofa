@@ -80,7 +80,6 @@ class SearchPassNotifier extends BaseChangeNotifier {
     });
   }
 
-
   Future<void> apiGetAllExternalAppointment(BuildContext context, {int? page}) async {
     _currentPage = page ?? _currentPage;
 
@@ -131,36 +130,47 @@ class SearchPassNotifier extends BaseChangeNotifier {
     return "${fromDate.day.toString().padLeft(2, '0')}/${fromDate.month.toString().padLeft(2, '0')}/${fromDate.year.toString().padLeft(4, '0')}";
   }
 
-  //location dropdown Api call
-  Future apiLocationDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiLocationDropDown({}, context).then((value) {
-      var locationData = value as List<LocationDropdownResult>;
+  // Location dropdown API call
+  Future<void> apiLocationDropdown(BuildContext context) async {
+    try {
+      final value = await ApplyPassRepository().apiLocationDropDown({}, context);
+      final locationData = value as List<LocationDropdownResult>;
       locationDropdownData = List<LocationDropdownResult>.from(locationData);
-    },);
+    } catch (e) {
+      print("Failed to load location dropdown: $e");
+    }
   }
 
-  //location dropdown Api call
-  Future apiStatusDropdown(BuildContext context) async {
-    await SearchPassRepository().apiStatusDropDown({}, context).then((value) {
-      var statusData = value as List<DeviceDropdownResult>;
+  // Status dropdown API call
+  Future<void> apiStatusDropdown(BuildContext context) async {
+    try {
+      final value = await SearchPassRepository().apiStatusDropDown({}, context);
+      final statusData = value as List<DeviceDropdownResult>;
       statusDropdownData = List<DeviceDropdownResult>.from(statusData);
-    },);
+    } catch (e) {
+      print("Failed to load status dropdown: $e");
+    }
   }
 
-  //location dropdown Api call
-  Future apiCancelAppointment(BuildContext context, GetExternalAppointmentData appointmentData) async {
-    await SearchPassRepository().apiCancelAppointment(CancelAppointmentRequest(
-      nLocationId: appointmentData.nLocationId,
-      nExternalRegistrationId: appointmentData.nExternalRegistrationId,
-      nAppointmentId: appointmentData.nAppointmentId,
-      nUpdatedByExternal: appointmentData.nExternalRegistrationId,
-      nUserId: appointmentData.userId,
-    ), context).then((value) {
+  // Cancel appointment API call
+  Future<void> apiCancelAppointment(BuildContext context, GetExternalAppointmentData appointmentData) async {
+    try {
+      await SearchPassRepository().apiCancelAppointment(
+        CancelAppointmentRequest(
+          nLocationId: appointmentData.nLocationId,
+          nExternalRegistrationId: appointmentData.nExternalRegistrationId,
+          nAppointmentId: appointmentData.nAppointmentId,
+          nUpdatedByExternal: appointmentData.nExternalRegistrationId,
+          nUserId: appointmentData.userId,
+        ),
+        context,
+      );
       Navigator.pop(context);
-      apiGetAllExternalAppointment(context);
-    },);
+      await apiGetAllExternalAppointment(context);
+    } catch (e) {
+      print("Failed to cancel appointment: $e");
+    }
   }
-
 
   void goToPreviousPage(BuildContext context) {
     if (_currentPage > 1) {
@@ -186,6 +196,7 @@ class SearchPassNotifier extends BaseChangeNotifier {
 
   // Getters
   List<GetExternalAppointmentData> get getAllDetailData => _visibleAppointments;
+
   int get currentPage => _currentPage;
 
   set currentPage(int value) {
@@ -195,6 +206,7 @@ class SearchPassNotifier extends BaseChangeNotifier {
   }
 
   int get totalPages => _totalPages;
+
   int get totalCount => _totalCount;
 
   List<LocationDropdownResult> get locationDropdownData => _locationDropdownData;

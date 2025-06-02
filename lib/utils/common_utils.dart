@@ -21,10 +21,9 @@ mixin CommonUtils {
     }
   }
 
-
-  TimeOfDay? parseTimeStringToTimeOfDay(String timeStr) {
+  static TimeOfDay? parseTimeStringToTimeOfDay(String timeStr) {
     try {
-      final parsedTime = DateFormat.jm().parse(timeStr); // e.g., "08:00 AM"
+      final parsedTime = DateFormat.jm().parse(timeStr);
       return TimeOfDay.fromDateTime(parsedTime);
     } catch (e) {
       print("Failed to parse time: $e");
@@ -32,7 +31,7 @@ mixin CommonUtils {
     }
   }
 
-  TimeOfDay? parseFullDateStringToTimeOfDay(String fullDateStr) {
+  static TimeOfDay? parseFullDateStringToTimeOfDay(String fullDateStr) {
     try {
       final parsedDateTime = DateFormat("dd/MM/yyyy '،'hh:mm a").parse(fullDateStr);
       return TimeOfDay.fromDateTime(parsedDateTime);
@@ -42,11 +41,23 @@ mixin CommonUtils {
     }
   }
 
-  bool isBeforeTimeOfDay(TimeOfDay a, TimeOfDay b) {
+  static bool isBeforeTimeOfDay(TimeOfDay a, TimeOfDay b) {
     return a.hour < b.hour || (a.hour == b.hour && a.minute < b.minute);
   }
 
-  bool isAfterTimeOfDay(TimeOfDay a, TimeOfDay b) {
+  static bool isAfterTimeOfDay(TimeOfDay a, TimeOfDay b) {
     return a.hour > b.hour || (a.hour == b.hour && a.minute > b.minute);
   }
+
+  static String formatIsoToReadable(String isoDateStr) {
+    try {
+      final dateTime = DateTime.parse(isoDateStr);
+      final formatter = DateFormat("MMM d, y 'at' h:mm a");
+      return formatter.format(dateTime);
+    } catch (e) {
+      print("Error formatting date: $e");
+      return isoDateStr; // fallback to original
+    }
+  }
 }
+

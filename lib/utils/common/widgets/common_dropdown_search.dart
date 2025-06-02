@@ -33,14 +33,14 @@ class CustomSearchDropdown<T> extends StatefulWidget {
   });
 
   @override
-  State<CustomSearchDropdown<T>> createState() =>
-      _CustomSearchDropdownState<T>();
+  State<CustomSearchDropdown<T>> createState() => _CustomSearchDropdownState<T>();
 }
 
 class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
   final LayerLink _layerLink = LayerLink();
-  OverlayEntry? _overlayEntry;
   final FocusNode _focusNode = FocusNode();
+  OverlayEntry? _overlayEntry;
+
   bool _suppressControllerListener = false;
   List<T> filteredItems = [];
 
@@ -63,7 +63,6 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
             .toList();
       });
 
-      // ✅ Only show overlay if the field is focused
       if (_focusNode.hasFocus) {
         _showOverlay();
       } else {
@@ -76,7 +75,6 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
     _focusNode.addListener(() {
       if (_focusNode.hasFocus) {
         setState(() {
-          // Always show full list on focus gained, regardless of text
           filteredItems = widget.items;
         });
         _showOverlay();
@@ -88,7 +86,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
 
   @override
   void dispose() {
-    widget.controller.removeListener(_controllerListener); // CLEAN UP
+    widget.controller.removeListener(_controllerListener);
     _removeOverlay();
     _focusNode.dispose();
     super.dispose();
@@ -114,63 +112,83 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
     final offset = renderBox.localToGlobal(Offset.zero);
     final screenHeight = MediaQuery.of(context).size.height;
 
-    const double dropdownMaxHeight = 200;
-    const double dropdownSpacing = 5;
+    const dropdownMaxHeight = 200.0;
+    const dropdownSpacing = 5.0;
 
-    final showAbove =
-        offset.dy + size.height + dropdownSpacing + dropdownMaxHeight >
-        screenHeight;
-    final dropdownOffset =
-        showAbove
-            ? Offset(0, -dropdownMaxHeight - dropdownSpacing)
-            : Offset(0, size.height + dropdownSpacing);
+    final showAbove = offset.dy + size.height + dropdownSpacing + dropdownMaxHeight > screenHeight;
+    final dropdownOffset = showAbove
+        ? Offset(0, -dropdownMaxHeight - dropdownSpacing)
+        : Offset(0, size.height + dropdownSpacing);
+
+    // Track the dropdown's full global rect
+    final dropdownRect = Rect.fromLTWH(
+      offset.dx,
+      showAbove ? offset.dy - dropdownMaxHeight - dropdownSpacing : offset.dy + size.height + dropdownSpacing,
+      size.width,
+      dropdownMaxHeight,
+    );
+
+    // Track the main input field's global rect
+    final fieldRect = Rect.fromLTWH(offset.dx, offset.dy, size.width, size.height);
 
     return OverlayEntry(
-      builder:
-          (context) => Positioned(
-            width: size.width,
-            left: offset.dx,
-            top: offset.dy,
-            child: CompositedTransformFollower(
-              link: _layerLink,
-              showWhenUnlinked: false,
-              offset: dropdownOffset,
-              child: Material(
-                color: AppColors.whiteColor,
-                elevation: 4,
-                borderRadius: BorderRadius.circular(15),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: dropdownMaxHeight),
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    shrinkWrap: true,
-                    children:
-                        filteredItems.map((item) {
-                          return ListTile(
-                            dense: true,
-                            minVerticalPadding: 0,
-                            title: Text(
-                              widget.itemLabel(item),
-                              style: AppFonts.textRegular17,
-                            ),
-                            onTap: () {
-                              widget.controller.text = widget.itemLabel(item);
-                              widget.onSelected?.call(item);
-                              _removeOverlay();
-                              FocusScope.of(context).unfocus();
-                            },
-                          );
-                        }).toList(),
+      builder: (context) => Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (event) {
+          // Dismiss only if tap is outside both the input and dropdown
+          if (!fieldRect.contains(event.position) && !dropdownRect.contains(event.position)) {
+            _removeOverlay();
+            FocusScope.of(context).unfocus();
+          }
+        },
+        child: Stack(
+          children: [
+            Positioned(
+              width: size.width,
+              left: offset.dx,
+              top: offset.dy,
+              child: CompositedTransformFollower(
+                link: _layerLink,
+                showWhenUnlinked: false,
+                offset: dropdownOffset,
+                child: Material(
+                  color: AppColors.whiteColor,
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(15),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: dropdownMaxHeight),
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      children: filteredItems.map((item) {
+                        return ListTile(
+                          dense: true,
+                          minVerticalPadding: 0,
+                          title: Text(widget.itemLabel(item), style: AppFonts.textRegular17),
+                          onTap: () {
+                            widget.controller.text = widget.itemLabel(item);
+                            widget.onSelected?.call(item);
+                            _removeOverlay();
+                            FocusScope.of(context).unfocus();
+                          },
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = widget.isSmallFieldFont;
+    final isDisabled = !widget.isEnable;
+
     return CompositedTransformTarget(
       link: _layerLink,
       child: Column(
@@ -178,13 +196,10 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
         children: [
           Row(
             children: [
-              Text(widget.fieldName, style: widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular18),
+              Text(widget.fieldName, style: isSmall ? AppFonts.textRegular14 : AppFonts.textRegular18),
               const SizedBox(width: 3),
               if (!widget.skipValidation)
-                const Text(
-                  "*",
-                  style: TextStyle(fontSize: 15, color: AppColors.textRedColor),
-                ),
+                const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
               if (widget.toolTipContent != null) ...[
                 const SizedBox(width: 3),
                 Tooltip(
@@ -194,11 +209,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                     color: AppColors.primaryColor,
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: const Icon(
-                    Icons.info_outline,
-                    size: 20,
-                    color: AppColors.primaryColor,
-                  ),
+                  child: const Icon(Icons.info_outline, size: 20, color: AppColors.primaryColor),
                 ),
               ],
             ],
@@ -217,30 +228,28 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 _showOverlay();
               }
             },
-            style: (widget.isSmallFieldFont == true && widget.isEnable == false)
+            style: isSmall && isDisabled
                 ? AppFonts.textRegularGrey14
-                : widget.isSmallFieldFont ? AppFonts.textRegular14 : !widget
-                .isEnable ? AppFonts.textRegularGrey17 : AppFonts
-                .textRegular17,
+                : isSmall
+                ? AppFonts.textRegular14
+                : isDisabled
+                ? AppFonts.textRegularGrey17
+                : AppFonts.textRegular17,
             validator: widget.skipValidation ? null : widget.validator ?? CommonValidation().commonValidator,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             enabled: widget.isEnable,
             decoration: InputDecoration(
               hintText: widget.hintText,
-              hintStyle: widget.isSmallFieldFont ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey16,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 13,
-                vertical: 18,
-              ),
+              hintStyle: isSmall ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey16,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 13, vertical: 18),
               filled: true,
-              fillColor: !widget.isEnable ? AppColors.disabledFieldColor : AppColors.whiteColor,
+              fillColor: isDisabled ? AppColors.disabledFieldColor : AppColors.whiteColor,
               suffixIcon: Padding(
                 padding: const EdgeInsets.only(right: 10.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Clear icon
                     if (widget.controller.text.isNotEmpty)
                       GestureDetector(
                         onTap: () {
@@ -258,68 +267,30 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                             _showOverlay();
                           }
                         },
-                        child: Icon(
-                          LucideIcons.x,
-                          size: 20,
-                          color: AppColors.greyColor,
-                        ),
+                        child: Icon(LucideIcons.x, size: 20, color: AppColors.greyColor),
                       ),
-                    // Dropdown icon
-                    Icon(
-                      LucideIcons.chevronsUpDown,
-                      size: 20,
-                      color: AppColors.greyColor,
-                    ),
+                    Icon(LucideIcons.chevronsUpDown, size: 20, color: AppColors.greyColor),
                   ],
                 ),
               ),
-              border: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              errorBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              focusedErrorBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderSide: const BorderSide(
-                  color: AppColors.fieldBorderColor,
-                  width: 2.5,
-                ),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              errorStyle: TextStyle(color: AppColors.underscoreColor),
+              border: _defaultBorder(),
+              enabledBorder: _defaultBorder(),
+              focusedBorder: _defaultBorder(),
+              errorBorder: _defaultBorder(),
+              focusedErrorBorder: _defaultBorder(),
+              disabledBorder: _defaultBorder(),
+              errorStyle: const TextStyle(color: AppColors.underscoreColor),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  OutlineInputBorder _defaultBorder() {
+    return OutlineInputBorder(
+      borderSide: const BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
+      borderRadius: BorderRadius.circular(15),
     );
   }
 }

@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:logger/logger.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/main.dart';
@@ -17,6 +19,7 @@ class NetworkProvider {
   static final NetworkProvider _instance = NetworkProvider._internal();
   factory NetworkProvider() => _instance;
   NetworkProvider._internal();
+  var cookieJar = CookieJar();
 
   final Logger logger = Logger(
     printer: PrettyPrinter(
@@ -38,15 +41,17 @@ class NetworkProvider {
     sendTimeout: const Duration(seconds: 60),
   );
 
-  static final Dio _dio = Dio(_baseOptions)..interceptors.add(_buildInterceptor());
+  static final Dio _dio = Dio(_baseOptions)
+    ..interceptors.add(CookieManager(CookieJar()))
+    ..interceptors.add(_buildInterceptor());
 
   static InterceptorsWrapper _buildInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) {
-        options.headers.addAll({
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        });
+        // options.headers.addAll({
+        //   // 'Content-Type': 'application/json',
+        //   'Accept': 'application/json',
+        // });
         handler.next(options);
       },
       onResponse: (response, handler) {
@@ -67,10 +72,19 @@ class NetworkProvider {
     dynamic body,
     String? queryParam,
     Map<String, dynamic>? headers,
+    urlEncoded = false,
     ResponseType? responseType,
   }) async {
     final url = _buildUrl(pathUrl, queryParam);
-    final options = Options(headers: headers, responseType: responseType);
+    final options;
+    if(urlEncoded) {
+      options = Options(headers: {
+        'Content-Type': Headers.formUrlEncodedContentType,
+      }, responseType: responseType);
+    } else {
+      options = Options(headers: headers, responseType: responseType);
+    }
+
 
     //Check internet before making request
     final connectivityResult = await Connectivity().checkConnectivity();
@@ -126,10 +140,13 @@ class NetworkProvider {
     final status = error.response?.statusCode ?? 0;
     final url = error.requestOptions.path;
 
+    print("AppUrl.baseUrl + AppUrl.pathCaptchaLogin");
+    print(AppUrl.baseUrl + AppUrl.pathCaptchaLogin);
+    print(url);
     switch (status) {
       case HttpStatus.unauthorized:
         if (![
-          AppUrl.baseUrl + AppUrl.pathLogin,
+          AppUrl.pathCaptchaLogin,
         ].any(url.contains)) {
           // await SharedPreferencesMobileWeb.instance.removeParticularKey(apiToken);
           await SecureStorageHelper.clearExceptRememberMe();

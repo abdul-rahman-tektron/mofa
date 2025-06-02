@@ -59,10 +59,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget approvedPassCard(
-    BuildContext context,
-    DashboardNotifier dashboardNotifier,
-  ) {
+  Widget approvedPassCard(BuildContext context, DashboardNotifier dashboardNotifier) {
     return GridView.builder(
       shrinkWrap: true,
       physics: NeverScrollableScrollPhysics(),
@@ -81,21 +78,14 @@ class DashboardScreen extends StatelessWidget {
 
   Widget buildPassCard(DashboardCardData data) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(15),
-      ),
+      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(15)),
       child: Stack(
         alignment: Alignment.center,
         children: [
           Positioned(
             top: 10,
             right: 10,
-            child: Icon(
-              data.icon,
-              color: AppColors.textRedColor.withOpacity(0.2),
-              size: 25,
-            ),
+            child: Icon(data.icon, color: AppColors.textRedColor.withOpacity(0.2), size: 25),
           ),
           Padding(
             padding: EdgeInsets.all(5.w),
@@ -105,11 +95,7 @@ class DashboardScreen extends StatelessWidget {
               children: [
                 Text(data.count.toString(), style: AppFonts.textRegular24),
                 5.verticalSpace,
-                Text(
-                  data.title,
-                  style: AppFonts.textRegular16,
-                  textAlign: TextAlign.center,
-                ),
+                Text(data.title, style: AppFonts.textRegular16, textAlign: TextAlign.center),
               ],
             ),
           ),
@@ -137,16 +123,10 @@ class DashboardScreen extends StatelessWidget {
           dashboardNotifier.selectedIndex = index;
           if (index == 0) {
             dashboardNotifier.isUpcoming = true;
-            dashboardNotifier.apiGetAllExternalAppointment(
-              context,
-              dashboardNotifier.isUpcoming,
-            );
+            dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
           } else {
             dashboardNotifier.isUpcoming = false;
-            dashboardNotifier.apiGetAllExternalAppointment(
-              context,
-              dashboardNotifier.isUpcoming,
-            );
+            dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
           }
         },
         dividerColor: Colors.transparent,
@@ -177,19 +157,19 @@ class DashboardScreen extends StatelessWidget {
 
   Widget buildAppointmentList(DashboardNotifier dashboardNotifier) {
     final appointments =
-        dashboardNotifier.isUpcoming
-            ? dashboardNotifier.upcomingAppointments
-            : dashboardNotifier.pastAppointments;
+        dashboardNotifier.isUpcoming ? dashboardNotifier.upcomingAppointments : dashboardNotifier.pastAppointments;
 
     if (appointments.isEmpty) {
-      return Center(child: Column(
-        children: [
-          15.verticalSpace,
-          Icon(LucideIcons.minusCircle, color: AppColors.primaryColor, size: 50),
-          15.verticalSpace,
-          Text('No Result found.', style: AppFonts.textRegular16),
-        ],
-      ));
+      return Center(
+        child: Column(
+          children: [
+            15.verticalSpace,
+            Icon(LucideIcons.minusCircle, color: AppColors.primaryColor, size: 50),
+            15.verticalSpace,
+            Text('No Result found.', style: AppFonts.textRegular16),
+          ],
+        ),
+      );
     }
 
     return ListView.separated(
@@ -209,9 +189,5 @@ class DashboardCardData {
   final String title;
   final int count;
 
-  DashboardCardData({
-    required this.icon,
-    required this.title,
-    required this.count,
-  });
+  DashboardCardData({required this.icon, required this.title, required this.count});
 }

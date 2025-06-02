@@ -143,6 +143,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textBoldGrey16 = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textFieldTextColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegularGrey10 = TextStyle(
     fontSize: 10,
     fontWeight: FontWeight.normal,
@@ -322,6 +329,13 @@ class AppFonts {
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.redColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegular14ErrorRed = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: AppColors.textRedColor,
     letterSpacing: 0.5,
   );
 

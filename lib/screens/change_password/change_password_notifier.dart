@@ -25,24 +25,36 @@ class ChangePasswordNotifier extends BaseChangeNotifier {
 
     emailAddressController.text = user?.email ?? "";
   }
-  
+
   void saveButtonFunctionality(BuildContext context) async {
     if (formKey.currentState!.validate()) {
       await apiChangePassword(context);
     }
   }
 
-
   Future<void> apiChangePassword(BuildContext context) async {
-    AuthRepository().apiUpdatePassword(UpdatePasswordRequest(
-        sEmail: emailAddressController.text,
-        sOldPassword: currentPasswordController.text,
-        sPassword: newPasswordController.text), context);
+    try {
+      await AuthRepository().apiUpdatePassword(
+        UpdatePasswordRequest(
+          sEmail: emailAddressController.text,
+          sOldPassword: currentPasswordController.text,
+          sPassword: newPasswordController.text,
+        ),
+        context,
+      );
+      // Optionally notify success here, or handle response
+    } catch (e) {
+      // Handle errors here, e.g., show Toast or dialog
+      debugPrint('Error changing password: $e');
+    }
   }
 
   @override
   void dispose() {
+    emailAddressController.dispose();
+    currentPasswordController.dispose();
     newPasswordController.dispose();
+    confirmPasswordController.dispose();
     super.dispose();
   }
 }

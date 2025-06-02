@@ -21,6 +21,8 @@ import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dar
 import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/search_comment/search_comment_request.dart';
 import 'package:mofa/core/model/search_comment/search_comment_response.dart';
+import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
+import 'package:mofa/core/model/validate_photo/validate_photo_response.dart';
 import 'package:mofa/core/model/validate_photo_config/validate_photo_config_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_request.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
@@ -46,8 +48,7 @@ import 'package:mofa/utils/toast_helper.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
-
+class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions {
   // String
   String? _selectedNationality;
   String? _selectedIdType = "National ID";
@@ -60,6 +61,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   int? _selectedLocationId;
   int? _selectedDeviceType;
   int? _selectedDevicePurpose;
+  int? _selectedPlateLetter1;
+  int? _selectedPlateLetter2;
+  int? _selectedPlateLetter3;
+  int? _selectedPlateType;
   int _currentPage = 1;
   int _totalPages = 1;
   int _totalCount = 0;
@@ -69,6 +74,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   bool _isChecked = false;
   bool _isUpdate = false;
   bool _isCheckedDevice = true;
+  bool _isCheckedVehicle = true;
   bool _showDeviceFields = true;
   bool _isEditingDevice = false;
   bool _photoUploadValidation = false;
@@ -98,6 +104,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   List<DeviceDropdownResult> _devicePurposeDropdownData = [];
   List<VisitPurposeDropdownResult> _visitPurposeDropdownData = [];
   List<DeviceModel> _addedDevices = [];
+  List<DeviceDropdownResult> _plateLetterDropdownData = [];
+  List<DeviceDropdownResult> _plateTypeDropdownData = [];
 
   List<SearchCommentData> _searchCommentData = [];
 
@@ -153,6 +161,13 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   TextEditingController _serialNumberController = TextEditingController();
   TextEditingController _devicePurposeController = TextEditingController();
 
+  //Vehicle Details
+  TextEditingController plateTypeController = TextEditingController();
+  TextEditingController plateLetter1Controller = TextEditingController();
+  TextEditingController plateLetter2Controller = TextEditingController();
+  TextEditingController plateLetter3Controller = TextEditingController();
+  TextEditingController plateNumberController = TextEditingController();
+
   //Re-submission Comment
   TextEditingController resubmissionCommentController = TextEditingController();
 
@@ -165,92 +180,130 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
 
   Future<void> initialize(BuildContext context, ApplyPassCategory category, bool isUpdate, int? id) async {
     applyPassCategory = category.name;
-    final DateTime now = DateTime.now();
     this.isUpdate = isUpdate;
 
-// Format: 21/05/2025 ،09:57 AM
-    final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+    final now = DateTime.now();
+    final formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
 
-// Set visit start
     visitStartDateController.text = formatter.format(now);
+    visitEndDateController.text = formatter.format(now.add(Duration(hours: 1)));
 
-// Add 1 hour and set visit end
-    final DateTime oneHourLater = now.add(Duration(hours: 1));
-    visitEndDateController.text = formatter.format(oneHourLater);
     await fetchAllDropdownData(context, id);
     initialDataForMySelf(context, id);
   }
 
   Future<void> fetchAllDropdownData(BuildContext context, int? id) async {
-    userResponse = LoginTokenUserResponse.fromJson(jsonDecode(await SecureStorageHelper.getUser() ?? ""));
+    final userJson = await SecureStorageHelper.getUser();
+    if (userJson == null || userJson.isEmpty) {
+      debugPrint("No user data found in secure storage");
+      return;
+    }
+
+    userResponse = LoginTokenUserResponse.fromJson(jsonDecode(userJson));
 
     try {
       await Future.wait([
-        if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, userResponse!, id),
+        if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, userResponse!, id),
         apiLocationDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
         apiVisitPurposeDropdown(context),
         apiDeviceTypeDropdown(context),
         apiDevicePurposeDropdown(context),
+        apiPlateSourceDropdown(context),
+        apiPlateLetterDropdown(context),
         apiVisitingHoursConfig(context),
+        apiValidatePhotoConfig(context),
       ]);
-      // notifyListeners(); // if any UI depends on dropdowns
     } catch (e) {
-      // Handle exceptions if needed
       debugPrint('Dropdown fetch error: $e');
     }
   }
 
   void initialDataForMySelf(BuildContext context, int? id) {
-    if(applyPassCategory == ApplyPassCategory.myself.name || isUpdate) {
+    if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) {
       if (isUpdate) {
-
         final approvalStatus = getByIdResult?.user?.sApprovalStatusEn ?? "";
 
-        if (approvalStatus == 'Rejected' || approvalStatus == 'Cancelled' || approvalStatus == 'Expired' || approvalStatus == 'Approved') {
+        if (approvalStatus == 'Rejected' ||
+            approvalStatus == 'Cancelled' ||
+            approvalStatus == 'Expired' ||
+            approvalStatus == 'Approved') {
           isEnable = false;
-        } else if(approvalStatus == 'Pending' || approvalStatus == 'Request Info') {
+        } else if (approvalStatus == 'Pending' || approvalStatus == 'Request Info') {
           evaluateEditableStatus(getByIdResult?.user);
         }
       }
-      visitorNameController.text = isUpdate ? getByIdResult?.user?.sVisitorNameEn ?? "" : getByIdResult?.user?.sFullName ?? "";
-      companyNameController.text = isUpdate ? getByIdResult?.user?.sSponsor ?? "" : getByIdResult?.user?.sCompanyName ?? "";
-      nationalityController.text = getByIdResult?.user?.sNationalityEn ?? "";
+      visitorNameController.text =
+          isUpdate ? getByIdResult?.user?.sVisitorNameEn ?? "" : getByIdResult?.user?.sFullName ?? "";
+      companyNameController.text =
+          isUpdate ? getByIdResult?.user?.sSponsor ?? "" : getByIdResult?.user?.sCompanyName ?? "";
+      nationalityController.text =
+          nationalityMenu
+              .firstWhere((item) => item.iso3 == getByIdResult?.user?.iso3, orElse: () => CountryData())
+              .name ??
+          "";
       selectedNationality = getByIdResult?.user?.iso3 ?? "";
-      phoneNumberController.text = isUpdate ? getByIdResult?.user?.visitorMobile ?? "" : getByIdResult?.user?.sMobileNumber ?? "";
-      emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" :getByIdResult?.user?.sEmail ?? "";
-      idTypeController.text = getByIdResult?.user?.dTypeEn ?? "";
+      phoneNumberController.text =
+          isUpdate ? getByIdResult?.user?.visitorMobile ?? "" : getByIdResult?.user?.sMobileNumber ?? "";
+      emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" : getByIdResult?.user?.sEmail ?? "";
+      idTypeController.text =
+          idTypeMenu
+              .firstWhere(
+                (item) => item.value == getByIdResult?.user?.nDocumentType,
+                orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+              )
+              .labelEn;
       selectedIdValue = getByIdResult?.user?.nDocumentType.toString() ?? "";
-      selectedIdType = getByIdResult?.user?.dTypeEn ?? "";
-      iqamaController.text = (getByIdResult?.user?.sIqama?.isNotEmpty ?? false)
-          ? decryptAES(getByIdResult!.user!.sIqama!)
-          : "";
+      selectedIdType = idTypeController.text ?? "";
+      iqamaController.text =
+          (getByIdResult?.user?.sIqama?.isNotEmpty ?? false) ? decryptAES(getByIdResult!.user!.sIqama!) : "";
       passportNumberController.text =
-      (getByIdResult?.user?.passportNumber?.isNotEmpty ?? false)
-          ? decryptAES(getByIdResult!.user!.passportNumber!)
-          : "";
+          (getByIdResult?.user?.passportNumber?.isNotEmpty ?? false)
+              ? decryptAES(getByIdResult!.user!.passportNumber!)
+              : "";
 
       nationalityIdController.text =
-      (getByIdResult?.user?.eidNumber?.isNotEmpty ?? false)
-          ? decryptAES(getByIdResult!.user!.eidNumber!)
-          : "";
+          (getByIdResult?.user?.eidNumber?.isNotEmpty ?? false) ? decryptAES(getByIdResult!.user!.eidNumber!) : "";
 
       documentNameController.text =
-      (getByIdResult?.user?.sOthersDoc?.isNotEmpty ?? false)
-          ? decryptAES(getByIdResult!.user!.sOthersDoc!)
-          : "";
+          (getByIdResult?.user?.sOthersDoc?.isNotEmpty ?? false) ? decryptAES(getByIdResult!.user!.sOthersDoc!) : "";
 
       documentNumberController.text =
-      (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
-          ? decryptAES(getByIdResult!.user!.sOthersValue!)
-          : "";
-      expiryDateController.text =
-          getByIdResult?.user?.dTIqamaExpiry?.toDisplayDateOnly() ?? "";
+          (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
+              ? decryptAES(getByIdResult!.user!.sOthersValue!)
+              : "";
+      expiryDateController.text = getByIdResult?.user?.dTIqamaExpiry?.toDisplayDateOnly() ?? "";
       vehicleNumberController.text = getByIdResult?.user?.sVehicleNo ?? "";
 
+      selectedPlateType = getByIdResult?.vehicle?.nPlateSource ?? 0;
+      plateTypeController.text =
+          plateTypeDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateType, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+          "";
+      selectedPlateLetter1 = getByIdResult?.vehicle?.nPlateLetter1 ?? 0;
+      plateLetter1Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter1, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+          "";
+      selectedPlateLetter2 = getByIdResult?.vehicle?.nPlateLetter2 ?? 0;
+      plateLetter2Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter2, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+          "";
+      selectedPlateLetter3 = getByIdResult?.vehicle?.nPlateLetter3 ?? 0;
+      plateLetter3Controller.text =
+          plateLetterDropdownData
+              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter3, orElse: () => DeviceDropdownResult())
+              .sDescE ??
+          "";
+      plateNumberController.text = getByIdResult?.vehicle?.sPlateNumber ?? "";
+
       //Update Part
-      if(isUpdate) {
+      if (isUpdate) {
         apiGetSearchComment(context, id);
         locationController.text = getByIdResult?.user?.sLocationNameEn ?? "";
         visitRequestTypeController.text = getByIdResult?.user?.sVisitorTypeEn ?? "";
@@ -276,66 +329,54 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     }
   }
 
-  Future apiGetFile(BuildContext context, {required int type}) async {
-    await ApplyPassRepository().apiGetFile(
-      GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
-      context,
-    ).then((value) {
+  Future<void> apiGetFile(BuildContext context, {required int type}) async {
+    try {
+      final response = await ApplyPassRepository().apiGetFile(
+        GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
+        context,
+      );
+
+      if (response is! GetFileResult) return;
+
+      final decodedBytes = base64Decode(response.photoFile ?? "");
+
       if (type == 1) {
-        uploadedImageBytes =
-            base64Decode((value as GetFileResult).photoFile ?? "");
-      } else if (type == 4) {
-        uploadedVehicleImageBytes =
-            base64Decode((value as GetFileResult).photoFile ?? "");
-        if((value).contentType == "application/pdf") {
-          Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: uploadedVehicleImageBytes ?? "");
-        } else {
-          showDialog(
-            context: context,
-            builder: (_) =>
-                AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 5.w, vertical: 5.h),
-                  content: ClipRRect(
-                    borderRadius: BorderRadius.circular(6.0),
-                    child: Image.memory(
-                        uploadedVehicleImageBytes!),
-                  ),
-                ),
-          );
-        }
-      } else {
-        uploadedDocumentBytes =
-            base64Decode((value as GetFileResult).photoFile ?? "");
-        if((value).contentType == "application/pdf") {
-          Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: uploadedDocumentBytes ?? "");
-        } else {
-          showDialog(
-            context: context,
-            builder: (_) =>
-                AlertDialog(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 5.w, vertical: 5.h),
-                  content: ClipRRect(
-                    borderRadius: BorderRadius.circular(6.0),
-                    child: Image.memory(
-                        uploadedDocumentBytes!),
-                  ),
-                ),
-          );
-        }
+        uploadedImageBytes = decodedBytes;
+        return;
       }
-    },);
+
+      final isPdf = response.contentType == "application/pdf";
+
+      if (type == 4) {
+        uploadedVehicleImageBytes = decodedBytes;
+        _showFilePreview(context, isPdf, uploadedVehicleImageBytes!);
+      } else {
+        uploadedDocumentBytes = decodedBytes;
+        _showFilePreview(context, isPdf, uploadedDocumentBytes!);
+      }
+    } catch (e) {
+      debugPrint("Error in apiGetFile: $e");
+      ToastHelper.showError("Failed to load file.");
+    }
+  }
+
+  void _showFilePreview(BuildContext context, bool isPdf, Uint8List bytes) {
+    if (isPdf) {
+      Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: bytes);
+    } else {
+      showDialog(
+        context: context,
+        builder:
+            (_) => AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
+              contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
+              content: ClipRRect(borderRadius: BorderRadius.circular(6.0), child: Image.memory(bytes)),
+            ),
+      );
+    }
   }
 
   Future<void> apiGetSearchComment(BuildContext context, int? id, {int? page}) async {
-
     final response = await SearchPassRepository().apiSearchComment(
       SearchCommentRequest(
         encryptedId: id.toString() ?? "",
@@ -356,78 +397,261 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
+  Future<void> apiGetById(BuildContext context, LoginTokenUserResponse user, int? id) async {
+    try {
+      final encryptedId = encryptAES(isUpdate ? id.toString() : user.userId.toString());
 
-  //GetById Api Call
-  Future apiGetById(BuildContext context, LoginTokenUserResponse user, int? id) async {
-    await ApplyPassRepository().apiGetById(
-        DeviceDropdownRequest(encryptedId: encryptAES(isUpdate ? id.toString() : user.userId.toString())), context, isUpdate: isUpdate).then((value) {
-      getByIdResult = value as GetByIdResult;
-    },);
+      final result = await ApplyPassRepository().apiGetById(
+        DeviceDropdownRequest(encryptedId: encryptedId),
+        context,
+        isUpdate: isUpdate,
+      );
+
+      if (result is GetByIdResult) {
+        getByIdResult = result;
+      } else {
+        debugPrint("Unexpected result type in apiGetById");
+      }
+    } catch (e) {
+      debugPrint("Error in apiGetById: $e");
+      ToastHelper.showError("Failed to load data.");
+    }
   }
 
-  //location dropdown Api call
-  Future apiLocationDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiLocationDropDown({}, context).then((value) {
-      var locationData = value as List<LocationDropdownResult>;
-      locationDropdownData = List<LocationDropdownResult>.from(locationData);
-    },);
+  // Location dropdown
+  Future<void> apiLocationDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiLocationDropDown({}, context);
+      if (result is List<LocationDropdownResult>) {
+        locationDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiLocationDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiLocationDropdown: $e");
+      ToastHelper.showError("Failed to load locations.");
+    }
   }
 
-  //Nationality dropdown Api call
-  Future apiNationalityDropdown(BuildContext context) async {
-    await AuthRepository().apiCountryList({}, context).then((value) {
-      var countryData = value as List<CountryData>;
-      nationalityMenu = List<CountryData>.from(countryData);
-    },);
+  // Nationality dropdown
+  Future<void> apiNationalityDropdown(BuildContext context) async {
+    try {
+      final result = await AuthRepository().apiCountryList({}, context);
+      if (result is List<CountryData>) {
+        nationalityMenu = result;
+      } else {
+        debugPrint("Unexpected result type in apiNationalityDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiNationalityDropdown: $e");
+      ToastHelper.showError("Failed to load nationalities.");
+    }
   }
 
-  //Visit Purpose dropdown Api call
-  Future apiVisitPurposeDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiVisitPurposeDropDown(VisitPurposeDropdownRequest(encryptedVisitRequestTypeId: ""), context).then((value) {
-      var visitPurposeData = value as List<VisitPurposeDropdownResult>;
-      visitPurposeDropdownData = List<VisitPurposeDropdownResult>.from(visitPurposeData);
-    },);
+  // Visit Purpose dropdown
+  Future<void> apiVisitPurposeDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiVisitPurposeDropDown(
+        VisitPurposeDropdownRequest(encryptedVisitRequestTypeId: ""),
+        context,
+      );
+      if (result is List<VisitPurposeDropdownResult>) {
+        visitPurposeDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiVisitPurposeDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiVisitPurposeDropdown: $e");
+      ToastHelper.showError("Failed to load visit purposes.");
+    }
   }
 
-  //Visit Request dropdown Api call
-  Future apiVisitRequestDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiVisitRequestDropDown({}, context).then((value) {
-      var visitRequestData = value as List<VisitRequestDropdownResult>;
-      visitRequestTypesDropdownData = List<VisitRequestDropdownResult>.from(visitRequestData);
-    },);
+  // Visit Request dropdown
+  Future<void> apiVisitRequestDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiVisitRequestDropDown({}, context);
+      if (result is List<VisitRequestDropdownResult>) {
+        visitRequestTypesDropdownData = result;
+
+        visitRequestTypesDropdownData.removeWhere((item) => item.nDetailedCode == 2191);
+      } else {
+        debugPrint("Unexpected result type in apiVisitRequestDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiVisitRequestDropdown: $e");
+      ToastHelper.showError("Failed to load visit request types.");
+    }
   }
 
-  //Device Type dropdown Api call
-  Future apiDeviceTypeDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiDeviceDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1036")), context).then((value) {
-      var deviceTypeData = value as List<DeviceDropdownResult>;
-      deviceTypeDropdownData = List<DeviceDropdownResult>.from(deviceTypeData);
-    },);
+  // Device Type dropdown
+  Future<void> apiDeviceTypeDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDeviceDropDown(
+        DeviceDropdownRequest(encryptedId: encryptAES("1036")),
+        context,
+      );
+      if (result is List<DeviceDropdownResult>) {
+        deviceTypeDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiDeviceTypeDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiDeviceTypeDropdown: $e");
+      ToastHelper.showError("Failed to load device types.");
+    }
   }
 
   //Device Purpose dropdown Api call
-  Future apiDevicePurposeDropdown(BuildContext context) async {
-    await ApplyPassRepository().apiDeviceDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1037")), context).then((value) {
-      var devicePurposeData = value as List<DeviceDropdownResult>;
-      devicePurposeDropdownData = List<DeviceDropdownResult>.from(devicePurposeData);
-    },);
+  Future<void> apiDevicePurposeDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDeviceDropDown(
+        DeviceDropdownRequest(encryptedId: encryptAES("1037")),
+        context,
+      );
+
+      if (result is List<DeviceDropdownResult>) {
+        devicePurposeDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type from apiDeviceDropDown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiDevicePurposeDropdown: $e");
+      ToastHelper.showError("Failed to load device purpose dropdown.");
+    }
   }
 
-  Future apiVisitingHoursConfig(BuildContext context) async {
-    await ApplyPassRepository().apiVisitingHoursConfig(
-        {}, context).then((value) {
-          final result = value as VisitingHoursConfigResult;
-      apiVisitStartTime = parseTimeStringToTimeOfDay(result.visitorsStartTime ?? "");
-      apiVisitEndTime = parseTimeStringToTimeOfDay(result.visitorsEndTime ?? "");
-    },);
+  //Plate Source dropdown Api call
+  Future<void> apiPlateSourceDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiPlateSourceDropDown({}, context);
+
+      if (result is List<DeviceDropdownResult>) {
+        plateTypeDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type from apiPlateSourceDropDown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiPlateSourceDropdown: $e");
+      ToastHelper.showError("Failed to load plate type dropdown.");
+    }
   }
 
-  Future apiValidatePhotoConfig(BuildContext context) async {
-    await ApplyPassRepository().apiValidatePhotoConfig(
-        {}, context).then((value) {
-      var validatePhotoConfigData = value as ValidatePhotoConfigResult;
-      isValidatePhotoFromFR = validatePhotoConfigData.isValidatePhotoFromFr ?? false;
-    },);
+  //Plate Source dropdown Api call
+  Future<void> apiPlateLetterDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiPlateLetterDropDown({}, context);
+
+      if (result is List<DeviceDropdownResult>) {
+        plateLetterDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type from apiPlateLetterDropDown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiPlateLetterDropdown: $e");
+      ToastHelper.showError("Failed to load plate letter dropdown.");
+    }
+  }
+
+  Future<void> apiVisitingHoursConfig(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiVisitingHoursConfig({}, context);
+      if (result is VisitingHoursConfigResult) {
+        apiVisitStartTime = CommonUtils.parseTimeStringToTimeOfDay(result.visitorsStartTime ?? "");
+        apiVisitEndTime = CommonUtils.parseTimeStringToTimeOfDay(result.visitorsEndTime ?? "");
+      } else {
+        debugPrint("Unexpected result type from apiVisitingHoursConfig");
+      }
+    } catch (e) {
+      debugPrint("Error in apiVisitingHoursConfig: $e");
+      ToastHelper.showError("Failed to fetch visiting hours configuration.");
+    }
+  }
+
+  Future<void> apiValidatePhotoConfig(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiValidatePhotoConfig({}, context);
+      if (result is ValidatePhotoConfigResult) {
+        isValidatePhotoFromFR = result.isValidatePhotoFromFr ?? false;
+      } else {
+        debugPrint("Unexpected result type from apiValidatePhotoConfig");
+      }
+    } catch (e) {
+      debugPrint("Error in apiValidatePhotoConfig: $e");
+      ToastHelper.showError("Failed to validate photo config");
+    }
+  }
+
+  Future<bool> apiValidatePhoto(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiValidatePhoto(
+        ValidatePhotoRequest(fullName: visitorNameController.text, photo: await uploadedImageFile?.toBase64()),
+        context,
+      );
+
+      if (result is! ValidatePhotoResult) {
+        _showUnexpectedError();
+        return false;
+      }
+
+      if (result.isPhotoValid == true) {
+        return true;
+      }
+
+      // Photo is invalid, handle errors
+      if (result.photoErrors != null && result.photoErrors!.isNotEmpty) {
+        _handlePhotoErrors(result.photoErrors!, context);
+      } else {
+        _showUnexpectedError();
+      }
+      return false;
+    } catch (e) {
+      debugPrint("Error in apiValidatePhoto: $e");
+      _showUnexpectedError();
+      return false;
+    }
+  }
+
+  void _handlePhotoErrors(List<dynamic> errors, BuildContext context) {
+    for (var error in errors) {
+      final errorCode = error["errorCode"] ?? -1;
+      final message = _getErrorMessageByCode(errorCode, context);
+      if (message != null) {
+        ToastHelper.showError(message);
+      }
+    }
+  }
+
+  void _showUnexpectedError() {
+    ToastHelper.showError("Unexpected result");
+  }
+
+  String? _getErrorMessageByCode(int errorCode, BuildContext context) {
+    final lang = context.readLang;
+
+    const errorCodeToMessageKey = {
+      0: AppLanguageText.photoValidationFailed,
+      1: AppLanguageText.errorValidatingPhoto,
+      2: AppLanguageText.photoSizeIncorrect,
+      3: AppLanguageText.photoTooSmall,
+      4: AppLanguageText.photoResolutionNotSupported,
+      17: AppLanguageText.noPhotoUploaded,
+      18: AppLanguageText.noFaceDetectedPhoto,
+      19: AppLanguageText.multipleFacesDetected,
+      20: AppLanguageText.faceTooSmallPhoto,
+      21: AppLanguageText.photoTooBright,
+      22: AppLanguageText.photoTooDark,
+      23: AppLanguageText.faceTooBlurry,
+      24: AppLanguageText.faceNotProperlyAligned,
+      33: AppLanguageText.photoAlreadyUsed,
+      34: AppLanguageText.photoFaceAlreadyExists,
+      36: AppLanguageText.faceAlreadyRegisteredSameName,
+    };
+
+    final messageKey = errorCodeToMessageKey[errorCode];
+    if (messageKey != null) {
+      return lang.translate(messageKey);
+    }
+    return null;
   }
 
   Future<bool> apiValidateEmail(BuildContext context) async {
@@ -442,7 +666,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
       return false;
     }
   }
-
 
   Future<bool> apiDuplicateAppointment(BuildContext context) async {
     try {
@@ -466,25 +689,15 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     }
   }
 
-  void addData() async {
-    String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry;
-
+  Future<void> addData() async {
     final expiryDate = expiryDateController.text.toDateTime().toString();
 
-    switch (selectedIdType) {
-      case 'National ID':
-        eidExpiry = expiryDate;
-        break;
-      case 'Iqama':
-        iqamaExpiry = expiryDate;
-        break;
-      case 'Passport':
-        passportExpiry = expiryDate;
-        break;
-      case 'Other':
-        othersExpiry = expiryDate;
-        break;
-    }
+    // Assign expiry based on ID type
+    final Map<String, String?> expiryMap = {'National ID': null, 'Iqama': null, 'Passport': null, 'Other': null};
+    expiryMap[selectedIdType ?? ''] = expiryDate;
+
+    final user = getByIdResult?.user;
+    final userId = int.tryParse(userResponse?.userId ?? "0") ?? 0;
 
     final appointmentData = AddAppointmentRequest(
       fullName: visitorNameController.text,
@@ -492,46 +705,47 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
       nationality: selectedNationality,
       mobileNo: phoneNumberController.text,
       email: emailController.text,
-      idType: int.parse(selectedIdValue ?? ""),
+      idType: int.tryParse(selectedIdValue ?? "") ?? 0,
       sIqama: encryptAES(iqamaController.text),
       passportNumber: encryptAES(passportNumberController.text),
       sOthersDoc: encryptAES(documentNameController.text),
       eidNumber: encryptAES(nationalityIdController.text),
       sOthersValue: encryptAES(documentNumberController.text),
-      dtEidExpiryDate: eidExpiry,
-      dtIqamaExpiry: iqamaExpiry,
-      dtPassportExpiryDate: passportExpiry,
-      dtOthersExpiry: othersExpiry,
+      dtEidExpiryDate: expiryMap['National ID'],
+      dtIqamaExpiry: expiryMap['Iqama'],
+      dtPassportExpiryDate: expiryMap['Passport'],
+      dtOthersExpiry: expiryMap['Other'],
       dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
       dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
       sVehicleNo: vehicleNumberController.text,
       devices: addedDevices,
       nLocationId: selectedLocationId,
-      nVisitType: int.parse(selectedVisitRequest ?? ""),
-      purpose: int.parse(selectedVisitPurpose ?? ""),
+      nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
+      purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
       remarks: noteController.text,
       sVisitingPersonEmail: mofaHostEmailController.text,
-      haveEid: getByIdResult?.user?.haveEid ?? 0,
-      havePassport: getByIdResult?.user?.havePassport ?? 0,
-      haveIqama: getByIdResult?.user?.haveIqama ?? 0,
-      havePhoto: getByIdResult?.user?.havePhoto ?? 0,
-      userId: int.parse(userResponse!.userId ?? "0"),
-      nExternalRegistrationId: int.parse(userResponse!.userId ?? "0"),
-      nCreatedByExternal: int.parse(userResponse!.userId ?? "0"),
-      haveVehicleRegistration: getByIdResult?.user?.haveVehicleRegistration ??
-          0,
-      haveOthers: getByIdResult?.user?.haveOthers ?? 0,
-      lastAppointmentId: getByIdResult?.user?.nAppointmentId ?? 0,
-      nSelfPass: getByIdResult?.user?.nSelfPass ??
-          ((applyPassCategory == ApplyPassCategory.myself.name) ? 1 : 2),
+      haveEid: user?.haveEid ?? 0,
+      havePassport: user?.havePassport ?? 0,
+      haveIqama: user?.haveIqama ?? 0,
+      havePhoto: user?.havePhoto ?? 0,
+      haveVehicleRegistration: user?.haveVehicleRegistration ?? 0,
+      haveOthers: user?.haveOthers ?? 0,
+      userId: userId,
+      nExternalRegistrationId: userId,
+      nCreatedByExternal: userId,
+      lastAppointmentId: user?.nAppointmentId ?? 0,
+      nSelfPass: user?.nSelfPass ?? (applyPassCategory == ApplyPassCategory.myself.name ? 1 : 2),
       nVisitCreatedFrom: 2,
       nVisitUpdatedFrom: 2,
       resubmissionComments: resubmissionCommentController.text,
+      nPlateSource: selectedPlateType,
+      nPlateLetter1: selectedPlateLetter1,
+      nPlateLetter2: selectedPlateLetter2,
+      nPlateLetter3: selectedPlateLetter3,
+      sPlateNumber: plateNumberController.text,
     );
 
-    log("appointmentData.toString()");
-    log(jsonEncode(appointmentData));
-
+    // Build image upload data
     final imageDataFile = {
       "imageUploaded": await uploadedImageFile?.toBase64(),
       "documentUploaded": await uploadedDocumentFile?.toBase64(),
@@ -539,19 +753,25 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
       "selectedIdType": selectedIdType,
     };
 
-    final jsonString = jsonEncode(appointmentData.toJson());
-    await SecureStorageHelper.setAppointmentData(jsonString);
+    debugPrint("Appointment Data: ${jsonEncode(appointmentData.toJson())}");
 
-    final jsonImageString = jsonEncode(imageDataFile);
-    await SecureStorageHelper.setUploadedImage(jsonImageString);
+    // Persist locally
+    await SecureStorageHelper.setAppointmentData(jsonEncode(appointmentData.toJson()));
+    await SecureStorageHelper.setUploadedImage(jsonEncode(imageDataFile));
   }
 
   Future<AddAppointmentRequest?> getStoredAppointmentData() async {
-    final jsonString = await SecureStorageHelper.getAppointmentData();
-    if (jsonString != null && jsonString.isNotEmpty) {
-      final jsonMap = jsonDecode(jsonString);
-      return AddAppointmentRequest.fromJson(jsonMap);
+    try {
+      final jsonString = await SecureStorageHelper.getAppointmentData();
+
+      if (jsonString?.isNotEmpty ?? false) {
+        final Map<String, dynamic> jsonMap = jsonDecode(jsonString!);
+        return AddAppointmentRequest.fromJson(jsonMap);
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error decoding appointment data: $e\n$stackTrace');
     }
+
     return null;
   }
 
@@ -569,7 +789,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     }
   }
 
-
   // Update User Verify checkbox state
   void userVerifyChecked(BuildContext context, bool? value) {
     isChecked = value!;
@@ -580,12 +799,13 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     isCheckedDevice = value!;
   }
 
-  Future<void> uploadImage({bool fromCamera = false, bool cropAfterPick = true}) async {
-    File? image = await FileUploadHelper.pickImage(
-      fromCamera: fromCamera,
-      cropAfterPick: cropAfterPick,
+  void vehicleDetailChecked(bool? value) {
+    isCheckedVehicle = value!;
+  }
 
-    );
+  Future<void> uploadImage({bool fromCamera = false, bool cropAfterPick = true}) async {
+    final image = await FileUploadHelper.pickImage(fromCamera: fromCamera, cropAfterPick: cropAfterPick);
+
     if (image != null) {
       uploadedImageFile = image;
       photoUploadValidation = false;
@@ -593,23 +813,27 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     }
   }
 
-  Future<void> uploadVehicleRegistrationImage({bool fromCamera = false, bool cropAfterPick = true}) async {
-    File? doc = await FileUploadHelper.pickDocument(
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    );
-    if (doc != null) {
-      uploadedVehicleRegistrationFile = doc;
-      notifyListeners();
-    }
+  Future<void> uploadVehicleRegistrationImage() async {
+    await _uploadFile(fileSetter: (file) => uploadedVehicleRegistrationFile = file);
   }
 
   Future<void> uploadDocument() async {
-    File? doc = await FileUploadHelper.pickDocument(
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    await _uploadFile(
+      fileSetter: (file) {
+        uploadedDocumentFile = file;
+        documentUploadValidation = false;
+      },
     );
-    if (doc != null) {
-      uploadedDocumentFile = doc;
-      documentUploadValidation = false;
+  }
+
+  /// 🔁 Reusable internal helper method
+  Future<void> _uploadFile({
+    required void Function(File) fileSetter,
+    List<String> allowedExtensions = const ['pdf', 'jpg', 'jpeg', 'png'],
+  }) async {
+    final file = await FileUploadHelper.pickDocument(allowedExtensions: allowedExtensions);
+    if (file != null) {
+      fileSetter(file);
       notifyListeners();
     }
   }
@@ -696,32 +920,61 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   void addMultipleDevicesFromResult(List<DeviceResult>? results) {
     if (results == null) return;
 
-    final deviceModels = results.map((r) {
-      var deviceType = r.deviceType == 2246 ? "Laptop" : r.deviceType == 2247 ? "Phone" : r.deviceType == 2248 ? "Tablet" : r.deviceType == 2249 ? "USB Drive" : "Other";
-      var devicePurpose = r.devicePurpose == 2251 ? "Presentation" : r.devicePurpose == 2252 ? "Data Collection" : r.devicePurpose == 2253 ? "General Use" : r.devicePurpose == 2254 ? "Other" : "";
-      return DeviceModel(
-        appointmentDeviceId: r.appointmentDeviceId ?? 0,
-        deviceType: r.deviceType,
-        deviceTypeString: deviceType,
-        deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
-        deviceModel: r.deviceModel ?? "",
-        serialNumber: r.serialNumber ?? "",
-        devicePurpose: r.devicePurpose,
-        devicePurposeString: devicePurpose,
-        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
-        approvalStatus: r.approvalStatus ?? 50,
-      );
-    } ).toList();
+    final deviceModels =
+        results.map((r) {
+          return DeviceModel(
+            appointmentDeviceId: r.appointmentDeviceId ?? 0,
+            deviceType: r.deviceType,
+            deviceTypeString: _getDeviceTypeString(r.deviceType),
+            deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
+            deviceModel: r.deviceModel ?? "",
+            serialNumber: r.serialNumber ?? "",
+            devicePurpose: r.devicePurpose,
+            devicePurposeString: _getDevicePurposeString(r.devicePurpose),
+            devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+            approvalStatus: r.approvalStatus ?? 50,
+          );
+        }).toList();
 
     addedDevices.addAll(deviceModels);
     showDeviceFields = false;
     notifyListeners();
   }
 
+  String _getDeviceTypeString(int? type) {
+    switch (type) {
+      case 2246:
+        return "Laptop";
+      case 2247:
+        return "Phone";
+      case 2248:
+        return "Tablet";
+      case 2249:
+        return "USB Drive";
+      default:
+        return "Other";
+    }
+  }
+
+  String _getDevicePurposeString(int? purpose) {
+    switch (purpose) {
+      case 2251:
+        return "Presentation";
+      case 2252:
+        return "Data Collection";
+      case 2253:
+        return "General Use";
+      case 2254:
+        return "Other";
+      default:
+        return "";
+    }
+  }
+
   Future<void> nextButton(BuildContext context, VoidCallback onNext) async {
     final isValid = await validation(context);
     if (isValid) {
-      addData();
+      await addData();
       onNext();
     }
   }
@@ -743,6 +996,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
 
     if (!_isVisitTimeWithinApiRange(context)) {
       return false;
+    }
+
+    if (isValidatePhotoFromFR) {
+      return await apiValidatePhoto(context);
     }
 
     if (!await _isEmailValid(context)) {
@@ -771,10 +1028,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
 
   bool _isDocumentValid(BuildContext context) {
     final user = getByIdResult?.user;
-    final isValid = ((user?.haveIqama ?? 0) == 1 ||
-        (user?.havePassport ?? 0) == 1 ||
-        (user?.haveEid ?? 0) == 1 ||
-        (user?.haveOthers ?? 0) == 1) ||
+    final isValid =
+        ((user?.haveIqama ?? 0) == 1 ||
+            (user?.havePassport ?? 0) == 1 ||
+            (user?.haveEid ?? 0) == 1 ||
+            (user?.haveOthers ?? 0) == 1) ||
         uploadedDocumentFile != null;
     if (!isValid) {
       ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
@@ -783,22 +1041,18 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   }
 
   bool _isVisitTimeWithinApiRange(BuildContext context) {
-    final visitStart = parseFullDateStringToTimeOfDay(visitStartDateController.text);
-    final visitEnd = parseFullDateStringToTimeOfDay(visitEndDateController.text);
+    final visitStart = CommonUtils.parseFullDateStringToTimeOfDay(visitStartDateController.text);
+    final visitEnd = CommonUtils.parseFullDateStringToTimeOfDay(visitEndDateController.text);
 
-    if (apiVisitStartTime != null && apiVisitEndTime != null &&
-        visitStart != null && visitEnd != null) {
-
-      final isVisitStartValid = !isBeforeTimeOfDay(visitStart, apiVisitStartTime!);
-      final isVisitEndValid = !isAfterTimeOfDay(visitEnd, apiVisitEndTime!);
+    if (apiVisitStartTime != null && apiVisitEndTime != null && visitStart != null && visitEnd != null) {
+      final isVisitStartValid = !CommonUtils.isBeforeTimeOfDay(visitStart, apiVisitStartTime!);
+      final isVisitEndValid = !CommonUtils.isAfterTimeOfDay(visitEnd, apiVisitEndTime!);
 
       if (!isVisitStartValid || !isVisitEndValid) {
         final startTimeFormatted = apiVisitStartTime!.format(context);
         final endTimeFormatted = apiVisitEndTime!.format(context);
 
-        ToastHelper.showError(
-            "Visit time should be between $startTimeFormatted - $endTimeFormatted"
-        );
+        ToastHelper.showError("Visit time should be between $startTimeFormatted - $endTimeFormatted");
         return false;
       }
     }
@@ -837,7 +1091,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
-
   //Getter and Setter
   bool get isChecked => _isChecked;
 
@@ -860,6 +1113,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   set isCheckedDevice(bool value) {
     if (_isCheckedDevice == value) return;
     _isCheckedDevice = value;
+    notifyListeners();
+  }
+
+  bool get isCheckedVehicle => _isCheckedVehicle;
+
+  set isCheckedVehicle(bool value) {
+    if (_isCheckedVehicle == value) return;
+    _isCheckedVehicle = value;
     notifyListeners();
   }
 
@@ -919,8 +1180,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
-  TextEditingController get expiryDateController =>
-      _expiryDateController;
+  TextEditingController get expiryDateController => _expiryDateController;
 
   set expiryDateController(TextEditingController value) {
     if (_expiryDateController == value) return;
@@ -1019,7 +1279,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   File? get uploadedImageFile => _uploadedImageFile;
 
   set uploadedImageFile(File? value) {
-    if(_uploadedImageFile == value) return;
+    if (_uploadedImageFile == value) return;
     _uploadedImageFile = value;
     notifyListeners();
   }
@@ -1027,7 +1287,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   File? get uploadedDocumentFile => _uploadedDocumentFile;
 
   set uploadedDocumentFile(File? value) {
-    if(_uploadedDocumentFile == value) return;
+    if (_uploadedDocumentFile == value) return;
     _uploadedDocumentFile = value;
     notifyListeners();
   }
@@ -1035,7 +1295,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   File? get uploadedVehicleRegistrationFile => _uploadedVehicleRegistrationFile;
 
   set uploadedVehicleRegistrationFile(File? value) {
-    if(_uploadedVehicleRegistrationFile == value) return;
+    if (_uploadedVehicleRegistrationFile == value) return;
     _uploadedVehicleRegistrationFile = value;
     notifyListeners();
   }
@@ -1069,6 +1329,22 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   set devicePurposeDropdownData(List<DeviceDropdownResult> value) {
     if (_devicePurposeDropdownData == value) return;
     _devicePurposeDropdownData = value;
+    notifyListeners();
+  }
+
+  List<DeviceDropdownResult> get plateLetterDropdownData => _plateLetterDropdownData;
+
+  set plateLetterDropdownData(List<DeviceDropdownResult> value) {
+    if (_plateLetterDropdownData == value) return;
+    _plateLetterDropdownData = value;
+    notifyListeners();
+  }
+
+  List<DeviceDropdownResult> get plateTypeDropdownData => _plateTypeDropdownData;
+
+  set plateTypeDropdownData(List<DeviceDropdownResult> value) {
+    if (_plateTypeDropdownData == value) return;
+    _plateTypeDropdownData = value;
     notifyListeners();
   }
 
@@ -1145,7 +1421,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
-// Device Model Controller
+  // Device Model Controller
   TextEditingController get deviceModelController => _deviceModelController;
 
   set deviceModelController(TextEditingController value) {
@@ -1154,7 +1430,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
-// Serial Number Controller
+  // Serial Number Controller
   TextEditingController get serialNumberController => _serialNumberController;
 
   set serialNumberController(TextEditingController value) {
@@ -1163,7 +1439,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     notifyListeners();
   }
 
-// Device Purpose Controller
+  // Device Purpose Controller
   TextEditingController get devicePurposeController => _devicePurposeController;
 
   set devicePurposeController(TextEditingController value) {
@@ -1309,6 +1585,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   }
 
   int get totalPages => _totalPages;
+
   int get totalCount => _totalCount;
 
   int? get selectedDevicePurpose => _selectedDevicePurpose;
@@ -1316,6 +1593,38 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
   set selectedDevicePurpose(int? value) {
     if (_selectedDevicePurpose == value) return;
     _selectedDevicePurpose = value;
+    notifyListeners();
+  }
+
+  int? get selectedPlateLetter1 => _selectedPlateLetter1;
+
+  set selectedPlateLetter1(int? value) {
+    if (_selectedPlateLetter1 == value) return;
+    _selectedPlateLetter1 = value;
+    notifyListeners();
+  }
+
+  int? get selectedPlateLetter2 => _selectedPlateLetter2;
+
+  set selectedPlateLetter2(int? value) {
+    if (_selectedPlateLetter2 == value) return;
+    _selectedPlateLetter2 = value;
+    notifyListeners();
+  }
+
+  int? get selectedPlateLetter3 => _selectedPlateLetter3;
+
+  set selectedPlateLetter3(int? value) {
+    if (_selectedPlateLetter3 == value) return;
+    _selectedPlateLetter3 = value;
+    notifyListeners();
+  }
+
+  int? get selectedPlateType => _selectedPlateType;
+
+  set selectedPlateType(int? value) {
+    if (_selectedPlateType == value) return;
+    _selectedPlateType = value;
     notifyListeners();
   }
 
@@ -1342,5 +1651,4 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonUtils{
     _isEnable = value;
     notifyListeners();
   }
-
 }

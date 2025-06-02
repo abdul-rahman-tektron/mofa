@@ -16,6 +16,7 @@ import 'package:mofa/screens/edit_profile/edit_profile_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_screen.dart';
 import 'package:mofa/screens/login/login_screen.dart';
+import 'package:mofa/screens/otp_verification/otp_verification_screen.dart';
 import 'package:mofa/screens/pdf_viewer/pdf_viewer.dart';
 import 'package:mofa/screens/register/register_screen.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_screen.dart';
@@ -23,6 +24,7 @@ import 'package:mofa/utils/enum_values.dart';
 
 class AppRoutes {
   static const String login = '/login';
+  static const String otpVerification = '/otp-verification';
   static const String register = '/register';
   static const String applyPass = '/apply-pass';
   static const String stepper = '/stepper';
@@ -46,6 +48,10 @@ class AppRouter {
 
       case AppRoutes.register:
         return MaterialPageRoute(builder: (_) => const RegisterScreen());
+
+      case AppRoutes.otpVerification:
+        final (email, password) = settings.arguments as (String, String);
+        return MaterialPageRoute(builder: (_) => OtpVerificationScreen(email: email, password: password,));
 
       case AppRoutes.bottomBar:
         final args = settings.arguments as int?;

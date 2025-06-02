@@ -19,6 +19,7 @@ import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/enum_values.dart';
+import 'package:mofa/utils/extensions.dart';
 import 'package:provider/provider.dart';
 
 class ApplyPassGroupScreen extends StatelessWidget {
@@ -27,13 +28,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   final bool isUpdate;
   final int? id;
 
-  const ApplyPassGroupScreen({
-    super.key,
-    required this.onNext,
-    required this.category,
-    this.isUpdate = false,
-    this.id,
-  });
+  const ApplyPassGroupScreen({super.key, required this.onNext, required this.category, this.isUpdate = false, this.id});
 
   @override
   Widget build(BuildContext context) {
@@ -47,92 +42,84 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildBody(BuildContext context,
-      ApplyPassGroupNotifier applyPassGroupNotifier,) {
-    return Column(children: [mainBody(context, applyPassGroupNotifier)]);
-  }
+  Widget buildBody(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    final lang = context.watchLang;
+    int stepCounter = 1;
 
-  Widget mainBody(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: 25.h,
-        right: 25.w,
-        left: 25.w,
-        top: 15.h,
+    String stepTitle(String label) => "${stepCounter++}. ${lang.translate(label)}";
+
+    List<Widget> children = [];
+
+    children.add(
+      buildExpansionTile(
+        title: stepTitle(AppLanguageText.visitDetails),
+        children: visitDetailsChildren(context, applyPassGroupNotifier),
       ),
-      child: Form(
-        key: applyPassGroupNotifier.formKey,
-        child: Column(
-          children: [
-            buildExpansionTile(
-              title:
-                  "${context.watchLang.translate(AppLanguageText.one)}. ${context.watchLang.translate(AppLanguageText.visitDetails)}",
-              children: visitDetailsChildren(context, applyPassGroupNotifier),
-            ),
-            if (applyPassGroupNotifier.isCheckedDevice) 15.verticalSpace,
-            if (applyPassGroupNotifier.isCheckedDevice)
-              buildExpansionTile(
-                title:
-                    "${context.watchLang.translate(AppLanguageText.two)}. ${context.watchLang.translate(AppLanguageText.deviceDetails)}",
-                children: deviceDetailsChildren(
-                  context,
-                  applyPassGroupNotifier,
-                ),
-              ),
-            15.verticalSpace,
-            buildExpansionTile(
-              title:
-                  "${applyPassGroupNotifier.isCheckedDevice ? context.watchLang.translate(AppLanguageText.three) : context.watchLang.translate(AppLanguageText.two)}. ${context.watchLang.translate(AppLanguageText.visitorDetails)}",
-              children: groupVisitorDetailsChildren(
-                context,
-                applyPassGroupNotifier,
-              ),
-            ),
-            15.verticalSpace,
-            buildBulletList(context, applyPassGroupNotifier),
-            15.verticalSpace,
-            userVerifyCheckbox(context, applyPassGroupNotifier),
-            15.verticalSpace,
-            nextButton(context, applyPassGroupNotifier),
-          ],
+    );
+
+    children.add(15.verticalSpace);
+
+    if (applyPassGroupNotifier.isCheckedVehicle) {
+      children.add(
+        buildExpansionTile(
+          title: stepTitle(AppLanguageText.vehicleInformation),
+          children: vehicleDetailsChildren(context, applyPassGroupNotifier),
         ),
+      );
+    }
+
+    if (applyPassGroupNotifier.isCheckedDevice) {
+      children.add(15.verticalSpace);
+      children.add(
+        buildExpansionTile(
+          title: stepTitle(AppLanguageText.deviceDetails),
+          children: deviceDetailsChildren(context, applyPassGroupNotifier),
+        ),
+      );
+    }
+
+    children.add(15.verticalSpace);
+
+    children.add(
+      buildExpansionTile(
+        title: stepTitle(AppLanguageText.visitorDetails),
+        children: groupVisitorDetailsChildren(context, applyPassGroupNotifier),
       ),
+    );
+
+    children.add(15.verticalSpace);
+    children.add(buildBulletList(context, applyPassGroupNotifier));
+    children.add(15.verticalSpace);
+    children.add(userVerifyCheckbox(context, applyPassGroupNotifier));
+    children.add(15.verticalSpace);
+    children.add(nextButton(context, applyPassGroupNotifier));
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: 25.h, right: 25.w, left: 25.w, top: 15.h),
+      child: Form(key: applyPassGroupNotifier.formKey, child: Column(children: children)),
     );
   }
 
-  Widget buildExpansionTile({
-    required String title,
-    required List<Widget> children,
-    isVisitorDetails = false,
-  }) {
+  Widget buildExpansionTile({required String title, required List<Widget> children, isVisitorDetails = false}) {
     return ExpansionTile(
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       collapsedBackgroundColor: AppColors.whiteColor,
-      collapsedShape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-      ),
+      collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       childrenPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
       initiallyExpanded: true,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: AppFonts.textRegular20),
-          if (isVisitorDetails)
-            Text("(${category.name})", style: AppFonts.textMedium12),
+          if (isVisitorDetails) Text("(${category.name})", style: AppFonts.textMedium12),
         ],
       ),
       children: children,
     );
   }
 
-  Widget nextButton(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget nextButton(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
@@ -151,16 +138,10 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget userVerifyCheckbox(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget userVerifyCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,41 +149,27 @@ class ApplyPassGroupScreen extends StatelessWidget {
             padding: const EdgeInsets.only(top: 5.0),
             child: GestureDetector(
               onTap: () {
-                applyPassGroupNotifier.userVerifyChecked(
-                  context,
-                  !applyPassGroupNotifier.isChecked,
-                );
+                applyPassGroupNotifier.userVerifyChecked(context, !applyPassGroupNotifier.isChecked);
               },
               child: Container(
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
                   border: Border.all(
-                    color:
-                        applyPassGroupNotifier.isChecked
-                            ? AppColors.primaryColor
-                            : AppColors.primaryColor,
+                    color: applyPassGroupNotifier.isChecked ? AppColors.primaryColor : AppColors.primaryColor,
                     width: 1.5,
                   ),
                   borderRadius: BorderRadius.circular(6),
-                  color:
-                      applyPassGroupNotifier.isChecked
-                          ? AppColors.whiteColor
-                          : Colors.transparent,
+                  color: applyPassGroupNotifier.isChecked ? AppColors.whiteColor : Colors.transparent,
                 ),
-                child:
-                    applyPassGroupNotifier.isChecked
-                        ? Icon(Icons.check, size: 17, color: Colors.black)
-                        : null,
+                child: applyPassGroupNotifier.isChecked ? Icon(Icons.check, size: 17, color: Colors.black) : null,
               ),
             ),
           ),
           10.horizontalSpace,
           Expanded(
             child: Text(
-              context.watchLang.translate(
-                AppLanguageText.formSubmissionCertification,
-              ),
+              context.watchLang.translate(AppLanguageText.formSubmissionCertification),
               style: AppFonts.textRegular14,
             ),
           ),
@@ -211,10 +178,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildBulletList(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget buildBulletList(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return BulletList(
       [
         context.watchLang.translate(AppLanguageText.personalDataNotice),
@@ -229,10 +193,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> visitDetailsChildren(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  List<Widget> visitDetailsChildren(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return [
       locationTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
@@ -248,58 +209,73 @@ class ApplyPassGroupScreen extends StatelessWidget {
       15.verticalSpace,
       noteTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
+      vehicleDetailCheckbox(context, applyPassGroupNotifier),
+      15.verticalSpace,
       deviceDetailCheckbox(context, applyPassGroupNotifier),
     ];
   }
 
-  Widget deviceDetailCheckbox(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget vehicleDetailCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           GestureDetector(
             onTap: () {
-              applyPassGroupNotifier.deviceDetailChecked(
-                context,
-                !applyPassGroupNotifier.isCheckedDevice,
-              );
+              applyPassGroupNotifier.vehicleDetailChecked(!applyPassGroupNotifier.isCheckedVehicle);
             },
             child: Container(
               width: 20,
               height: 20,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color:
-                      applyPassGroupNotifier.isCheckedDevice
-                          ? AppColors.primaryColor
-                          : AppColors.primaryColor,
+                  color: applyPassGroupNotifier.isCheckedVehicle ? AppColors.primaryColor : AppColors.primaryColor,
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(6),
-                color:
-                    applyPassGroupNotifier.isCheckedDevice
-                        ? AppColors.whiteColor
-                        : Colors.transparent,
+                color: applyPassGroupNotifier.isCheckedVehicle ? AppColors.whiteColor : Colors.transparent,
               ),
-              child:
-                  applyPassGroupNotifier.isCheckedDevice
-                      ? Icon(Icons.check, size: 17, color: Colors.black)
-                      : null,
+              child: applyPassGroupNotifier.isCheckedVehicle ? Icon(Icons.check, size: 17, color: Colors.black) : null,
+            ),
+          ),
+          10.horizontalSpace,
+          Expanded(
+            child: Text(context.watchLang.translate(AppLanguageText.vehicleDetails), style: AppFonts.textRegular14),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget deviceDetailCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return Container(
+      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          GestureDetector(
+            onTap: () {
+              applyPassGroupNotifier.deviceDetailChecked(context, !applyPassGroupNotifier.isCheckedDevice);
+            },
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: applyPassGroupNotifier.isCheckedDevice ? AppColors.primaryColor : AppColors.primaryColor,
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(6),
+                color: applyPassGroupNotifier.isCheckedDevice ? AppColors.whiteColor : Colors.transparent,
+              ),
+              child: applyPassGroupNotifier.isCheckedDevice ? Icon(Icons.check, size: 17, color: Colors.black) : null,
             ),
           ),
           10.horizontalSpace,
           Expanded(
             child: Text(
-              context.watchLang.translate(
-                AppLanguageText.declareDevicesBroughtOnsite,
-              ),
+              context.watchLang.translate(AppLanguageText.declareDevicesBroughtOnsite),
               style: AppFonts.textRegular14,
             ),
           ),
@@ -308,10 +284,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget locationTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget locationTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<LocationDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.location),
       hintText: 'Select...',
@@ -327,10 +300,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget visitRequestTypeTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget visitRequestTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<VisitRequestDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.visitRequestType),
       hintText: 'Select...',
@@ -339,18 +309,14 @@ class ApplyPassGroupScreen extends StatelessWidget {
       itemLabel: (item) => item.sDescE ?? 'Unknown',
       isSmallFieldFont: true,
       onSelected: (VisitRequestDropdownResult? menu) {
-        applyPassGroupNotifier.selectedVisitRequest =
-            menu?.nDetailedCode.toString() ?? "";
+        applyPassGroupNotifier.selectedVisitRequest = menu?.nDetailedCode.toString() ?? "";
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: CommonValidation().validateVisitRequestType,
     );
   }
 
-  Widget visitPurposeTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget visitPurposeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<VisitPurposeDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.visitPurpose),
       hintText: 'Select...',
@@ -359,18 +325,14 @@ class ApplyPassGroupScreen extends StatelessWidget {
       itemLabel: (item) => item.sPurposeEn ?? 'Unknown',
       isSmallFieldFont: true,
       onSelected: (VisitPurposeDropdownResult? menu) {
-        applyPassGroupNotifier.selectedVisitPurpose =
-            menu?.nPurposeId.toString() ?? "";
+        applyPassGroupNotifier.selectedVisitPurpose = menu?.nPurposeId.toString() ?? "";
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: CommonValidation().validateVisitPurpose,
     );
   }
 
-  Widget mofaHostEmailTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget mofaHostEmailTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.mofaHostEmailController,
       fieldName: context.watchLang.translate(AppLanguageText.hostEmailAddress),
@@ -379,10 +341,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget visitStartDateTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget visitStartDateTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.visitStartDateController,
       fieldName: context.watchLang.translate(AppLanguageText.visitStartDate),
@@ -406,10 +365,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget visitEndDateTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget visitEndDateTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     DateTime? parsedStartDate;
     if (applyPassGroupNotifier.visitStartDateController.text.isNotEmpty) {
       try {
@@ -430,10 +386,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget noteTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget noteTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.noteController,
       fieldName: context.watchLang.translate(AppLanguageText.note),
@@ -442,14 +395,97 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> deviceDetailsChildren(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  List<Widget> vehicleDetailsChildren(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return [
-      addDeviceButton(context, applyPassGroupNotifier),
+      plateTypeTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
-      deviceTable(applyPassGroupNotifier),
+      plateLetter1TextField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      plateLetter2TextField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      plateLetter3TextField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      plateNumberTextField(context, applyPassGroupNotifier),
+    ];
+  }
+
+  Widget plateTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomSearchDropdown<DeviceDropdownResult>(
+      fieldName: context.watchLang.translate(AppLanguageText.plateType),
+      hintText: 'Select...',
+      controller: applyPassGroupNotifier.plateTypeController,
+      items: applyPassGroupNotifier.plateTypeDropdownData,
+      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      isSmallFieldFont: true,
+      skipValidation: true,
+      onSelected: (DeviceDropdownResult? menu) {
+        applyPassGroupNotifier.selectedPlateType = menu?.nDetailedCode ?? 0;
+      },
+      validator: CommonValidation().validateDeviceType,
+    );
+  }
+
+  Widget plateLetter1TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomSearchDropdown<DeviceDropdownResult>(
+      fieldName: context.watchLang.translate(AppLanguageText.plateLetter1),
+      hintText: 'Select...',
+      controller: applyPassGroupNotifier.plateLetter1Controller,
+      items: applyPassGroupNotifier.plateLetterDropdownData,
+      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      isSmallFieldFont: true,
+      skipValidation: true,
+      onSelected: (DeviceDropdownResult? menu) {
+        applyPassGroupNotifier.selectedPlateLetter1 = menu?.nDetailedCode ?? 0;
+      },
+      validator: CommonValidation().validateDeviceType,
+    );
+  }
+
+  Widget plateLetter2TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomSearchDropdown<DeviceDropdownResult>(
+      fieldName: context.watchLang.translate(AppLanguageText.plateLetter2),
+      hintText: 'Select...',
+      controller: applyPassGroupNotifier.plateLetter2Controller,
+      items: applyPassGroupNotifier.plateLetterDropdownData,
+      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      isSmallFieldFont: true,
+      skipValidation: true,
+      onSelected: (DeviceDropdownResult? menu) {
+        applyPassGroupNotifier.selectedPlateLetter2 = menu?.nDetailedCode ?? 0;
+      },
+      validator: CommonValidation().validateDeviceType,
+    );
+  }
+
+  Widget plateLetter3TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomSearchDropdown<DeviceDropdownResult>(
+      fieldName: context.watchLang.translate(AppLanguageText.plateLetter3),
+      hintText: 'Select...',
+      controller: applyPassGroupNotifier.plateLetter3Controller,
+      items: applyPassGroupNotifier.plateLetterDropdownData,
+      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      isSmallFieldFont: true,
+      skipValidation: true,
+      onSelected: (DeviceDropdownResult? menu) {
+        applyPassGroupNotifier.selectedPlateLetter3 = menu?.nDetailedCode ?? 0;
+      },
+      validator: CommonValidation().validateDeviceType,
+    );
+  }
+
+  Widget plateNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.plateNumberController,
+      fieldName: context.watchLang.translate(AppLanguageText.plateNumber),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.number,
+      validator: CommonValidation().validateIqama,
+    );
+  }
+
+  List<Widget> deviceDetailsChildren(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return [
+      deviceDetailsChipList(context, applyPassGroupNotifier),
       15.verticalSpace,
       if (applyPassGroupNotifier.showDeviceFields) ...[
         deviceTypeTextField(context, applyPassGroupNotifier),
@@ -468,146 +504,188 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget deviceTable(ApplyPassGroupNotifier applyPassGroupNotifier) {
     final devices = applyPassGroupNotifier.addedDevices;
 
+    Widget buildHeader() {
+      return Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.buttonBgColor.withOpacity(0.5),
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: const Text('Device Details', style: AppFonts.textBoldWhite14),
+      );
+    }
+
+    Widget buildActionButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Container(
+          height: 28,
+          width: 48,
+          decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+          child: Icon(icon, color: AppColors.whiteColor, size: 20),
+        ),
+      );
+    }
+
+    if (devices.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [buildHeader(), const Padding(padding: EdgeInsets.all(16), child: Text('No result found'))],
+        ),
+      );
+    }
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey.shade300),
         borderRadius: BorderRadius.circular(8),
       ),
-      child:
-          devices.isEmpty
-              ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.buttonBgColor.withOpacity(0.5),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        topRight: Radius.circular(8),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
+          headingRowColor: MaterialStateProperty.all(AppColors.buttonBgColor.withOpacity(0.5)),
+          headingTextStyle: AppFonts.textBoldWhite14,
+          border: TableBorder(borderRadius: BorderRadius.circular(8)),
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          columnSpacing: 40,
+          columns: const [
+            DataColumn(label: Text('Device Type')),
+            DataColumn(label: Text('Model')),
+            DataColumn(label: Text('Serial No.')),
+            DataColumn(label: Text('Purpose')),
+            DataColumn(label: Text('Action')),
+          ],
+          rows:
+              devices.asMap().entries.map((entry) {
+                final index = entry.key;
+                final device = entry.value;
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text(device.deviceTypeString ?? "")),
+                    DataCell(Text(device.deviceModel ?? "")),
+                    DataCell(Text(device.serialNumber ?? "")),
+                    DataCell(Text(device.devicePurposeString ?? "")),
+                    DataCell(
+                      Row(
+                        children: [
+                          buildActionButton(
+                            icon: LucideIcons.pencil,
+                            color: AppColors.buttonBgColor,
+                            onTap: () => applyPassGroupNotifier.startEditingDevice(index),
+                          ),
+                          5.horizontalSpace,
+                          buildActionButton(
+                            icon: LucideIcons.trash,
+                            color: AppColors.textRedColor,
+                            onTap: () => applyPassGroupNotifier.removeDevice(index),
+                          ),
+                        ],
                       ),
                     ),
-                    padding: const EdgeInsets.all(12),
-                    child: const Text(
-                      'Device Details',
-                      style: AppFonts.textBoldWhite14,
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No result found'),
-                  ),
-                ],
-              )
-              : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowColor: MaterialStateColor.resolveWith(
-                    (states) => AppColors.buttonBgColor.withOpacity(0.5),
-                  ),
-                  headingTextStyle: AppFonts.textBoldWhite14,
-                  border: TableBorder(borderRadius: BorderRadius.circular(8)),
-                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                  columnSpacing: 40,
-                  columns: const [
-                    DataColumn(label: Text('Device Type')),
-                    DataColumn(label: Text('Model')),
-                    DataColumn(label: Text('Serial No.')),
-                    DataColumn(label: Text('Purpose')),
-                    DataColumn(label: Text('Action')),
                   ],
-                  rows:
-                      devices.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final device = entry.value;
-
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(device.deviceTypeString ?? "")),
-                            DataCell(Text(device.deviceModel ?? "")),
-                            DataCell(Text(device.serialNumber ?? "")),
-                            DataCell(Text(device.devicePurposeString ?? "")),
-                            DataCell(
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap:
-                                        () => applyPassGroupNotifier
-                                            .startEditingDevice(index),
-                                    child: Container(
-                                      height: 28,
-                                      width: 48,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.buttonBgColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.pencil,
-                                        color: AppColors.whiteColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  5.horizontalSpace,
-                                  GestureDetector(
-                                    onTap:
-                                        () => applyPassGroupNotifier
-                                            .removeDevice(index),
-                                    child: Container(
-                                      height: 28,
-                                      width: 48,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.textRedColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.trash,
-                                        color: AppColors.whiteColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                ),
-              ),
+                );
+              }).toList(),
+        ),
+      ),
     );
   }
 
-  Widget addDeviceButton(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget deviceDetailsChipList(BuildContext context, ApplyPassGroupNotifier notifier) {
+    final devices = notifier.addedDevices;
+
+    if (devices.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Text('No devices added'),
+      );
+    }
+
+    return Wrap(
+      spacing: 10,
+      runSpacing: 10,
+      children: devices
+          .asMap()
+          .entries
+          .map((entry) {
+        final index = entry.key;
+        final device = entry.value;
+
+        return InputChip(
+          label: Text(device.deviceTypeString ?? 'Unknown'),
+          avatar: Icon(getDeviceIcon(device.deviceTypeString ?? ""), size: 18),
+          onPressed: () => notifier.startEditingDevice(index),
+          onDeleted: () => notifier.removeDevice(index),
+          deleteIcon: const Icon(Icons.close),
+          deleteIconColor: Colors.red,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5),
+            side: const BorderSide(color: AppColors.buttonBgColor, width: 1),
+          ),
+          backgroundColor: AppColors.whiteColor,
+          labelStyle: AppFonts.textRegular14,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        );
+      }).toList(),
+    );
+  }
+
+  IconData getDeviceIcon(String deviceType) {
+    switch (deviceType.toLowerCase()) {
+      case 'phone':
+        return LucideIcons.smartphone;
+      case 'laptop':
+        return LucideIcons.laptop;
+      case 'tablet':
+        return LucideIcons.tablet;
+      case 'usb drive':
+      case 'usb':
+        return LucideIcons.usb;
+      case 'other':
+      default:
+        return LucideIcons.monitorSmartphone;
+    }
+  }
+
+  Widget addDeviceButton(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomButton(
       text: context.watchLang.translate(AppLanguageText.addDevice),
       onPressed: () => applyPassGroupNotifier.showDeviceFieldsAgain(),
     );
   }
 
-  Widget addVisitorsButton(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget addVisitorsButton(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomButton(
       text: context.watchLang.translate(AppLanguageText.addVisitor),
       onPressed: () => applyPassGroupNotifier.showVisitorsFieldsAgain(),
     );
   }
 
-  Widget saveAndCancel(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget saveAndCancel(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return Row(
       children: [
         Expanded(
           child: CustomButton(
-            text: context.watchLang.translate(AppLanguageText.save),
-            onPressed: () => applyPassGroupNotifier.saveDevice(),
+            text: context.watchLang.translate(AppLanguageText.addDevice),
+            height: 45,
+            smallWidth: true,
+            onPressed: () {
+              if (applyPassGroupNotifier.showDeviceFields) {
+                applyPassGroupNotifier.saveDevice(); // Save or update
+              } else {
+                applyPassGroupNotifier.showDeviceFieldsAgain(); // Show fields to add
+              }
+            },
           ),
         ),
         SizedBox(width: 10),
@@ -615,31 +693,38 @@ class ApplyPassGroupScreen extends StatelessWidget {
           child: CustomButton(
             text: context.watchLang.translate(AppLanguageText.cancel),
             backgroundColor: Colors.white,
+            height: 45,
+            smallWidth: true,
             borderColor: AppColors.buttonBgColor,
             textFont: AppFonts.textBold14,
-            onPressed: () => applyPassGroupNotifier.cancelDeviceEditing(),
+            onPressed: () => applyPassGroupNotifier.cancelEditing(),
           ),
         ),
       ],
     );
   }
 
-  Widget saveAndCancelVisitors(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget saveAndCancelVisitors(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return Row(
       children: [
         Expanded(
           child: CustomButton(
-            text: context.watchLang.translate(AppLanguageText.save),
-            onPressed: () => applyPassGroupNotifier.saveVisitors(context),
+            text: context.watchLang.translate(AppLanguageText.addVisitor),
+            height: 45,
+            onPressed: () {
+              if (!applyPassGroupNotifier.showVisitorsFields) {
+                applyPassGroupNotifier.showVisitorsFieldsAgain();
+              } else {
+                applyPassGroupNotifier.saveVisitors(context);
+              }
+            },
           ),
         ),
         SizedBox(width: 10),
         Expanded(
           child: CustomButton(
             text: context.watchLang.translate(AppLanguageText.cancel),
+            height: 45,
             backgroundColor: Colors.white,
             borderColor: AppColors.buttonBgColor,
             textFont: AppFonts.textBold14,
@@ -650,10 +735,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget deviceModelTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget deviceModelTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.deviceModelController,
       fieldName: context.watchLang.translate(AppLanguageText.deviceModel),
@@ -663,10 +745,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget serialNumberTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget serialNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.serialNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.serialNumber),
@@ -676,10 +755,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget deviceTypeTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget deviceTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.deviceType),
       hintText: 'Select...',
@@ -695,10 +771,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget devicePurposeTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget devicePurposeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
       hintText: 'Select...',
@@ -714,57 +787,78 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  List<Widget> groupVisitorDetailsChildren(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
-    return [
-      addVisitorsButton(context, applyPassGroupNotifier),
+  List<Widget> groupVisitorDetailsChildren(BuildContext context, ApplyPassGroupNotifier notifier) {
+    List<Widget> children = [
+      // addVisitorsButton(context, notifier),
+      // 15.verticalSpace,
+      visitorTable(notifier),
       15.verticalSpace,
-      visitorTable(applyPassGroupNotifier),
-      15.verticalSpace,
-      if (applyPassGroupNotifier.showVisitorsFields) ...[
-        visitorNameTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        companyNameTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        phoneNumberTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        emailTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        nationalityField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        idTypeField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        if (applyPassGroupNotifier.selectedIdType == "National ID")
-          nationalIdTextField(context, applyPassGroupNotifier),
-        if (applyPassGroupNotifier.selectedIdType == "Passport")
-          passportField(context, applyPassGroupNotifier),
-        if (applyPassGroupNotifier.selectedIdType == "Iqama")
-          iqamaField(context, applyPassGroupNotifier),
-        if (applyPassGroupNotifier.selectedIdType == "Other")
-          documentNameField(context, applyPassGroupNotifier),
-        if (applyPassGroupNotifier.selectedIdType == "Other") 15.verticalSpace,
-        if (applyPassGroupNotifier.selectedIdType == "Other")
-          documentNumberField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        expirationDateTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        vehicleNumberTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        buildUploadImageSection(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        buildUploadDocumentSection(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        buildUploadVehicleRegistrationSection(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        saveAndCancelVisitors(context, applyPassGroupNotifier),
-      ],
     ];
+
+    if (notifier.showVisitorsFields) {
+      children.addAll([
+        visitorNameTextField(context, notifier),
+        15.verticalSpace,
+        companyNameTextField(context, notifier),
+        15.verticalSpace,
+        phoneNumberTextField(context, notifier),
+        15.verticalSpace,
+        emailTextField(context, notifier),
+        15.verticalSpace,
+        nationalityField(context, notifier),
+        15.verticalSpace,
+        idTypeField(context, notifier),
+        15.verticalSpace,
+        ..._buildIdTypeFields(context, notifier),
+        expirationDateTextField(context, notifier),
+        15.verticalSpace,
+        vehicleNumberTextField(context, notifier),
+        15.verticalSpace,
+        buildUploadImageSection(context, notifier),
+        15.verticalSpace,
+        buildUploadDocumentSection(context, notifier),
+        15.verticalSpace,
+        buildUploadVehicleRegistrationSection(context, notifier),
+        15.verticalSpace,
+        saveAndCancelVisitors(context, notifier),
+      ]);
+    }
+
+    return children;
   }
 
-  Widget visitorTable(ApplyPassGroupNotifier applyPassGroupNotifier) {
-    final visitors = applyPassGroupNotifier.addedVisitors;
+  List<Widget> _buildIdTypeFields(BuildContext context, ApplyPassGroupNotifier notifier) {
+    final type = notifier.selectedIdType;
+    List<Widget> idWidgets = [];
+
+    switch (type) {
+      case "National ID":
+        idWidgets.add(nationalIdTextField(context, notifier));
+        break;
+      case "Passport":
+        idWidgets.add(passportField(context, notifier));
+        break;
+      case "Iqama":
+        idWidgets.add(iqamaField(context, notifier));
+        break;
+      case "Other":
+        idWidgets.addAll([
+          documentNameField(context, notifier),
+          15.verticalSpace,
+          documentNumberField(context, notifier),
+        ]);
+        break;
+    }
+
+    if (idWidgets.isNotEmpty) {
+      idWidgets.add(15.verticalSpace);
+    }
+
+    return idWidgets;
+  }
+
+  Widget visitorTable(ApplyPassGroupNotifier notifier) {
+    final visitors = notifier.addedVisitors;
 
     return Container(
       decoration: BoxDecoration(
@@ -773,36 +867,11 @@ class ApplyPassGroupScreen extends StatelessWidget {
       ),
       child:
           visitors.isEmpty
-              ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.buttonBgColor.withOpacity(0.5),
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(8),
-                        topRight: Radius.circular(8),
-                      ),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: const Text(
-                      'Visitors Details',
-                      style: AppFonts.textBoldWhite14,
-                    ),
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text('No result found'),
-                  ),
-                ],
-              )
+              ? _buildEmptyTableHeader(title: 'Visitors Details')
               : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowColor: MaterialStateColor.resolveWith(
-                    (states) => AppColors.buttonBgColor.withOpacity(0.5),
-                  ),
+                  headingRowColor: MaterialStateColor.resolveWith((states) => AppColors.buttonBgColor.withOpacity(0.5)),
                   headingTextStyle: AppFonts.textBoldWhite14,
                   border: TableBorder(borderRadius: BorderRadius.circular(8)),
                   clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -836,46 +905,9 @@ class ApplyPassGroupScreen extends StatelessWidget {
                             DataCell(Text(visitor.nationality)),
                             DataCell(Text(visitor.vehicleNumber)),
                             DataCell(
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap:
-                                        () => applyPassGroupNotifier
-                                            .startEditingVisitors(index),
-                                    child: Container(
-                                      height: 28,
-                                      width: 48,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.buttonBgColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.pencil,
-                                        color: AppColors.whiteColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  5.horizontalSpace,
-                                  GestureDetector(
-                                    onTap:
-                                        () => applyPassGroupNotifier
-                                            .removeVisitors(index),
-                                    child: Container(
-                                      height: 28,
-                                      width: 48,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.textRedColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: const Icon(
-                                        LucideIcons.trash,
-                                        color: AppColors.whiteColor,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
+                              _buildActionButtons(
+                                onEdit: () => notifier.startEditingVisitors(index),
+                                onDelete: () => notifier.removeVisitors(index),
                               ),
                             ),
                           ],
@@ -886,39 +918,76 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildUploadImageSection(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget _buildEmptyTableHeader({required String title}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: AppColors.buttonBgColor.withOpacity(0.5),
+            borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Text(title, style: AppFonts.textBoldWhite14),
+        ),
+        const Padding(padding: EdgeInsets.all(16), child: Text('No result found')),
+      ],
+    );
+  }
+
+  Widget _buildActionButtons({required VoidCallback onEdit, required VoidCallback onDelete}) {
+    return Row(
+      children: [
+        _buildIconButton(icon: LucideIcons.pencil, color: AppColors.buttonBgColor, onTap: onEdit),
+        5.horizontalSpace,
+        _buildIconButton(icon: LucideIcons.trash, color: AppColors.textRedColor, onTap: onDelete),
+      ],
+    );
+  }
+
+  Widget _buildIconButton({required IconData icon, required Color color, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 28,
+        width: 48,
+        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: AppColors.whiteColor, size: 20),
+      ),
+    );
+  }
+
+  Widget buildUploadSection({
+    required BuildContext context,
+    required String title,
+    required String? fileName,
+    required VoidCallback onUploadTap,
+    bool showTooltip = false,
+    String? tooltipMessage,
+    bool isRequired = false,
+    bool showError = false,
+    String? errorText,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text(
-              context.watchLang.translate(AppLanguageText.uploadPhoto),
-              style: AppFonts.textRegular14,
-            ),
-            3.horizontalSpace,
-            Text(
-              "*",
-              style: TextStyle(fontSize: 15, color: AppColors.textRedColor),
-            ),
-            3.horizontalSpace,
-            Tooltip(
-              message:
-                  "Upload a recent passport-sized\n photo (JPG, PNG, or JPEG).\n Ensure the image is clear and meets\n official guidelines.",
-              textAlign: TextAlign.center,
-              decoration: BoxDecoration(
-                color: AppColors.primaryColor,
-                borderRadius: BorderRadius.circular(5),
+            Text(title, style: AppFonts.textRegular14),
+            if (isRequired) ...[
+              3.horizontalSpace,
+              const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
+            ],
+            if (showTooltip && tooltipMessage != null) ...[
+              3.horizontalSpace,
+              Tooltip(
+                message: tooltipMessage,
+                textAlign: TextAlign.center,
+                decoration: BoxDecoration(color: AppColors.primaryColor, borderRadius: BorderRadius.circular(5)),
+                child: Icon(Icons.info_outline, size: 20, color: AppColors.primaryColor),
               ),
-              child: Icon(
-                Icons.info_outline,
-                size: 20,
-                color: AppColors.primaryColor,
-              ),
-            ),
+            ],
           ],
         ),
         5.verticalSpace,
@@ -927,108 +996,109 @@ class ApplyPassGroupScreen extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                applyPassGroupNotifier.uploadedImageFile?.path
-                        .split('/')
-                        .last ??
-                    context.watchLang.translate(AppLanguageText.noFileSelected),
+                fileName ?? context.watchLang.translate(AppLanguageText.noFileSelected),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
             Flexible(
               child: CustomUploadButton(
                 text: context.watchLang.translate(AppLanguageText.uploadFile),
-                onPressed: () async {
-                  showModalBottomSheet(
-                    context: context,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(
-                        top: Radius.circular(20),
-                      ),
-                    ),
-                    backgroundColor: Colors.white,
-                    builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Upload Image",
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                uploadOptionCard(
-                                  icon: LucideIcons.camera,
-                                  label: "Camera",
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    await applyPassGroupNotifier.uploadImage(
-                                      fromCamera: true,
-                                      cropAfterPick: true,
-                                    );
-                                  },
-                                ),
-                                uploadOptionCard(
-                                  icon: LucideIcons.image,
-                                  label: "Device",
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    await applyPassGroupNotifier.uploadImage(
-                                      fromCamera: false,
-                                      cropAfterPick: true,
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
+                onPressed: onUploadTap,
               ),
             ),
           ],
         ),
-        Divider(height: 10, indent: 0, thickness: 1),
-        if(applyPassGroupNotifier.photoUploadValidation)
-          Text("Photo upload is required.", style: AppFonts.errorTextRegular12),
+        const Divider(height: 10, indent: 0, thickness: 1),
+        if (showError && errorText != null) Text(errorText, style: AppFonts.errorTextRegular12),
       ],
     );
   }
 
-  Widget uploadOptionCard({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
+  Widget buildUploadImageSection(BuildContext context, ApplyPassGroupNotifier notifier) {
+    return buildUploadSection(
+      context: context,
+      title: context.watchLang.translate(AppLanguageText.uploadPhoto),
+      fileName: notifier.uploadedImageFile?.path.split('/').last,
+      onUploadTap: () {
+        showImageUploadBottomSheet(
+          context: context,
+          onCameraTap: () async {
+            await notifier.uploadImage(fromCamera: true, cropAfterPick: true);
+          },
+          onGalleryTap: () async {
+            await notifier.uploadImage(fromCamera: false, cropAfterPick: true);
+          },
+        );
+      },
+      isRequired: true,
+      showTooltip: true,
+      tooltipMessage:
+          "Upload a recent passport-sized\n photo (JPG, PNG, or JPEG).\n Ensure the image is clear and meets\n official guidelines.",
+      showError: notifier.photoUploadValidation,
+      errorText: "Photo upload is required.",
+    );
+  }
+
+  Future<void> showImageUploadBottomSheet({
+    required BuildContext context,
+    required VoidCallback onCameraTap,
+    required VoidCallback onGalleryTap,
   }) {
+    return showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      backgroundColor: Colors.white,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 16),
+              const Text("Upload Image", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  uploadOptionCard(
+                    icon: LucideIcons.camera,
+                    label: "Camera",
+                    onTap: () {
+                      Navigator.pop(context);
+                      onCameraTap();
+                    },
+                  ),
+                  uploadOptionCard(
+                    icon: LucideIcons.image,
+                    label: "Device",
+                    onTap: () {
+                      Navigator.pop(context);
+                      onGalleryTap();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget uploadOptionCard({required IconData icon, required String label, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.buttonBgColor.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: AppColors.buttonBgColor.withOpacity(0.2), shape: BoxShape.circle),
             child: Icon(icon, size: 28, color: AppColors.buttonBgColor),
           ),
           const SizedBox(height: 8),
@@ -1038,159 +1108,28 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildUploadDocumentSection(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Upload ${applyPassGroupNotifier.selectedIdType}',
-              style: AppFonts.textRegular14,
-            ),
-            3.horizontalSpace,
-            Text(
-              "*",
-              style: TextStyle(fontSize: 15, color: AppColors.textRedColor),
-            ),
-          ],
-        ),
-        5.verticalSpace,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                applyPassGroupNotifier.uploadedDocumentFile?.path
-                        .split('/')
-                        .last ??
-                    context.watchLang.translate(AppLanguageText.noFileSelected),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Flexible(
-              child: CustomUploadButton(
-                text: context.watchLang.translate(AppLanguageText.uploadFile),
-                onPressed: () async {
-                  await applyPassGroupNotifier.uploadDocument();
-                },
-              ),
-            ),
-          ],
-        ),
-        Divider(height: 10, indent: 0, thickness: 1),
-        if(applyPassGroupNotifier.documentUploadValidation)
-          Text("${applyPassGroupNotifier.selectedIdType} upload is required.", style: AppFonts.errorTextRegular12),
-      ],
+  Widget buildUploadDocumentSection(BuildContext context, ApplyPassGroupNotifier notifier) {
+    return buildUploadSection(
+      context: context,
+      title: 'Upload ${notifier.selectedIdType}',
+      fileName: notifier.uploadedDocumentFile?.path.split('/').last,
+      onUploadTap: () async => await notifier.uploadDocument(),
+      isRequired: true,
+      showError: notifier.documentUploadValidation,
+      errorText: "${notifier.selectedIdType} upload is required.",
     );
   }
 
-  Widget buildUploadVehicleRegistrationSection(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          context.watchLang.translate(
-            AppLanguageText.vehicleRegistrationLicense,
-          ),
-          style: AppFonts.textRegular14,
-        ),
-        5.verticalSpace,
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: Text(
-                applyPassGroupNotifier.uploadedVehicleRegistrationFile?.path
-                        .split('/')
-                        .last ??
-                    context.watchLang.translate(AppLanguageText.noFileSelected),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Flexible(
-              child: CustomUploadButton(
-                text: context.watchLang.translate(AppLanguageText.uploadFile),
-                onPressed: () async {
-                  showModalBottomSheet(
-                    context: context,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    backgroundColor: Colors.white,
-                    builder: (context) {
-                      return Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(2),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Upload Vehicle Registration Image",
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                uploadOptionCard(
-                                  icon: LucideIcons.camera,
-                                  label: "Camera",
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    await applyPassGroupNotifier.uploadVehicleRegistrationImage(
-                                      fromCamera: true,
-                                      cropAfterPick: true,
-                                    );
-                                  },
-                                ),
-                                uploadOptionCard(
-                                  icon: LucideIcons.image,
-                                  label: "Device",
-                                  onTap: () async {
-                                    Navigator.pop(context);
-                                    await applyPassGroupNotifier.uploadVehicleRegistrationImage(
-                                      fromCamera: false,
-                                      cropAfterPick: true,
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        Divider(height: 10, indent: 0, thickness: 1),
-      ],
+  Widget buildUploadVehicleRegistrationSection(BuildContext context, ApplyPassGroupNotifier notifier) {
+    return buildUploadSection(
+      context: context,
+      title: context.watchLang.translate(AppLanguageText.vehicleRegistrationLicense),
+      fileName: notifier.uploadedVehicleRegistrationFile?.path.split('/').last,
+      onUploadTap: () async => await notifier.uploadVehicleRegistrationImage(),
     );
   }
 
-  Widget visitorNameTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget visitorNameTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.visitorNameController,
       fieldName: context.watchLang.translate(AppLanguageText.visitorName),
@@ -1199,10 +1138,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget companyNameTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget companyNameTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.companyNameController,
       fieldName: context.watchLang.translate(AppLanguageText.companyName),
@@ -1211,10 +1147,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget phoneNumberTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget phoneNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.phoneNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
@@ -1223,10 +1156,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget emailTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget emailTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.emailController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
@@ -1235,10 +1165,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget nationalIdTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget nationalIdTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.nationalityIdController,
       fieldName: context.watchLang.translate(AppLanguageText.nationalID),
@@ -1247,48 +1174,20 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget expirationDateTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget expirationDateTextField(BuildContext context, ApplyPassGroupNotifier notifier) {
+    final idType = notifier.selectedIdTypeEnum;
+
     return CustomTextField(
-      controller: applyPassGroupNotifier.expiryDateController,
-      fieldName:
-          applyPassGroupNotifier.selectedIdType == "National ID"
-              ? context.watchLang.translate(
-                AppLanguageText.nationalIDExpiryDate,
-              )
-              : applyPassGroupNotifier.selectedIdType == "Iqama"
-              ? context.watchLang.translate(AppLanguageText.iqamaExpiryDate)
-              : applyPassGroupNotifier.selectedIdType == "Passport"
-              ? context.watchLang.translate(AppLanguageText.passportExpiryDate)
-              : applyPassGroupNotifier.selectedIdType == "Other"
-              ? context.watchLang.translate(
-                AppLanguageText.documentExpiryDateOther,
-              )
-              : context.watchLang.translate(
-                AppLanguageText.nationalIDExpiryDate,
-              ),
+      controller: notifier.expiryDateController,
+      fieldName: idType.translatedLabel(context),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
       startDate: DateTime.now(),
-      validator:
-          applyPassGroupNotifier.selectedIdType == "National ID"
-              ? CommonValidation().validateNationalIdExpiryDate
-              : applyPassGroupNotifier.selectedIdType == "Iqama"
-              ? CommonValidation().validateIqamaExpiryDate
-              : applyPassGroupNotifier.selectedIdType == "Passport"
-              ? CommonValidation().validatePassportExpiryDate
-              : applyPassGroupNotifier.selectedIdType == "Other"
-              ? CommonValidation().validateDocumentExpiryDate
-              : CommonValidation().validateNationalIdExpiryDate,
+      validator: idType.validator,
     );
   }
 
-  Widget vehicleNumberTextField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget vehicleNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.vehicleNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.vehicleNo),
@@ -1299,10 +1198,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // nationalityField
-  Widget nationalityField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget nationalityField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<CountryData>(
       fieldName: context.watchLang.translate(AppLanguageText.nationality),
       hintText: 'Select Country',
@@ -1318,10 +1214,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // idTypeField
-  Widget idTypeField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget idTypeField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DocumentIdModel>(
       fieldName: context.watchLang.translate(AppLanguageText.idType),
       hintText: 'Select Id type',
@@ -1338,10 +1231,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // iqamaField
-  Widget iqamaField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget iqamaField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.iqamaController,
       fieldName: context.watchLang.translate(AppLanguageText.iqama),
@@ -1352,10 +1242,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // passportField
-  Widget passportField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget passportField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.passportNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
@@ -1365,10 +1252,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // documentNameField
-  Widget documentNameField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget documentNameField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.documentNameController,
       fieldName: context.watchLang.translate(AppLanguageText.documentNameOther),
@@ -1378,15 +1262,10 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   // documentNumberField
-  Widget documentNumberField(
-    BuildContext context,
-    ApplyPassGroupNotifier applyPassGroupNotifier,
-  ) {
+  Widget documentNumberField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.documentNumberController,
-      fieldName: context.watchLang.translate(
-        AppLanguageText.documentNumberOther,
-      ),
+      fieldName: context.watchLang.translate(AppLanguageText.documentNumberOther),
       isSmallFieldFont: true,
       validator: CommonValidation().documentNumberValidator,
     );

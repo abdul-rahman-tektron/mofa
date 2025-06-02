@@ -8,6 +8,7 @@ class AppStrings {
   static const languageCode = 'language_code';
   static const appointmentData = 'appointment_data';
   static const uploadedImageCode = 'image_data';
+  static const captchaData = 'captcha_data';
 
 
   //Url
