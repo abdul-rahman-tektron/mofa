@@ -353,6 +353,18 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions 
       documentNameController.text = userData.sOthersDoc ?? "";
 
       documentNumberController.text = userData.sOthersValue ?? "";
+      // switch (selectedIdType.fromSt) {
+      //   case IdType.nationalId:
+      //     return [nationalIdTextField(context, notifier)];
+      //   case IdType.passport:
+      //     return [passportField(context, notifier)];
+      //   case IdType.iqama:
+      //     return [iqamaField(context, notifier)];
+      //   case IdType.other:
+      //     return [documentNameField(context, notifier), 15.verticalSpace, documentNumberField(context, notifier)];
+      //   default:
+      //     return [];
+      // }
       expiryDateController.text = userData.dtIqamaExpiry?.toDisplayDateOnly() ?? "";
       vehicleNumberController.text = userData.sVehicleNo ?? "";
 
@@ -397,9 +409,29 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions 
         mofaHostEmailController.text = userData.sVisitingPersonEmail ?? "";
         visitStartDateController.text = userData.dtAppointmentStartTime.toString() ?? "";
         visitEndDateController.text = userData.dtAppointmentEndTime?.toString() ?? "";
-        addMultipleDevicesFromResult(userData.devices?.cast<DeviceResult>());
+      final deviceResults = convertDeviceModelsToResults(userData.devices ?? []);
+      addMultipleDevicesFromResult(deviceResults);
     }
   }
+
+  List<DeviceResult> convertDeviceModelsToResults(List<DeviceModel> models) {
+    return models.map((model) {
+      return DeviceResult(
+        appointmentDeviceId: model.appointmentDeviceId,
+        appointmentId: null, // Provide if needed
+        deviceType: model.deviceType,
+        deviceTypeOthersValue: model.deviceTypeOthersValue,
+        deviceModel: model.deviceModel,
+        serialNumber: model.serialNumber,
+        devicePurpose: model.devicePurpose,
+        devicePurposeOthersValue: model.devicePurposeOthersValue,
+        approvalStatus: model.approvalStatus,
+        currentApprovalStatus: null, // Provide if needed
+        comment: null,
+      );
+    }).toList();
+  }
+
 
   void evaluateEditableStatus(GetByIdUser? details) {
     final currentOrder = details?.nCurrentApproverOrderNo ?? -1;
