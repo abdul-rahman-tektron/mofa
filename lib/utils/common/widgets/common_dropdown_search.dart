@@ -157,6 +157,10 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                   borderRadius: BorderRadius.circular(15),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxHeight: dropdownMaxHeight),
+                    child: Scrollbar(
+                      thumbVisibility: true,
+                      radius: const Radius.circular(8),
+                      thickness: 4,
                     child: ListView(
                       padding: EdgeInsets.zero,
                       shrinkWrap: true,
@@ -175,6 +179,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                       }).toList(),
                     ),
                   ),
+                  ),
                 ),
               ),
             ),
@@ -188,6 +193,9 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
   Widget build(BuildContext context) {
     final isSmall = widget.isSmallFieldFont;
     final isDisabled = !widget.isEnable;
+    final textColor = !widget.isEnable
+        ? (widget.isSmallFieldFont ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey17)
+        : (widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17);
 
     return CompositedTransformTarget(
       link: _layerLink,
@@ -196,7 +204,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
         children: [
           Row(
             children: [
-              Text(widget.fieldName, style: isSmall ? AppFonts.textRegular14 : AppFonts.textRegular18),
+              Text(widget.fieldName, style: textColor),
               const SizedBox(width: 3),
               if (!widget.skipValidation)
                 const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
@@ -235,7 +243,7 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> {
                 : isDisabled
                 ? AppFonts.textRegularGrey17
                 : AppFonts.textRegular17,
-            validator: widget.skipValidation ? null : widget.validator ?? CommonValidation().commonValidator,
+            validator: widget.skipValidation ? null : widget.validator ?? (value) => CommonValidation().commonValidator(context, value),
             autovalidateMode: AutovalidateMode.onUserInteraction,
             enabled: widget.isEnable,
             decoration: InputDecoration(

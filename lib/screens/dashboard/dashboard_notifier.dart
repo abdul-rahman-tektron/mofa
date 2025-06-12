@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_request.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/core/model/kpi/kpi_response.dart';
 import 'package:mofa/core/remote/service/dashboard_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/dashboard/dashboard_screen.dart';
 
 class DashboardNotifier extends BaseChangeNotifier {
@@ -20,7 +22,7 @@ class DashboardNotifier extends BaseChangeNotifier {
   int _selectedIndex = 0;
 
   DashboardNotifier(BuildContext context) {
-    _init(context);
+    runWithLoadingVoid(_init(context));
   }
 
   Future<void> _init(BuildContext context) async {
@@ -36,25 +38,26 @@ class DashboardNotifier extends BaseChangeNotifier {
       cardData = [
         DashboardCardData(
           icon: LucideIcons.calendar,
-          title: "Total Visits (Today)",
+          titleKey: AppLanguageText.totalVisitsToday,
           count: kpiData?.totalPassToday ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.calendarDays,
-          title: "Total Visits (Month)",
+          titleKey: AppLanguageText.totalVisitsMonthly,
           count: kpiData?.totalPassMonth ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.calendarCheck,
-          title: "Total Visits (Year)",
+          titleKey: AppLanguageText.totalVisitsYearly,
           count: kpiData?.totalPassYear ?? 0,
         ),
         DashboardCardData(
           icon: LucideIcons.ticket,
-          title: "Total Visits",
+          titleKey: AppLanguageText.totalVisits,
           count: kpiData?.totalPasses ?? 0,
         ),
       ];
+
 
       notifyListeners();  // Important to update UI
     } catch (e) {

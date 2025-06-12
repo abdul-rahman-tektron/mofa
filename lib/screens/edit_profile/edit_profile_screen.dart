@@ -7,6 +7,7 @@ import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/edit_profile/edit_profile_notifier.dart';
+import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
@@ -15,7 +16,7 @@ import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:provider/provider.dart';
 
-class EditProfileScreen extends StatelessWidget {
+class EditProfileScreen extends StatelessWidget with CommonUtils {
   const EditProfileScreen({super.key});
 
   @override
@@ -86,7 +87,8 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.fullNameController,
       fieldName: context.watchLang.translate(AppLanguageText.fullName),
       isSmallFieldFont: true,
-      validator: CommonValidation().nameValidator,
+      keyboardType: TextInputType.name,
+      validator: (value) => CommonValidation().nameValidator(context, value),
     );
   }
 
@@ -95,7 +97,7 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.visitorCompanyController,
       fieldName: context.watchLang.translate(AppLanguageText.visitorCompanyName),
       isSmallFieldFont: true,
-      validator: CommonValidation().visitorNameValidator,
+      validator: (value) => CommonValidation().visitorNameValidator(context, value),
     );
   }
 
@@ -104,15 +106,19 @@ class EditProfileScreen extends StatelessWidget {
   context,EditProfileNotifier editProfileNotifier) {
     return CustomSearchDropdown<CountryData>(
       fieldName: context.watchLang.translate(AppLanguageText.nationality),
-      hintText: 'Select Country',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: editProfileNotifier.nationalityController,
       items: editProfileNotifier.nationalityMenu,
-      itemLabel: (item) => item.name ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.nameAr,
+        getEnglish: () => item.name,
+      ),
       isSmallFieldFont: true,
       onSelected: (country) {
         editProfileNotifier.selectedNationality = country?.iso3 ?? "";
       },
-      validator: CommonValidation().nationalityValidator,
+      validator: (value) => CommonValidation().nationalityValidator(context, value),
     );
   }
 
@@ -121,7 +127,8 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.mobileNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.mobileNumber),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateMobile,
+      keyboardType: TextInputType.phone,
+      validator: (value) => CommonValidation().validateMobile(context, value),
     );
   }
 
@@ -131,7 +138,8 @@ class EditProfileScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       isSmallFieldFont: true,
       isEnable: false,
-      validator: CommonValidation().validateEmail,
+      keyboardType: TextInputType.emailAddress,
+      validator: (value) => CommonValidation().validateEmail(context, value),
     );
   }
 
@@ -140,16 +148,24 @@ class EditProfileScreen extends StatelessWidget {
   context,EditProfileNotifier editProfileNotifier) {
     return CustomSearchDropdown<DocumentIdModel>(
       fieldName: context.watchLang.translate(AppLanguageText.idType),
-      hintText: 'Select Id type',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: editProfileNotifier.idTypeController,
       items: editProfileNotifier.idTypeMenu,
-      itemLabel: (item) => item.labelEn ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.labelAr,
+        getEnglish: () => item.labelEn,
+      ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
         editProfileNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        editProfileNotifier.selectedIdType = menu?.labelEn ?? "";
+        editProfileNotifier.selectedIdType = getLocalizedText(
+          currentLang: context.lang,
+          english: menu?.labelEn ?? "",
+          arabic: menu?.labelAr ?? "",
+        );
       },
-      validator: CommonValidation().iDTypeValidator,
+      validator: (value) => CommonValidation().iDTypeValidator(context, value),
     );
   }
 
@@ -158,9 +174,8 @@ class EditProfileScreen extends StatelessWidget {
     return CustomTextField(
       controller: editProfileNotifier.iqamaController,
       fieldName: context.watchLang.translate(AppLanguageText.iqama),
-      keyboardType: TextInputType.phone,
       isSmallFieldFont: true,
-      validator: CommonValidation().validateIqama,
+      validator: (value) => CommonValidation().validateIqama(context, value),
     );
   }
 
@@ -170,7 +185,7 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.passportNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
       isSmallFieldFont: true,
-      validator: CommonValidation().validatePassport,
+      validator: (value) => CommonValidation().validatePassport(context, value),
     );
   }
 
@@ -180,7 +195,7 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.documentNameController,
       fieldName: context.watchLang.translate(AppLanguageText.documentNameOther),
       isSmallFieldFont: true,
-      validator: CommonValidation().documentNameValidator,
+      validator: (value) => CommonValidation().documentNameValidator(context, value),
     );
   }
 
@@ -192,7 +207,7 @@ class EditProfileScreen extends StatelessWidget {
         AppLanguageText.documentNumberOther,
       ),
       isSmallFieldFont: true,
-      validator: CommonValidation().documentNumberValidator,
+      validator: (value) => CommonValidation().documentNumberValidator(context, value),
     );
   }
 
@@ -201,19 +216,19 @@ class EditProfileScreen extends StatelessWidget {
       controller: editProfileNotifier.nationalityIdController,
       fieldName: context.watchLang.translate(AppLanguageText.nationalID),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateNationalId,
+      validator: (value) => CommonValidation().validateNationalId(context, value),
     );
   }
 
   List<Widget> _buildIdTypeFields(BuildContext context, EditProfileNotifier notifier) {
-    switch (notifier.selectedIdType) {
-      case "National ID":
+    switch (notifier.selectedIdValue) {
+      case "24": // National ID
         return [nationalIdTextField(context, notifier)];
-      case "Passport":
+      case "26": // Passport
         return [passportField(context, notifier)];
-      case "Iqama":
+      case "2244": // Iqama
         return [iqamaField(context, notifier)];
-      case "Other":
+      case "2245": // Other
         return [
           documentNameField(context, notifier),
           15.verticalSpace,

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/captcha/captcha_login_response.dart';
 import 'package:mofa/core/model/captcha/get_captcha_response.dart';
@@ -12,6 +13,7 @@ import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/captcha_data_model.dart';
 import 'package:mofa/model/remember_me/remember_me_model.dart';
 import 'package:mofa/res/app_language_text.dart';
+import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/captcha_widget.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
@@ -23,7 +25,7 @@ import 'package:mofa/utils/toast_helper.dart';
 class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
   // Data Controller
   TextEditingController _userNameController = TextEditingController();
-  TextEditingController _passwordNameController = TextEditingController();
+  TextEditingController _passwordController = TextEditingController();
   TextEditingController _captchaController = TextEditingController();
 
   String? _captchaImage;
@@ -59,7 +61,7 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
     if (data != null) {
       RememberMeModel rememberMeModel = RememberMeModel.fromJson(jsonDecode(data));
       userNameController.text = rememberMeModel.userName;
-      passwordNameController.text = rememberMeModel.password;
+      passwordController.text = rememberMeModel.password;
       isChecked = true;
     }
   }
@@ -80,63 +82,100 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
       // final loginRequest = LoginTokenRequest(
       //     email: email, password: encryptedPassword);
 
-      loginApiCall(context);
+      runWithLoadingVoid(loginApiCall(context));
     }
   }
 
   // API call for login
-  void loginApiCall(BuildContext context) async {
+  Future<void> loginApiCall(BuildContext context) async {
     try {
-      final captchaJson = await SecureStorageHelper.getCaptchaData();
-      if (captchaJson == null) {
-        ToastHelper.showError("Captcha data is missing.");
-        return;
-      }
+      final captchaData = await _getValidCaptchaData(context);
+      if (captchaData == null) return;
 
-      final captchaData = CaptchaDataModel.fromJson(jsonDecode(captchaJson));
-
-      final loginRequest = CaptchaLoginRequest(
-        email: userNameController.text.trim(),
-        password: passwordNameController.text.trim(),
-        dntCaptchaInputText: captchaController.text.trim(),
-        dntCaptchaText: captchaData.captchaTextValue?? '',
-        dntCaptchaToken: captchaData.captchaTokenValue ?? '',
-      );
-
-      // final loginRequest = LoginTokenRequest(
-      //   email: userNameController.text.trim(),
-      //   password: passwordNameController.text.trim(),
-      // );
+      final loginRequest = _buildLoginRequest(captchaData);
 
       final result = await AuthRepository().apiUserCaptchaLogin(loginRequest, context);
-      // final result = await AuthRepository().apiUserLogin(loginRequest, context);
 
-      if (result is TokenResult) {
-        if (isChecked) {
-          final rememberData = RememberMeModel(
-            userName: userNameController.text,
-            password: passwordNameController.text,
-          );
-          await SecureStorageHelper.setRememberMe(jsonEncode(rememberData));
-        }
-        Navigator.pushReplacementNamed(context, AppRoutes.bottomBar);
-      } else if (result is LoginOTPResult) {
-        Navigator.pushNamed(context, AppRoutes.otpVerification, arguments: (userNameController.text.trim(), passwordNameController.text.trim()),);
-      } else if(result is LoginFailureResult){
-        apiGetCaptcha(context);
-        if(result.remainingFailedLoginAttempts == 0){
-          accountLockedPopup(context);
-          loginError = "${context.readLang.translate(AppLanguageText.yourAccountWillUnlockAt)} ${CommonUtils.formatIsoToReadable(result.accountLockoutEndTime) ?? ""}";
-        } else {
-          loginError =
-              "${context.readLang.translate(AppLanguageText.youHave)} ${result.remainingFailedLoginAttempts ?? 0} ${context.readLang.translate(AppLanguageText.attempts)} ${context.readLang.translate(AppLanguageText.remaining)}";
-        }
-      } else {
-        ToastHelper.showError("Incorrect Email or Password");
-      }
+      await _handleLoginResult(result, context);
     } catch (e) {
       debugPrint("Login error: $e");
       ToastHelper.showError("An error occurred. Please try again.");
+    }
+  }
+
+  Future<CaptchaDataModel?> _getValidCaptchaData(BuildContext context) async {
+    final captchaJson = await SecureStorageHelper.getCaptchaData();
+    if (captchaJson == null) {
+      ToastHelper.showError("Captcha data is missing.");
+      return null;
+    }
+
+    final captchaData = CaptchaDataModel.fromJson(jsonDecode(captchaJson));
+    if ((captchaData.captchaTokenValue?.isEmpty ?? true) ||
+        (captchaData.captchaTextValue?.isEmpty ?? true)) {
+      ToastHelper.showError("Invalid captcha. Please reload.");
+      await apiGetCaptcha(context);
+      return null;
+    }
+
+    return captchaData;
+  }
+
+  CaptchaLoginRequest _buildLoginRequest(CaptchaDataModel captchaData) {
+    return CaptchaLoginRequest(
+      email: userNameController.text.trim(),
+      password: passwordController.text.trim(),
+      dntCaptchaInputText: captchaController.text.trim(),
+      dntCaptchaText: captchaData.captchaTextValue ?? '',
+      dntCaptchaToken: captchaData.captchaTokenValue ?? '',
+    );
+  }
+
+  Future<void> _handleLoginResult(dynamic result, BuildContext context) async {
+    if (result is TokenResult) {
+      await _handleRememberMe();
+      Navigator.pushReplacementNamed(context, AppRoutes.bottomBar);
+    } else if (result is LoginOTPResult) {
+      Navigator.pushNamed(
+        context,
+        AppRoutes.otpVerification,
+        arguments: (userNameController.text.trim(), passwordController.text.trim()),
+      );
+    } else if (result is CaptchaFailureResult) {
+      await apiGetCaptcha(context);
+      captchaController.clear();
+      ToastHelper.showError("Captcha code is not valid");
+    } else if (result is LoginFailureResult) {
+      await _handleFailedLogin(result, context);
+    } else {
+      ToastHelper.showError("Incorrect Email or Password");
+    }
+  }
+
+  Future<void> _handleRememberMe() async {
+    if (isChecked) {
+      final rememberData = RememberMeModel(
+        userName: userNameController.text,
+        password: passwordController.text,
+      );
+      await SecureStorageHelper.setRememberMe(jsonEncode(rememberData));
+    } else {
+      await SecureStorageHelper.removeParticularKey(AppStrings.rememberMeKey);
+    }
+  }
+
+  Future<void> _handleFailedLogin(LoginFailureResult result, BuildContext context) async {
+    await apiGetCaptcha(context);
+
+    if (result.remainingFailedLoginAttempts == 0) {
+      accountLockedPopup(context);
+      loginError =
+      "${context.readLang.translate(AppLanguageText.yourAccountWillUnlockAt)} ${CommonUtils.formatIsoToReadable(result.accountLockoutEndTime) ?? ""}";
+    } else {
+      passwordController.clear();
+      ToastHelper.showError("Incorrect Email or Password");
+      loginError =
+      "${context.readLang.translate(AppLanguageText.youHave)} ${result.remainingFailedLoginAttempts ?? 0} ${context.readLang.translate(AppLanguageText.attempts)} ${context.readLang.translate(AppLanguageText.remaining)}";
     }
   }
 
@@ -193,11 +232,11 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
-  TextEditingController get passwordNameController => _passwordNameController;
+  TextEditingController get passwordController => _passwordController;
 
-  set passwordNameController(TextEditingController value) {
-    if (_passwordNameController == value) return;
-    _passwordNameController = value;
+  set passwordController(TextEditingController value) {
+    if (_passwordController == value) return;
+    _passwordController = value;
     notifyListeners();
   }
 

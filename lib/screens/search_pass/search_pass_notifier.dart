@@ -8,6 +8,7 @@ import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/search_pass/search_pass_screen.dart';
 import 'package:mofa/utils/extensions.dart';
 
@@ -38,22 +39,27 @@ class SearchPassNotifier extends BaseChangeNotifier {
   Timer? _debounceTimer;
 
   List<TableColumnConfig> columnConfigs = [
-    TableColumnConfig(label: 'Ref No', isMandatory: true),
-    TableColumnConfig(label: 'Name', isMandatory: true),
-    TableColumnConfig(label: 'Status', isMandatory: true),
-    TableColumnConfig(label: 'Company Name', isVisible: false),
-    TableColumnConfig(label: 'Start & End Date', isMandatory: true),
-    TableColumnConfig(label: 'Email', isVisible: false),
-    TableColumnConfig(label: 'Host Name', isVisible: false),
-    TableColumnConfig(label: 'Location', isVisible: false),
-    TableColumnConfig(label: 'Vehicle Permit', isVisible: false),
-    TableColumnConfig(label: 'Action', isMandatory: true),
+    TableColumnConfig(labelKey: AppLanguageText.refNo, isMandatory: true),
+    TableColumnConfig(labelKey: AppLanguageText.name, isMandatory: true),
+    TableColumnConfig(labelKey: AppLanguageText.status, isMandatory: true),
+    TableColumnConfig(labelKey: AppLanguageText.companyName, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.startAndEndDate, isMandatory: true),
+    TableColumnConfig(labelKey: AppLanguageText.email, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.hostName, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.location, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.vehiclePermit, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.action, isMandatory: true),
   ];
 
   SearchPassNotifier(BuildContext context) {
     visitStartDateController.text = _getDefaultStartDate();
+
+    runWithLoadingVoid(_init(context));
+  }
+
+  Future<void> _init(BuildContext context) async {
     searchController.addListener(() => _onSearchChanged(context));
-    allApiCall(context);
+    await allApiCall(context);
   }
 
   Future<void> allApiCall(BuildContext context) async {
@@ -187,7 +193,7 @@ class SearchPassNotifier extends BaseChangeNotifier {
   }
 
   void updateColumnVisibility(String label, bool isVisible) {
-    final index = columnConfigs.indexWhere((c) => c.label == label);
+    final index = columnConfigs.indexWhere((c) => c.labelKey == label);
     if (index != -1 && !columnConfigs[index].isMandatory) {
       columnConfigs[index].isVisible = isVisible;
       notifyListeners();

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -38,7 +39,7 @@ extension BackendDateFormat on String {
 
     try {
       // Try with Arabic comma format
-      return DateFormat("dd/MM/yyyy ،hh:mm a").parse(trimmed);
+      return DateFormat("dd/MM/yyyy, hh:mm a").parse(trimmed);
     } catch (_) {
       try {
         // Try plain date format
@@ -72,7 +73,17 @@ extension FormatApiDateTime on String {
     try {
       final inputFormat = DateFormat('M/d/yyyy h:mm:ss a');
       final dateTime = inputFormat.parse(this);
-      final outputFormat = DateFormat('dd/MM/yyyy ,h:mm a');
+      final outputFormat = DateFormat('dd/MM/yyyy, h:mm a');
+      return outputFormat.format(dateTime);
+    } catch (e) {
+      return ''; // Return empty if parsing fails
+    }
+  }
+
+  String toDisplayDateTimeString() {
+    try {
+      final dateTime = DateTime.parse(this);
+      final outputFormat = DateFormat('dd/MM/yyyy, h:mm a');
       return outputFormat.format(dateTime);
     } catch (e) {
       return ''; // Return empty if parsing fails
@@ -89,6 +100,17 @@ extension FormatApiDateTime on String {
       return ''; // Return empty if parsing fails
     }
   }
+
+
+  String toDisplayDate() {
+    try {
+      final dateTime = DateTime.parse(this); // Parses ISO 8601 format
+      final outputFormat = DateFormat('dd/MM/yyyy');
+      return outputFormat.format(dateTime);
+    } catch (e) {
+      return ''; // Return empty string on failure
+    }
+  }
 }
 
 extension FileBase64Extension on File {
@@ -102,6 +124,19 @@ extension FileBase64Extension on File {
     } catch (e) {
       // In case of any read/encoding errors, return an empty string
       return "";
+    }
+  }
+}
+
+extension Base64ByteExtension on String? {
+  /// Converts this File to a base64-encoded string
+  Uint8List? decodeBase64OrNull() {
+    if (this == null) return null;
+    try {
+      return Uint8List.fromList(base64Decode(this!));
+    } catch (e) {
+      // Optionally log or handle the decoding error
+      return null;
     }
   }
 }
@@ -133,6 +168,21 @@ extension IdTypeExtension on IdType {
     }
   }
 
+  static IdType? fromInt(int? value) {
+    switch (value ?? 0) {
+      case 2244:
+        return IdType.iqama;
+      case 24:
+        return IdType.nationalId;
+      case 26:
+        return IdType.passport;
+      case 2245:
+        return IdType.other;
+      default:
+        return IdType.nationalId;
+    }
+  }
+
   String translatedLabel(BuildContext context) {
     final lang = context.watchLang;
     switch (this) {
@@ -149,7 +199,7 @@ extension IdTypeExtension on IdType {
     }
   }
 
-  String? Function(String?) get validator {
+  String? Function(BuildContext, String?) get validator {
     final validation = CommonValidation();
     switch (this) {
       case IdType.nationalId:
@@ -160,8 +210,35 @@ extension IdTypeExtension on IdType {
         return validation.validatePassportExpiryDate;
       case IdType.other:
         return validation.validateDocumentExpiryDate;
+      }
+  }
+}
+
+extension ApplyPassCategoryExtension on ApplyPassCategory {
+  /// Returns a user-friendly string
+  String label(BuildContext context) {
+    switch (this) {
+      case ApplyPassCategory.myself:
+        return context.watchLang.translate(AppLanguageText.myself);
+      case ApplyPassCategory.someoneElse:
+        return context.watchLang.translate(AppLanguageText.someoneElse);
+      case ApplyPassCategory.group:
+        return context.watchLang.translate(AppLanguageText.group);
+    }
+  }
+
+  /// Parses a string and returns the corresponding enum value
+  static ApplyPassCategory? fromString(String? value) {
+    switch (value?.toLowerCase().trim()) {
+      case 'myself':
+        return ApplyPassCategory.myself;
+      case 'someone else':
+      case 'someoneelse':
+        return ApplyPassCategory.someoneElse;
+      case 'group':
+        return ApplyPassCategory.group;
       default:
-        return validation.validateNationalIdExpiryDate;
+        return null;
     }
   }
 }

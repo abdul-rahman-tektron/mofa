@@ -11,7 +11,7 @@ class LocalInputRegex {
   static const String fullName = r"^[a-zA-Z]+(([',. -][a-zA-Z ])?[a-zA-Z]*)*$";
 
   // Regular expression for validating phone numbers
-  static const String phone = r'^\d{1,14}$';
+  static const String phone = r'^\d{8,14}$';
 
   // Regular expression for matching only alphabetic characters
   static const String onlyAlphabets = r'[a-zA-Z]';

@@ -1,8 +1,10 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
@@ -146,7 +148,7 @@ class LoginScreen extends StatelessWidget {
     return CustomTextField(
       controller: loginNotifier.userNameController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
-      validator: CommonValidation().validateEmail,
+      validator: (value) => CommonValidation().validateEmail(context, value),
       keyboardType: TextInputType.emailAddress,
     );
   }
@@ -154,10 +156,14 @@ class LoginScreen extends StatelessWidget {
   // Function to create the password field widget
   Widget passwordField(BuildContext context, LoginNotifier loginNotifier) {
     return CustomTextField(
-      controller: loginNotifier.passwordNameController,
+      controller: loginNotifier.passwordController,
       isPassword: true,
+      isAutoValidate: false,
       fieldName: context.watchLang.translate(AppLanguageText.password),
-      validator: CommonValidation().validatePassword,
+      onChanged: (value) {
+        loginNotifier.loginError = '';
+      },
+      validator: (value) => CommonValidation().validatePassword(context, value),
     );
   }
 
@@ -203,9 +209,12 @@ class LoginScreen extends StatelessWidget {
           errorStyle: TextStyle(color: AppColors.underscoreColor),
         ),
         keyboardType: TextInputType.number,
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'[0-9]')),
+        ],
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Please enter the CAPTCHA';
+            return context.readLang.translate(AppLanguageText.pleaseEnterCaptcha);
           }
           return null;
         },
@@ -291,6 +300,7 @@ class LoginScreen extends StatelessWidget {
     return Center(
       child: CustomButton(
         onPressed: () => loginNotifier.performLogin(context),
+        isLoading: loginNotifier.loadingState == LoadingState.Busy,
         text: context.watchLang.translate(AppLanguageText.login),
         backgroundColor: AppColors.buttonBgColor,
       ),

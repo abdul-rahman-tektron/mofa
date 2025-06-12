@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/model/custom_args/custom_args.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common_utils.dart';
@@ -41,8 +43,10 @@ class TicketDialogWrapper extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(width: 2, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
             ),
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width * 0.8,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: 400
+              ),
               child: Padding(
                 padding: EdgeInsets.only(top: 20.w),
                 child: TicketDialogContent(appointmentData: appointmentData),
@@ -72,15 +76,29 @@ class TicketDialogContent extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        QrImageView(
-          data: appointmentData?.sQRCodeValue ?? "",
-          size: 220.w,
-          backgroundColor: Colors.white,
+        ConstrainedBox(
+          constraints: BoxConstraints(
+              maxWidth: 250,
+              minWidth: 150,
+            maxHeight: 200
+          ),
+          child: appointmentData?.sQRCodeValue?.isNotEmpty ?? false ? QrImageView(
+            data: appointmentData?.sQRCodeValue ?? "",
+            // size: 150.w,
+            backgroundColor: Colors.white,
+          ) : Padding(
+            padding: EdgeInsets.all(10),
+            child: Center(
+              child: Text(
+                context.watchLang.translate(AppLanguageText.qrCodeNotGenerated), style: AppFonts.textRegularGrey17,
+                textAlign: TextAlign.center,),
+            ),
+          ),
         ),
-        _dottedLine(),
-        _visitorDetails(appointmentData),
-        _dottedLine(),
-        _dateDetails(appointmentData),
+        _dottedLine(context),
+        _visitorDetails(context, appointmentData),
+        _dottedLine(context),
+        _dateDetails(context, appointmentData),
         15.verticalSpace,
         _actionButtons(context, appointmentData),
         10.verticalSpace,
@@ -88,7 +106,7 @@ class TicketDialogContent extends StatelessWidget {
     );
   }
 
-  Widget _dottedLine() => Column(
+  Widget _dottedLine(BuildContext context) => Column(
     children: [
       15.verticalSpace,
       SizedBox(
@@ -102,7 +120,7 @@ class TicketDialogContent extends StatelessWidget {
     ],
   );
 
-  Widget _visitorDetails(GetExternalAppointmentData? data) => Padding(
+  Widget _visitorDetails(BuildContext context, GetExternalAppointmentData? data) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 15.0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,34 +131,52 @@ class TicketDialogContent extends StatelessWidget {
         5.verticalSpace,
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(data?.sSponsor ?? "", style: AppFonts.textRegular16),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: "${context.watchLang.translate(AppLanguageText.hostName)}: ",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    TextSpan(
+                      text: data?.sSponsor ?? "",
+                      style: TextStyle(fontWeight: FontWeight.normal),
+                    ),
+                  ],
+                ),
+                style: AppFonts.textRegular16, // base style
+              ),
+            ),
+            10.horizontalSpace,
             Container(
               padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 2.h),
-                decoration: BoxDecoration(
-                  color: CommonUtils.getStatusColor(data?.sApprovalStatusEn ?? ""),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Row(
-                  children: [
-                    Text(data?.sApprovalStatusEn ?? "", style: AppFonts.textRegular16White),
-                  ],
-                )),
+              decoration: BoxDecoration(
+                color: CommonUtils.getStatusColor(data?.sApprovalStatusEn ?? ""),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              child: Row(
+                children: [
+                  Text(CommonUtils.getTranslatedStatus(context, data?.sApprovalStatusEn ?? ""), style: AppFonts.textRegular16White),
+                ],
+              ),),
           ],
         ),
       ],
     ),
   );
 
-  Widget _dateDetails(GetExternalAppointmentData? data) => Padding(
+  Widget _dateDetails(BuildContext context, GetExternalAppointmentData? data) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 15.0),
     child: Column(
       children: [
         Row(
           children: [
-            Expanded(child: Text("Start Date:", style: AppFonts.textRegularGrey14)),
+            Expanded(child: Text(context.watchLang.translate(AppLanguageText.startDate), style: AppFonts.textRegularGrey14)),
             15.horizontalSpace,
-            Expanded(child: Text("End Date:", style: AppFonts.textRegularGrey14)),
+            Expanded(child: Text(context.watchLang.translate(AppLanguageText.endDate), style: AppFonts.textRegularGrey14)),
           ],
         ),
         3.verticalSpace,
@@ -159,7 +195,7 @@ class TicketDialogContent extends StatelessWidget {
     mainAxisAlignment: MainAxisAlignment.center,
     children: [
       CustomButton(
-        text: "view details",
+        text: context.watchLang.translate(AppLanguageText.viewDetails),
         height: 40,
         backgroundColor: AppColors.whiteColor,
         borderColor: AppColors.buttonBgColor,
@@ -167,7 +203,6 @@ class TicketDialogContent extends StatelessWidget {
         smallWidth: true,
         onPressed: () {
           Navigator.pop(context);
-          print("Appointment ID: ${appointment?.nAppointmentId ?? ""}");
           Navigator.pushNamed(
             context,
             AppRoutes.stepper,
@@ -180,14 +215,13 @@ class TicketDialogContent extends StatelessWidget {
       ),
       15.horizontalSpace,
       CustomButton(
-        text: "close",
+        text: context.watchLang.translate(AppLanguageText.close),
         height: 40,
         backgroundColor: AppColors.whiteColor,
         borderColor: AppColors.buttonBgColor,
         textFont: AppFonts.textBold14,
         smallWidth: true,
         onPressed: () {
-          debugPrint("close");
           Navigator.pop(context);
         },
       ),

@@ -333,5 +333,105 @@
   "enterPlateNumberUpto6Digits": "Enter a plate number with up to 6 digits.",
 
   "tooManyRequestsTryAgainLater": "Too many requests. Try again later.",
-  "notAuthorizedToPerformAction": "You are not authorized to perform this action!"
+  "notAuthorizedToPerformAction": "You are not authorized to perform this action!",
+
+
+  "showMore": "Show More",
+  "showLess": "Show Less",
+  "noDeviceAdded" : "No device added",
+  "totalVisitsMonthly": "Total Visits (Monthly)",
+  "totalVisitsYearly": "Total Visits (Yearly)",
+  "totalVisitsToday": "Total Visits (Today)",
+  "totalVisits": "Total Visits",
+  "pastVisits": "Past Visits",
+  "upcomingVisits": "Upcoming Visits",
+  "qrCodeNotGenerated": "QR code not available for this visit.",
+  "startDate": "Start Date:",
+  "endDate": "End Date:",
+  "viewDetails": "View Details",
+  "page": "Page",
+  "of": "of",
+  "startAndEndDate": "Start & End Date",
+  "validation.email.required": "Email is required",
+  "validation.email.invalid": "Please enter a valid email",
+
+  "validation.password.required": "Password is required",
+  "validation.confirm_password.required": "Confirm Password is required",
+  "validation.confirm_password.mismatch": "Passwords must match",
+
+  "validation.common.required": "Please enter data",
+
+  "validation.dob.required": "Required dob",
+  "validation.name.required": "Name is Required",
+  "validation.lastname.required": "Required Lastname",
+
+  "validation.mobile.required": "Mobile Number is required.",
+  "validation.mobile.invalid": "Enter a valid number.",
+
+  "validation.company.required": "Company is Required",
+  "validation.visitor_name.required": "Visitor Name is Required",
+  "validation.vehicle_number.required": "Vehicle Number is Required",
+  "validation.nationality.required": "Nationality is Required",
+  "validation.id_type.required": "ID Type is Required",
+  "validation.document_number.required": "Document Number is Required",
+  "validation.document_name.required": "Document Name is Required",
+
+  "validation.iqama.required": "Iqama is required.",
+  "validation.iqama.invalid": "Enter a valid iqama number.",
+
+  "validation.national_id.required": "National ID is required.",
+  "validation.national_id.invalid": "Enter a valid National ID.",
+
+  "validation.national_id_expiry.required": "National ID Expiry Date is required.",
+  "validation.iqama_expiry.required": "Iqama Expiry Date is required.",
+  "validation.passport_expiry.required": "Passport Expiry Date is required.",
+  "validation.document_expiry.required": "Document Expiry Date is required.",
+
+  "validation.passport.required": "Passport Number is required.",
+  "validation.passport.invalid": "Enter valid Passport Number",
+
+  "validation.location.required": "Location is required",
+  "validation.visit_request_type.required": "Visit request type is required",
+  "validation.visit_purpose.required": "Visit purpose is required",
+
+  "validation.host_email.required": "Host Email is required",
+  "validation.host_email.invalid": "Enter a valid Host email address",
+
+  "validation.visit_start_date.required": "Visit start date is required",
+  "validation.visit_end_date.required": "Visit end date is required",
+
+  "validation.device_type.required": "Device type is required",
+  "validation.device_model.required": "Device model is required",
+  "validation.serial_number.required": "Serial number is required",
+  "validation.device_purpose.required": "Device purpose is required",
+
+  "validation.plate_type.required": "Plate Source is required",
+  "validation.plate_letter1.required": "Plate Letter 1 is required",
+  "validation.plate_letter2.required": "Plate Letter 2 is required",
+  "validation.plate_letter3.required": "Plate Letter 3 is required",
+  "validation.plate_number.required": "Plate Number is required",
+  "validation.photo_upload.required": "Photo is required",
+  "validation.vehicle_upload.required": "Vehicle Registration Id is required",
+  "validation.required": "is required",
+  "mofaEmailRequired": "MOFA email is required.",
+  "invalidMofaEmail": "Invalid MOFA email address.",
+  "pleaseEnterData": "Please enter the required data.",
+  "pleaseEnterCaptcha": "Please enter the CAPTCHA.",
+  "logout": "Logout",
+  "uploadRecentPassport": "Upload a recent passport-sized",
+  "photoJpgPng": "photo (JPG, PNG, or JPEG).",
+  "ensureTheImage": "Ensure the image is clear and meets",
+  "officialGuidelines": "official guidelines.",
+  "camera": "Camera",
+  "device": "Device",
+  "upload": "Upload",
+  "fillAllTheDeviceDetail": "Please fill all device details before adding a device.",
+  "phoneNumberIn": "Enter phone number in",
+  "internationalFormat": "international format, e.g., ",
+  "entre10digit": "Enter 10-digit national ",
+  "idAsPerRecords": "ID as per official records",
+  "requestInfo": "Request Info",
+  "noResultFound": "No result found",
+  "updateDevice": "Update Device"
+
 }

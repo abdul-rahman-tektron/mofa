@@ -137,7 +137,7 @@ class ApplyPassScreen extends StatelessWidget {
         child: Column(
           children: [
             Expanded(child: Icon(icon, size: 45, color: AppColors.buttonBgColor)),
-            Text(title, style: AppFonts.textMedium16),
+            Text(title, style: AppFonts.textMedium16,textAlign: TextAlign.center,),
           ],
         ),
       ),

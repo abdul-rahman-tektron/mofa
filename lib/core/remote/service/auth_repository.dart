@@ -133,6 +133,10 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       LoginTokenFailureResponse loginTokenFailureResponse = loginTokenFailureResponseFromJson(jsonEncode(response?.data));
 
       return loginTokenFailureResponse.result;
+    } else if(response?.statusCode == HttpStatus.badRequest) {
+      CaptchaFailureResponse captchaFailureResponse = captchaFailureResponseFromJson(jsonEncode(response?.data));
+
+      return captchaFailureResponse.result;
     } else{
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

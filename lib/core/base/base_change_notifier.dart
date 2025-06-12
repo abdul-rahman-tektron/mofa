@@ -35,6 +35,16 @@ abstract class BaseChangeNotifier with ChangeNotifier {
     }
   }
 
+  Future<void> runWithLoadingVoid(Future<void> task, {BaseChangeNotifier? target}) async {
+    final notifier = target ?? this;
+    try {
+      notifier.setLoadingState(LoadingState.Busy);
+      await task;
+    } finally {
+      notifier.setLoadingState(LoadingState.Idle);
+    }
+  }
+
   // ----- Shared Preference Loader -----
   // Future<void> loadData() async {
   //   final value = await SharedPreferencesMobileWeb.instance.getCountry('country');

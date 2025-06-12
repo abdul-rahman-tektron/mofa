@@ -2,15 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/notifier/language_notifier.dart';
-import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_notifier.dart';
-import 'package:mofa/utils/app_routes.dart';
-import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
-import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -23,7 +19,7 @@ class HealthAndSafetyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => HealthAndSafetyNotifier(),
+      create: (context) => HealthAndSafetyNotifier(isUpdate),
       child: Consumer<HealthAndSafetyNotifier>(
         builder: (context, healthAndSafetyNotifier, child) {
           return buildBody(context, healthAndSafetyNotifier);
@@ -100,23 +96,23 @@ class HealthAndSafetyScreen extends StatelessWidget {
     BuildContext context,
     HealthAndSafetyNotifier healthAndSafetyNotifier,
   ) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.whiteColor,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5.0),
-            child: GestureDetector(
-              onTap: () {
-                healthAndSafetyNotifier.userAcceptDeclarationChecked(
-                  context,
-                  !healthAndSafetyNotifier.isChecked,
-                );
-              },
+    return GestureDetector(
+      onTap: () {
+        healthAndSafetyNotifier.userAcceptDeclarationChecked(
+          context,
+          !healthAndSafetyNotifier.isChecked,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.whiteColor,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 5.0),
               child: Container(
                 width: 20,
                 height: 20,
@@ -140,17 +136,17 @@ class HealthAndSafetyScreen extends StatelessWidget {
                         : null,
               ),
             ),
-          ),
-          10.horizontalSpace,
-          Expanded(
-            child: Text(
-              context.watchLang.translate(
-                AppLanguageText.acceptDeclarationAndGuidelines,
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                context.watchLang.translate(
+                  AppLanguageText.acceptDeclarationAndGuidelines,
+                ),
+                style: AppFonts.textRegular14,
               ),
-              style: AppFonts.textRegular14,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

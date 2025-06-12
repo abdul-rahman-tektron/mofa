@@ -58,7 +58,7 @@ class CommonDrawer extends StatelessWidget {
               ],
             ),
           ),
-          _buildDrawerItem(context, LucideIcons.logOut, 'Logout', 7),
+          _buildDrawerItem(context, LucideIcons.logOut, context.watchLang.translate(AppLanguageText.logout), 7),
           15.verticalSpace,
         ],
       ),

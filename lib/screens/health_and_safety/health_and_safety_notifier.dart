@@ -113,7 +113,8 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
   ];
 
   //Functions
-  HealthAndSafetyNotifier() {
+  HealthAndSafetyNotifier(bool isUpdate) {
+    this.isUpdate = isUpdate;
     getStoredAppointmentData();
   }
 
@@ -268,6 +269,8 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
       int index,
       ) async {
     try {
+      print("isUpdate is updating");
+      print(isUpdate);
       final result = isUpdate
           ? await SearchPassRepository().apiUpdateAppointment(appointment, context)
           : await ApplyPassRepository().apiAddAppointment(appointment, context);
@@ -289,6 +292,10 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     }
 
     final imageDataList = await _loadUploadDataFromStorage();
+
+    print("imageDataList.length");
+    print(imageDataList.length);
+    print(addAppointmentRequest?.length);
     if (imageDataList.length != addAppointmentRequest!.length) {
       print("Mismatch between appointments and image data.");
       return;
@@ -302,35 +309,6 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
 
     await Future.wait(futures);
     onNext();
-  }
-
-
-  Future<void> apiAddAppointments(BuildContext context) async {
-    if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
-      print("No appointments to send.");
-      return;
-    }
-
-    try {
-      // Run all API calls in parallel using Future.wait
-      await Future.wait(
-        addAppointmentRequest!.map((appointment) async {
-          try {
-            final result = await ApplyPassRepository().apiAddAppointment(
-              appointment,
-              context,
-            );
-            print("Appointment added: $result");
-          } catch (e) {
-            print("Failed to add appointment: $e");
-          }
-        }),
-      );
-
-      print("All API calls completed.");
-    } catch (e) {
-      print("One or more API calls failed: $e");
-    }
   }
 
   // Use getters instead of fields

@@ -1,268 +1,180 @@
-
+import 'package:flutter/widgets.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/regex.dart';
 
 class CommonValidation {
-  // Validates email input
-  String? validateEmail(String? value) {
+  String? validateEmail(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email is required';
+      return context.readLang.translate(AppLanguageText.emailRequired);
     }
     final emailRegex = RegExp(LocalInputRegex.email);
     if (!emailRegex.hasMatch(value)) {
-      return 'Please enter a valid email';
+      return context.readLang.translate(AppLanguageText.emailInvalid);
     }
     return null;
   }
 
-  // Validates password input
-  String? validatePassword(String? value) {
+  String? validatePassword(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return context.readLang.translate(AppLanguageText.passwordRequired);
     }
     return null;
   }
 
-  // Validates password input
-  String? validateConfirmPassword(String? oldValue, String? newValue) {
+  String? validateConfirmPassword(BuildContext context, String? oldValue, String? newValue) {
     if (newValue == null || newValue.isEmpty) {
-      return 'Confirm Password is required';
+      return context.readLang.translate(AppLanguageText.confirmPasswordRequired);
     }
     if (oldValue != newValue) {
-      return 'Passwords must match';
+      return context.readLang.translate(AppLanguageText.confirmPasswordMismatch);
     }
     return null;
   }
 
-  // Common validator for generic input validation
-  String? commonValidator(String? value) {
+  String? commonValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.pleaseEnterData);
+
+  String? dobValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.dobRequired);
+
+  String? nameValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.nameRequired);
+
+  String? validateMobile(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter data';
+      return context.readLang.translate(AppLanguageText.mobileRequired);
+    }
+    if (!RegExp(LocalInputRegex.phone).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.mobileInvalid);
     }
     return null;
   }
 
-  String? dobValidator(String? value) {
+  String? companyValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.companyRequired);
+
+  String? visitorNameValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitorNameRequired);
+
+  String? vehicleNumberValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.vehicleNumberRequired);
+
+  String? nationalityValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.nationalityRequired);
+
+  String? iDTypeValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.idTypeRequired);
+
+  String? documentNumberValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.documentNumberRequired);
+
+  String? documentNameValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.documentNameRequired);
+
+  String? validateIqama(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Required dob';
+      return context.readLang.translate(AppLanguageText.iqamaRequired);
+    }
+    if (!RegExp(LocalInputRegex.iqamaNumber).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.iqamaInvalid);
     }
     return null;
   }
 
-  String? nameValidator(String? value) {
+  String? validateNationalId(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Name is Required';
+      return context.readLang.translate(AppLanguageText.nationalIdRequired);
+    }
+    if (!RegExp(LocalInputRegex.nationalId).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.nationalIdInvalid);
     }
     return null;
   }
 
-  String? validateMobile(String? value) {
+  String? validatePassport(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Mobile Number is required.';
+      return context.readLang.translate(AppLanguageText.passportRequired);
     }
-    final regex = RegExp(LocalInputRegex.phone);
-    if (!regex.hasMatch(value)) {
-      return 'Enter a valid number.';
+    if (!RegExp(LocalInputRegex.passportNumber).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.passportInvalid);
     }
     return null;
   }
 
-  String? companyValidator(String? value) {
+  String? validateNationalIdExpiryDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.nationalIdExpiryRequired);
+
+  String? validateIqamaExpiryDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.iqamaExpiryRequired);
+
+  String? validatePassportExpiryDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.passportExpiryRequired);
+
+  String? validateDocumentExpiryDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.documentExpiryRequired);
+
+  String? lastnameValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.lastnameRequired);
+
+  String? validateLocation(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.locationRequired);
+
+  String? validateVisitRequestType(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitRequestTypeRequired);
+
+  String? validateVisitPurpose(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitPurposeRequired);
+
+  String? validateMofaHostEmail(BuildContext context, String? value) {
     if (value == null || value.isEmpty) {
-      return 'Company is Required';
+      return context.readLang.translate(AppLanguageText.mofaEmailRequired);
+    }
+    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.invalidMofaEmail);
     }
     return null;
   }
 
-  String? visitorNameValidator(String? value) {
+  String? validateVisitStartDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitStartDateRequired);
+
+  String? validateVisitEndDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitEndDateRequired);
+
+  String? validateDeviceType(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.deviceTypeRequired);
+
+  String? validateDeviceModel(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.deviceModelRequired);
+
+  String? validateSerialNumber(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.serialNumberRequired);
+
+  String? validateDevicePurpose(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.devicePurposeRequired);
+
+  String? validatePlateType(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.plateTypeRequired);
+
+  String? validatePlateLetter1(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.plateLetter1Required);
+
+  String? validatePlateLetter2(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.plateLetter2Required);
+
+  String? validatePlateLetter3(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.plateLetter3Required);
+
+  String? validatePlateNumber(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.plateNumberRequired);
+
+  // Helper method for common required field validations
+  String? _requiredFieldValidator(BuildContext context, String? value, String key) {
     if (value == null || value.isEmpty) {
-      return 'Visitor Name is Required';
+      return context.readLang.translate(key);
     }
     return null;
   }
-
-  String? vehicleNumberValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Vehicle Number is Required';
-    }
-    return null;
-  }
-
-  String? nationalityValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Nationality is Required';
-    }
-    return null;
-  }
-
-  String? iDTypeValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'ID Type is Required';
-    }
-    return null;
-  }
-
-  String? documentNumberValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Document Number is Required';
-    }
-    return null;
-  }
-
-  String? documentNameValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Document Name is Required';
-    }
-    return null;
-  }
-
-  String? validateIqama(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Iqama is required.';
-      }
-      if (!RegExp(LocalInputRegex.iqamaNumber).hasMatch(value)) {
-        return 'Enter a valid iqama number.';
-      }
-    return null;
-  }
-
-  String? validateNationalId(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'National ID is required.';
-      }
-      if (!RegExp(LocalInputRegex.nationalId).hasMatch(value)) {
-        return 'Enter a valid National ID.';
-      }
-    return null;
-  }
-
-  String? validateNationalIdExpiryDate(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'National ID Expiry Date is required.';
-      }
-    return null;
-  }
-
-  String? validateIqamaExpiryDate(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Iqama Expiry Date is required.';
-      }
-    return null;
-  }
-
-  String? validatePassportExpiryDate(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Passport Expiry Date is required.';
-      }
-    return null;
-  }
-
-  String? validateDocumentExpiryDate(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Document Expiry Date is required.';
-      }
-    return null;
-  }
-
-  String? validatePassport(String? value) {
-      if (value == null || value.isEmpty) {
-        return 'Passport Number is required.';
-      }
-      if (!RegExp(LocalInputRegex.passportNumber).hasMatch(value)) {
-        return 'Enter valid Passport Number';
-      }
-    return null;
-  }
-
-  String? lastnameValidator(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Required Lastname';
-    }
-    return null;
-  }
-
-  // Validates location input
-  String? validateLocation(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Location is required';
-    }
-    return null;
-  }
-
-// Validates visit request type input
-  String? validateVisitRequestType(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Visit request type is required';
-    }
-    return null;
-  }
-
-// Validates visit purpose input
-  String? validateVisitPurpose(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Visit purpose is required';
-    }
-    return null;
-  }
-
-// Validates MOFA host email input
-  String? validateMofaHostEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    // Basic email format check
-    final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email address';
-    }
-    return null;
-  }
-
-// Validates visit start date input
-  String? validateVisitStartDate(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Visit start date is required';
-    }
-    return null;
-  }
-
-// Validates visit end date input
-  String? validateVisitEndDate(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Visit end date is required';
-    }
-    return null;
-  }
-
-  // Validates device type
-  String? validateDeviceType(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Device type is required';
-    }
-    return null;
-  }
-
-  // Validates device model
-  String? validateDeviceModel(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Device model is required';
-    }
-    return null;
-  }
-
-  // Validates serial number
-  String? validateSerialNumber(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Serial number is required';
-    }
-    return null;
-  }
-
-  // Validates device purpose
-  String? validateDevicePurpose(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Device purpose is required';
-    }
-    return null;
-  }
-
 }
+

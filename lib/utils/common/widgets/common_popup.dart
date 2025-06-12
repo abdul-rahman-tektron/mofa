@@ -272,13 +272,13 @@ void columnVisibilityPopup(BuildContext context, SearchPassNotifier searchPassNo
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(config.label, style: AppFonts.textRegular14),
+                      Text(context.readLang.translate(config.labelKey), style: AppFonts.textRegular14),
                       Transform.scale(
                         scale: 0.8,
                         child: Switch(
                           value: config.isVisible,
                           onChanged: (val) {
-                            searchPassNotifier.updateColumnVisibility(config.label, val);
+                            searchPassNotifier.updateColumnVisibility(config.labelKey, val);
                             setState(() {});
                           },
                           activeColor: AppColors.whiteColor,

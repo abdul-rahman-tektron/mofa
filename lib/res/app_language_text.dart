@@ -231,7 +231,6 @@ class AppLanguageText {
   static const presentation = 'presentation';
   static const dataCollection = 'dataCollection';
   static const generalUse = 'generalUse';
-  static const nationalityRequired = 'nationalityRequired';
   static const approvalStatus = 'approvalStatus';
   static const kindlyAddADevice = 'kindlyAddADevice';
   static const refNo = 'refNo';
@@ -313,6 +312,104 @@ class AppLanguageText {
   static const enterPlateNumberUpto6Digits = 'enterPlateNumberUpto6Digits';
   static const tooManyRequestsTryAgainLater = 'tooManyRequestsTryAgainLater';
   static const notAuthorizedToPerformAction = 'notAuthorizedToPerformAction';
+  static const showMore = 'showMore';
+  static const showLess = 'showLess';
+  static const noDeviceAdded = 'noDeviceAdded';
+  static const totalVisitsMonthly = 'totalVisitsMonthly';
+  static const totalVisitsYearly = 'totalVisitsYearly';
+  static const totalVisitsToday = 'totalVisitsToday';
+  static const totalVisits = 'totalVisits';
+  static const pastVisits = 'pastVisits';
+  static const upcomingVisits = 'upcomingVisits';
+  static const qrCodeNotGenerated = 'qrCodeNotGenerated';
+  static const startDate = 'startDate';
+  static const endDate = 'endDate';
+  static const viewDetails = 'viewDetails';
+  static const page = 'page';
+  static const of = 'of';
+  static const startAndEndDate = 'startAndEndDate';
+
+  static const emailRequired = 'validation.email.required';
+  static const emailInvalid = 'validation.email.invalid';
+
+  static const passwordRequired = 'validation.password.required';
+  static const confirmPasswordRequired = 'validation.confirm_password.required';
+  static const confirmPasswordMismatch = 'validation.confirm_password.mismatch';
+
+  static const commonRequired = 'validation.common.required';
+
+  static const dobRequired = 'validation.dob.required';
+  static const nameRequired = 'validation.name.required';
+  static const lastnameRequired = 'validation.lastname.required';
+
+  static const mobileRequired = 'validation.mobile.required';
+  static const mobileInvalid = 'validation.mobile.invalid';
+
+  static const companyRequired = 'validation.company.required';
+  static const visitorNameRequired = 'validation.visitor_name.required';
+  static const vehicleNumberRequired = 'validation.vehicle_number.required';
+  static const nationalityRequired = 'validation.nationality.required';
+  static const idTypeRequired = 'validation.id_type.required';
+  static const documentNumberRequired = 'validation.document_number.required';
+  static const documentNameRequired = 'validation.document_name.required';
+
+  static const iqamaRequired = 'validation.iqama.required';
+  static const iqamaInvalid = 'validation.iqama.invalid';
+
+  static const nationalIdRequired = 'validation.national_id.required';
+  static const nationalIdInvalid = 'validation.national_id.invalid';
+
+  static const nationalIdExpiryRequired = 'validation.national_id_expiry.required';
+  static const iqamaExpiryRequired = 'validation.iqama_expiry.required';
+  static const passportExpiryRequired = 'validation.passport_expiry.required';
+  static const documentExpiryRequired = 'validation.document_expiry.required';
+
+  static const passportRequired = 'validation.passport.required';
+  static const passportInvalid = 'validation.passport.invalid';
+
+  static const locationRequired = 'validation.location.required';
+  static const visitRequestTypeRequired = 'validation.visit_request_type.required';
+  static const visitPurposeRequired = 'validation.visit_purpose.required';
+
+  static const hostEmailRequired = 'validation.host_email.required';
+  static const hostEmailInvalid = 'validation.host_email.invalid';
+
+  static const visitStartDateRequired = 'validation.visit_start_date.required';
+  static const visitEndDateRequired = 'validation.visit_end_date.required';
+
+  static const deviceTypeRequired = 'validation.device_type.required';
+  static const deviceModelRequired = 'validation.device_model.required';
+  static const serialNumberRequired = 'validation.serial_number.required';
+  static const devicePurposeRequired = 'validation.device_purpose.required';
+
+  static const plateTypeRequired = 'validation.plate_type.required';
+  static const plateLetter1Required = 'validation.plate_letter1.required';
+  static const plateLetter2Required = 'validation.plate_letter2.required';
+  static const plateLetter3Required = 'validation.plate_letter3.required';
+  static const plateNumberRequired = 'validation.plate_number.required';
+  static const String mofaEmailRequired = 'mofaEmailRequired';
+  static const String invalidMofaEmail = 'invalidMofaEmail';
+  static const String pleaseEnterData = 'pleaseEnterData';
+  static const String pleaseEnterCaptcha = 'pleaseEnterCaptcha';
+  static const String logout = 'logout';
+  static const String uploadRecentPassport = 'uploadRecentPassport';
+  static const String photoJpgPng = 'photoJpgPng';
+  static const String ensureTheImage = 'ensureTheImage';
+  static const String officialGuidelines = 'officialGuidelines';
+  static const String validationPhotoUploadRequired = 'validation.photo_upload.required';
+  static const String validationVehicleUploadRequired = 'validation.vehicle_upload.required';
+  static const String validationRequired = 'validation.required';
+  static const String camera = 'camera';
+  static const String device = 'device';
+  static const String fillAllTheDeviceDetail = 'fillAllTheDeviceDetail';
+  static const String upload = 'upload';
+  static const String phoneNumberIn = 'phoneNumberIn';
+  static const String internationalFormat = 'internationalFormat';
+  static const String entre10digit = 'entre10digit';
+  static const String idAsPerRecords = 'idAsPerRecords';
+  static const String requestInfo = 'requestInfo';
+  static const String noResultFound = 'noResultFound';
+  static const String updateDevice = 'updateDevice';
 
 // Add the rest of the keys here...
 }

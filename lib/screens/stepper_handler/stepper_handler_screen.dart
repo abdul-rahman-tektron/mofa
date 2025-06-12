@@ -4,10 +4,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
 import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
+import 'package:mofa/utils/secure_storage.dart';
 import 'package:provider/provider.dart';
 
 class StepperHandlerScreen extends StatelessWidget {
@@ -23,20 +25,26 @@ class StepperHandlerScreen extends StatelessWidget {
       create: (context) => StepperHandlerNotifier(context, category, isUpdate, id),
       child: Consumer<StepperHandlerNotifier>(
         builder: (context, stepperHandlerNotifier, child) {
-          return Scaffold(
-            backgroundColor: AppColors.backgroundColor,
-            appBar: CommonAppBar(),
-            drawer: CommonDrawer(),
-            body: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // Extract stepper to a separate widget to prevent rebuilds
-                  _StepperIndicator(notifier: stepperHandlerNotifier),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: stepperHandlerNotifier.steps[stepperHandlerNotifier.currentStep],
-                  ),
-                ],
+          return PopScope(
+            onPopInvokedWithResult: (didPop, result) async {
+              await SecureStorageHelper.removeParticularKey(AppStrings.appointmentData);
+              await SecureStorageHelper.removeParticularKey(AppStrings.uploadedImageCode);
+            },
+            child: Scaffold(
+              backgroundColor: AppColors.backgroundColor,
+              appBar: CommonAppBar(),
+              drawer: CommonDrawer(),
+              body: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // Extract stepper to a separate widget to prevent rebuilds
+                    _StepperIndicator(notifier: stepperHandlerNotifier),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: stepperHandlerNotifier.steps[stepperHandlerNotifier.currentStep],
+                    ),
+                  ],
+                ),
               ),
             ),
           );

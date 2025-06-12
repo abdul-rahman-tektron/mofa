@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/get_all_detail/get_all_detail_response.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/common/widgets/ticket_dialog.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -27,7 +29,7 @@ class TicketCard extends StatelessWidget {
           ClipPath(
             clipper: DolDurmaClipper(left: 101.w, holeRadius: 10),
             child: Container(
-              height: 120,
+              height: 110.h,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
@@ -35,9 +37,10 @@ class TicketCard extends StatelessWidget {
                     appointmentData?.sApprovalStatusEn ?? "")),
               ),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // QR Code on the left
-                  Container(
+                  appointmentData?.sQRCodeValue?.isNotEmpty ?? false ? Container(
                     width: 100.w,
                     padding: EdgeInsets.all(10),
                     child: Center(
@@ -45,6 +48,12 @@ class TicketCard extends StatelessWidget {
                         version: QrVersions.auto,
                         data: appointmentData?.sQRCodeValue ?? "",
                       ),
+                    ),
+                  ) : Container(
+                    width: 100.w,
+                    padding: EdgeInsets.all(10),
+                    child: Center(
+                      child: Text(context.watchLang.translate(AppLanguageText.qrCodeNotGenerated), textAlign: TextAlign.center,),
                     ),
                   ),
 
@@ -54,7 +63,7 @@ class TicketCard extends StatelessWidget {
                         color: CommonUtils.getStatusColor(
                             appointmentData?.sApprovalStatusEn ?? "")),
                     child: SizedBox(
-                      height: double.infinity,
+                      // height: 100,
                       width: 1,
                     ),
                   ),
@@ -65,22 +74,25 @@ class TicketCard extends StatelessWidget {
                       padding: EdgeInsets.symmetric(horizontal: 15.w, ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           Text(appointmentData?.sVisitorName ?? "",
+                              overflow: TextOverflow.ellipsis,
                               style: AppFonts.textRegular20),
-                          5.verticalSpace,
                           Text(formatAppointmentRangeFromString(appointmentData?.dtAppointmentStartTime, appointmentData?.dtAppointmentEndTime),
                               style: AppFonts.textRegular12),
-                          5.verticalSpace,
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Text(appointmentData?.sHostName ?? "",
-                                    style: AppFonts.textRegular14, overflow: TextOverflow.ellipsis,),
-                              ),
-                              5.horizontalSpace,
+                              Row(
+                                children: [
+                                  Icon(Icons.location_pin, color: AppColors.buttonBgColor,
+                                    size: 15,),
+                                  2.horizontalSpace,
+                                  Text(getFormattedLocation(appointmentData?.sLocationNameEn ?? ""),
+                                      style: AppFonts.textBold14),
+                                ],
+                              ), 5.horizontalSpace,
                               Container(
                                 padding: EdgeInsets.symmetric(
                                     horizontal: 5, vertical: 2),
@@ -88,15 +100,8 @@ class TicketCard extends StatelessWidget {
                                   color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
                                   borderRadius: BorderRadius.circular(5),
                                 ),
-                                child: Row(
-                                  children: [
-                                    Icon(LucideIcons.mapPin, color: Colors.white,
-                                      size: 15,),
-                                    5.horizontalSpace,
-                                    Text(getFormattedLocation(appointmentData?.sLocationNameEn ?? ""),
-                                        style: AppFonts.textBoldWhite14),
-                                  ],
-                                ),
+                                child: Text(getFormattedLocation(CommonUtils.getTranslatedStatus(context, appointmentData?.sApprovalStatusEn ?? "")),
+                                    style: AppFonts.textBoldWhite14),
                               )
                             ],
                           ),
@@ -161,9 +166,9 @@ class TicketCard extends StatelessWidget {
       final endTimeStr = timeFormat.format(end);
 
       if (startDateStr == endDateStr) {
-        return '$startDateStr، $startTimeStr - $endTimeStr';
+        return '$startDateStr, $startTimeStr - $endTimeStr';
       } else {
-        return '$startDateStr ،$startTimeStr - $endDateStr ،$endTimeStr';
+        return '$startDateStr, $startTimeStr - $endDateStr, $endTimeStr';
       }
     } catch (e) {
       return '';

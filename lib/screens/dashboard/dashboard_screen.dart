@@ -6,6 +6,7 @@ import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/dashboard/dashboard_notifier.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:mofa/utils/common/widgets/ticket_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -18,7 +19,9 @@ class DashboardScreen extends StatelessWidget {
       create: (context) => DashboardNotifier(context),
       child: Consumer<DashboardNotifier>(
         builder: (context, dashboardNotifier, child) {
-          return buildBody(context, dashboardNotifier);
+          return LoadingOverlay<DashboardNotifier>(
+            child: buildBody(context, dashboardNotifier),
+          );
         },
       ),
     );
@@ -53,7 +56,7 @@ class DashboardScreen extends StatelessWidget {
 
   Widget headerText(BuildContext context) {
     return Text(
-      "Dashboard",
+      context.watchLang.translate(AppLanguageText.dashboard),
       // context.watchLang.translate(AppLanguageText.approvedPasses),
       style: AppFonts.textRegular24,
     );
@@ -67,16 +70,16 @@ class DashboardScreen extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10.h,
         crossAxisSpacing: 10.w,
-        childAspectRatio: 1.8, // Tune this based on card width/height
+        childAspectRatio: 1.3.w,
       ),
       itemCount: dashboardNotifier.cardData?.length ?? 0,
       itemBuilder: (context, index) {
-        return buildPassCard(dashboardNotifier.cardData![index]);
+        return buildPassCard(context, dashboardNotifier.cardData![index]);
       },
     );
   }
 
-  Widget buildPassCard(DashboardCardData data) {
+  Widget buildPassCard(BuildContext context, DashboardCardData data) {
     return Container(
       decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(15)),
       child: Stack(
@@ -88,14 +91,18 @@ class DashboardScreen extends StatelessWidget {
             child: Icon(data.icon, color: AppColors.textRedColor.withOpacity(0.2), size: 25),
           ),
           Padding(
-            padding: EdgeInsets.all(5.w),
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(data.count.toString(), style: AppFonts.textRegular24),
                 5.verticalSpace,
-                Text(data.title, style: AppFonts.textRegular16, textAlign: TextAlign.center),
+                Text(
+                  context.watchLang.translate(data.titleKey), // Translate here!
+                  style: AppFonts.textRegular16,
+                  textAlign: TextAlign.center,
+                ),
               ],
             ),
           ),
@@ -104,36 +111,41 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
+
   Widget tabBar(BuildContext context, DashboardNotifier dashboardNotifier) {
-    return Container(
-      height: 45.h,
-      padding: EdgeInsets.all(3), // space around the indicator
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.buttonBgColor, width: 1),
-        borderRadius: BorderRadius.circular(30),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: 45.h,
       ),
-      child: TabBar(
-        labelColor: Colors.white,
-        unselectedLabelColor: AppColors.buttonBgColor,
-        indicator: BoxDecoration(
-          color: AppColors.buttonBgColor,
-          borderRadius: BorderRadius.circular(30), // rounded indicator
+      child: Container(
+        padding: EdgeInsets.all(3), // space around the indicator
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.buttonBgColor, width: 1),
+          borderRadius: BorderRadius.circular(30),
         ),
-        onTap: (index) {
-          dashboardNotifier.selectedIndex = index;
-          if (index == 0) {
-            dashboardNotifier.isUpcoming = true;
-            dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
-          } else {
-            dashboardNotifier.isUpcoming = false;
-            dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
-          }
-        },
-        dividerColor: Colors.transparent,
-        indicatorSize: TabBarIndicatorSize.tab,
-        labelStyle: AppFonts.textBold14,
-        unselectedLabelStyle: AppFonts.textBold14,
-        tabs: const [Tab(text: 'Upcoming Visits'), Tab(text: 'Past Visits')],
+        child: TabBar(
+          labelColor: Colors.white,
+          unselectedLabelColor: AppColors.buttonBgColor,
+          indicator: BoxDecoration(
+            color: AppColors.buttonBgColor,
+            borderRadius: BorderRadius.circular(30), // rounded indicator
+          ),
+          onTap: (index) {
+            dashboardNotifier.selectedIndex = index;
+            if (index == 0) {
+              dashboardNotifier.isUpcoming = true;
+              dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
+            } else {
+              dashboardNotifier.isUpcoming = false;
+              dashboardNotifier.apiGetAllExternalAppointment(context, dashboardNotifier.isUpcoming);
+            }
+          },
+          dividerColor: Colors.transparent,
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelStyle: AppFonts.textBold14,
+          unselectedLabelStyle: AppFonts.textBold14,
+          tabs: [Tab(text: context.watchLang.translate(AppLanguageText.upcomingVisits)), Tab(text: context.watchLang.translate(AppLanguageText.pastVisits))],
+        ),
       ),
     );
   }
@@ -186,8 +198,13 @@ class DashboardScreen extends StatelessWidget {
 
 class DashboardCardData {
   final IconData icon;
-  final String title;
+  final String titleKey;  // <-- store key, not translated string
   final int count;
 
-  DashboardCardData({required this.icon, required this.title, required this.count});
+  DashboardCardData({
+    required this.icon,
+    required this.titleKey,
+    required this.count,
+  });
 }
+

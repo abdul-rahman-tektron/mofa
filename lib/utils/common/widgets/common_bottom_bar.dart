@@ -57,20 +57,26 @@ class CustomBottomNavBar extends StatelessWidget {
                   ),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Column(
-                        children: [
-                          Icon(
-                            _icons[index],
-                            size: 20,
-                            color:
-                                isSelected
-                                    ? AppColors.buttonBgColor
-                                    : AppColors.textFieldTextColor,
-                          ),
-                          5.verticalSpace,
-                          Text(_labels[index], style: isSelected ? AppFonts.textRegular10 : AppFonts.textRegularGrey10,),
-                        ],
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5.0),
+                        decoration: BoxDecoration(
+                          color: isSelected ?AppColors.buttonBgColor.withOpacity(0.1) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _icons[index],
+                              size: 20,
+                              color: AppColors.buttonBgColor,
+                            ),
+                            5.verticalSpace,
+                            Text(_labels[index], style: isSelected ? AppFonts.textRegular10 : AppFonts.textRegular10,),
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -94,7 +94,7 @@ class ChangePasswordScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       isSmallFieldFont: true,
       isEnable: false,
-      validator: CommonValidation().validateEmail,
+      validator: (value) => CommonValidation().validateEmail(context, value),
     );
   }
 
@@ -107,7 +107,7 @@ class ChangePasswordScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.currentPassword),
       isSmallFieldFont: true,
       isPassword: true,
-      validator: CommonValidation().validatePassword,
+      validator: (value) => CommonValidation().validatePassword(context, value),
     );
   }
 
@@ -120,7 +120,7 @@ class ChangePasswordScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.newPassword),
       isSmallFieldFont: true,
       isPassword: true,
-      validator: CommonValidation().validatePassword,
+      validator: (value) => CommonValidation().validatePassword(context, value),
     );
   }
 
@@ -135,6 +135,7 @@ class ChangePasswordScreen extends StatelessWidget {
       isPassword: true,
       validator: (value) =>
           CommonValidation().validateConfirmPassword(
+            context,
               changePasswordNotifier.newPasswordController.text,
               changePasswordNotifier.confirmPasswordController.text),
     );

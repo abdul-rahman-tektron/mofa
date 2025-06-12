@@ -4,6 +4,7 @@ import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/encrypt.dart';
 
 class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
@@ -42,13 +43,14 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   // Constructor
   // Initializes the RegisterNotifier and makes an API call for the country list
   RegisterNotifier(BuildContext context) {
-    idTypeController.text = "National ID";
+    idTypeController.text = idTypeMenu[1].labelEn;
+    selectedIdValue = idTypeMenu[1].value.toString();
     countryApiCall(context, {});
   }
 
   // Navigates to the login screen
   void navigateToLoginScreen(BuildContext context) {
-    Navigator.pop(context);
+    Navigator.pushReplacementNamed(context, AppRoutes.login);
   }
 
   // Makes an API call to fetch the country list
@@ -94,12 +96,12 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
         sOthersValue: encryptOtherDocumentNumber,
       );
 
-      registerApiCall(context, registerRequest);
+      runWithLoadingVoid(registerApiCall(context, registerRequest));
     }
   }
 
   // Makes an API call to register the user
-  void registerApiCall(BuildContext context, RegisterRequest registerRequest) async {
+  Future<void> registerApiCall(BuildContext context, RegisterRequest registerRequest) async {
     await AuthRepository().apiRegistration(
         registerRequest, context).then((value) {
       // if (value == "Not Found") {

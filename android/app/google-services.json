@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "204915826431",
+    "project_id": "mofa-a89c3",
+    "storage_bucket": "mofa-a89c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204915826431:android:a6570bdb96eec3a0feb6ca",
+        "android_client_info": {
+          "package_name": "com.example.mofa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDl-r7W2o8YOW66JyIxib8cwXKaOjG3OxE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

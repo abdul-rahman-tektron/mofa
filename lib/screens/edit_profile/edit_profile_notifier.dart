@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/get_profile/get_profile_response.dart';
 import 'package:mofa/core/model/update_profile/update_profile_request.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
+import 'package:mofa/utils/common_utils.dart';
 
-class EditProfileNotifier extends BaseChangeNotifier {
+class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
 
   String? _selectedNationality;
   String? _selectedIdType = "National ID";
@@ -43,7 +45,7 @@ class EditProfileNotifier extends BaseChangeNotifier {
 
   Future<void> _init(BuildContext context) async {
     await _fetchProfileAndNationality(context);
-    _initializeData();
+    _initializeData(context);
   }
 
   Future<void> _fetchProfileAndNationality(BuildContext context) async {
@@ -59,7 +61,7 @@ class EditProfileNotifier extends BaseChangeNotifier {
     }
   }
 
-  void _initializeData() {
+  void _initializeData(BuildContext context) {
     final data = _getProfileData;
     fullNameController.text = data?.sFullName ?? "";
     visitorCompanyController.text = data?.sCompanyName ?? "";
@@ -76,16 +78,16 @@ class EditProfileNotifier extends BaseChangeNotifier {
           (item) => item.value == data?.nDocumentType,
       orElse: () => DocumentIdModel(labelEn: "Unknown", labelAr: "", value: 0),
     );
-    _selectedIdType = matchedIdType.labelEn;
+    _selectedIdType = getLocalizedText(currentLang: context.lang, english: matchedIdType.labelEn, arabic: matchedIdType.labelAr);
     _selectedIdValue = data?.nDocumentType.toString();
-    idTypeController.text = matchedIdType.labelEn;
+    idTypeController.text = getLocalizedText(currentLang: context.lang, english: matchedIdType.labelEn, arabic: matchedIdType.labelAr);
 
     final matchedNationality = _nationalityMenu.firstWhere(
           (country) => country.iso3 == data?.iso3,
       orElse: () => CountryData(name: "Unknown", iso3: ""),
     );
     _selectedNationality = data?.iso3;
-    nationalityController.text = matchedNationality.name ?? "";
+    nationalityController.text = getLocalizedText(currentLang: context.lang, english: matchedNationality.name, arabic: matchedNationality.nameAr);
 
     notifyListeners();
   }

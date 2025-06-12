@@ -1,3 +1,6 @@
+
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
@@ -8,18 +11,22 @@ import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_purpose_dropdown_response.dart';
 import 'package:mofa/core/model/visit_dropdown/visit_request_dropdown_response.dart';
+import 'package:mofa/core/notifier/language_notifier.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
+import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_notifier.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
+import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/extensions.dart';
+import 'package:mofa/utils/toast_helper.dart';
 import 'package:provider/provider.dart';
 
 class ApplyPassGroupScreen extends StatelessWidget {
@@ -53,7 +60,14 @@ class ApplyPassGroupScreen extends StatelessWidget {
     children.add(
       buildExpansionTile(
         title: stepTitle(AppLanguageText.visitDetails),
-        children: visitDetailsChildren(context, applyPassGroupNotifier),
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ...visitDetailsChildren(context, applyPassGroupNotifier),
+            ],
+          ),
+        ],
       ),
     );
 
@@ -83,7 +97,17 @@ class ApplyPassGroupScreen extends StatelessWidget {
     children.add(
       buildExpansionTile(
         title: stepTitle(AppLanguageText.visitorDetails),
-        children: groupVisitorDetailsChildren(context, applyPassGroupNotifier),
+        children: [
+          Form(
+            key: applyPassGroupNotifier.visitorFormKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...groupVisitorDetailsChildren(context, applyPassGroupNotifier),
+              ],
+            ),
+          ),
+        ],
       ),
     );
 
@@ -96,7 +120,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
 
     return Padding(
       padding: EdgeInsets.only(bottom: 25.h, right: 25.w, left: 25.w, top: 15.h),
-      child: Form(key: applyPassGroupNotifier.formKey, child: Column(children: children)),
+      child: Form(key: applyPassGroupNotifier.visitFormKey, child: Column(children: children)),
     );
   }
 
@@ -139,18 +163,18 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget userVerifyCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5.0),
-            child: GestureDetector(
-              onTap: () {
-                applyPassGroupNotifier.userVerifyChecked(context, !applyPassGroupNotifier.isChecked);
-              },
+    return GestureDetector(
+      onTap: () {
+        applyPassGroupNotifier.userVerifyChecked(context, !applyPassGroupNotifier.isChecked);
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
+        decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 5.0),
               child: Container(
                 width: 20,
                 height: 20,
@@ -165,31 +189,31 @@ class ApplyPassGroupScreen extends StatelessWidget {
                 child: applyPassGroupNotifier.isChecked ? Icon(Icons.check, size: 17, color: Colors.black) : null,
               ),
             ),
-          ),
-          10.horizontalSpace,
-          Expanded(
-            child: Text(
-              context.watchLang.translate(AppLanguageText.formSubmissionCertification),
-              style: AppFonts.textRegular14,
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                context.watchLang.translate(AppLanguageText.formSubmissionCertification),
+                style: AppFonts.textRegular14,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget buildBulletList(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+  Widget buildBulletList(BuildContext context, ApplyPassGroupNotifier notifier) {
+    final points = [
+      context.watchLang.translate(AppLanguageText.personalDataNotice),
+      context.watchLang.translate(AppLanguageText.submitDataConsent),
+      "${context.watchLang.translate(AppLanguageText.dataProcessingNotice)} ${context.watchLang.translate(AppLanguageText.privacyPolicyHere)}",
+      context.watchLang.translate(AppLanguageText.acknowledgementStatement),
+    ];
+
     return BulletList(
-      [
-        context.watchLang.translate(AppLanguageText.personalDataNotice),
-        context.watchLang.translate(AppLanguageText.submitDataConsent),
-        "${context.watchLang.translate(AppLanguageText.dataProcessingNotice)} ${context.watchLang.translate(AppLanguageText.privacyPolicyHere)}",
-        context.watchLang.translate(AppLanguageText.acknowledgementStatement),
-      ],
-      onPrivacyPolicyTap: () {
-        // Navigate or open link here
-        applyPassGroupNotifier.launchPrivacyUrl();
-      },
+      points,
+      onPrivacyPolicyTap: () => notifier.launchPrivacyUrl(),
+      initiallyVisibleIndices: [2, 3], // Last 2 points
     );
   }
 
@@ -216,16 +240,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget vehicleDetailCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GestureDetector(
-            onTap: () {
-              applyPassGroupNotifier.vehicleDetailChecked(!applyPassGroupNotifier.isCheckedVehicle);
-            },
-            child: Container(
+    return GestureDetector(
+      onTap: () {
+        applyPassGroupNotifier.vehicleDetailChecked(!applyPassGroupNotifier.isCheckedVehicle);
+      },
+      child: Container(
+        decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
               width: 20,
               height: 20,
               decoration: BoxDecoration(
@@ -238,27 +262,27 @@ class ApplyPassGroupScreen extends StatelessWidget {
               ),
               child: applyPassGroupNotifier.isCheckedVehicle ? Icon(Icons.check, size: 17, color: Colors.black) : null,
             ),
-          ),
-          10.horizontalSpace,
-          Expanded(
-            child: Text(context.watchLang.translate(AppLanguageText.vehicleDetails), style: AppFonts.textRegular14),
-          ),
-        ],
+            10.horizontalSpace,
+            Expanded(
+              child: Text(context.watchLang.translate(AppLanguageText.vehicleDetails), style: AppFonts.textRegular14),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget deviceDetailCheckbox(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return Container(
-      decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          GestureDetector(
-            onTap: () {
-              applyPassGroupNotifier.deviceDetailChecked(context, !applyPassGroupNotifier.isCheckedDevice);
-            },
-            child: Container(
+    return GestureDetector(
+      onTap: () {
+        applyPassGroupNotifier.deviceDetailChecked(context, !applyPassGroupNotifier.isCheckedDevice);
+      },
+      child: Container(
+        decoration: BoxDecoration(color: AppColors.whiteColor, borderRadius: BorderRadius.circular(8)),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
               width: 20,
               height: 20,
               decoration: BoxDecoration(
@@ -271,15 +295,15 @@ class ApplyPassGroupScreen extends StatelessWidget {
               ),
               child: applyPassGroupNotifier.isCheckedDevice ? Icon(Icons.check, size: 17, color: Colors.black) : null,
             ),
-          ),
-          10.horizontalSpace,
-          Expanded(
-            child: Text(
-              context.watchLang.translate(AppLanguageText.declareDevicesBroughtOnsite),
-              style: AppFonts.textRegular14,
+            10.horizontalSpace,
+            Expanded(
+              child: Text(
+                context.watchLang.translate(AppLanguageText.declareDevicesBroughtOnsite),
+                style: AppFonts.textRegular14,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -287,48 +311,60 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget locationTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<LocationDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.location),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.locationController,
       items: applyPassGroupNotifier.locationDropdownData,
-      itemLabel: (item) => item.sLocationNameEn ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sLocationNameAr,
+        getEnglish: () => item.sLocationNameEn,
+      ),
       isSmallFieldFont: true,
       onSelected: (LocationDropdownResult? menu) {
         applyPassGroupNotifier.selectedLocationId = menu?.nLocationId ?? 0;
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
-      validator: CommonValidation().validateLocation,
+      validator: (value) => CommonValidation().validateLocation(context, value),
     );
   }
 
   Widget visitRequestTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<VisitRequestDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.visitRequestType),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.visitRequestTypeController,
       items: applyPassGroupNotifier.visitRequestTypesDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
       onSelected: (VisitRequestDropdownResult? menu) {
         applyPassGroupNotifier.selectedVisitRequest = menu?.nDetailedCode.toString() ?? "";
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
-      validator: CommonValidation().validateVisitRequestType,
+      validator: (value) => CommonValidation().validateVisitRequestType(context, value),
     );
   }
 
   Widget visitPurposeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<VisitPurposeDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.visitPurpose),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.visitPurposeController,
       items: applyPassGroupNotifier.visitPurposeDropdownData,
-      itemLabel: (item) => item.sPurposeEn ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sPurposeAr,
+        getEnglish: () => item.sPurposeEn,
+      ),
       isSmallFieldFont: true,
       onSelected: (VisitPurposeDropdownResult? menu) {
         applyPassGroupNotifier.selectedVisitPurpose = menu?.nPurposeId.toString() ?? "";
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
-      validator: CommonValidation().validateVisitPurpose,
+      validator: (value) => CommonValidation().validateVisitPurpose(context, value),
     );
   }
 
@@ -337,7 +373,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.mofaHostEmailController,
       fieldName: context.watchLang.translate(AppLanguageText.hostEmailAddress),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateMofaHostEmail,
+      validator: (value) => CommonValidation().validateMofaHostEmail(context, value),
     );
   }
 
@@ -350,7 +386,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       startDate: DateTime.now(),
       onChanged: (value) {
         try {
-          final DateFormat formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+          final DateFormat formatter = DateFormat("dd/MM/yyyy, hh:mm a");
           final DateTime selectedStart = formatter.parse(value);
           final DateTime oneHourLater = selectedStart.add(Duration(hours: 1));
           applyPassGroupNotifier.visitEndDateController.text = formatter.format(oneHourLater);
@@ -361,7 +397,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
         }
       },
       needTime: true,
-      validator: CommonValidation().validateVisitStartDate,
+      validator: (value) => CommonValidation().validateVisitStartDate(context, value),
     );
   }
 
@@ -369,7 +405,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     DateTime? parsedStartDate;
     if (applyPassGroupNotifier.visitStartDateController.text.isNotEmpty) {
       try {
-        parsedStartDate = DateFormat("dd/MM/yyyy ،hh:mm a").parse(applyPassGroupNotifier.visitStartDateController.text);
+        parsedStartDate = DateFormat("dd/MM/yyyy, hh:mm a").parse(applyPassGroupNotifier.visitStartDateController.text);
       } catch (e) {
         parsedStartDate = null;
         debugPrint("Failed to parse start date: $e");
@@ -382,7 +418,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       keyboardType: TextInputType.datetime,
       needTime: true,
       startDate: parsedStartDate,
-      validator: CommonValidation().validateVisitEndDate,
+      validator: (value) => CommonValidation().validateVisitEndDate(context, value),
     );
   }
 
@@ -412,64 +448,80 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget plateTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.plateType),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateTypeController,
       items: applyPassGroupNotifier.plateTypeDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
-      skipValidation: true,
+      skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedPlateType = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDeviceType,
+      validator: (value) => CommonValidation().validatePlateType(context, value),
     );
   }
 
   Widget plateLetter1TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.plateLetter1),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter1Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
-      skipValidation: true,
+      skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedPlateLetter1 = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDeviceType,
+      validator: (value) => CommonValidation().validatePlateLetter1(context, value),
     );
   }
 
   Widget plateLetter2TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.plateLetter2),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter2Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
-      skipValidation: true,
+      skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedPlateLetter2 = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDeviceType,
+      validator: (value) => CommonValidation().validatePlateLetter2(context, value),
     );
   }
 
   Widget plateLetter3TextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.plateLetter3),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter3Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
-      skipValidation: true,
+      skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedPlateLetter3 = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDeviceType,
+      validator: (value) => CommonValidation().validatePlateLetter3(context, value),
     );
   }
 
@@ -478,8 +530,9 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.plateNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.plateNumber),
       isSmallFieldFont: true,
+      skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       keyboardType: TextInputType.number,
-      validator: CommonValidation().validateIqama,
+      validator: (value) => CommonValidation().validatePlateNumber(context, value),
     );
   }
 
@@ -495,9 +548,9 @@ class ApplyPassGroupScreen extends StatelessWidget {
         serialNumberTextField(context, applyPassGroupNotifier),
         15.verticalSpace,
         devicePurposeTextField(context, applyPassGroupNotifier),
-        15.verticalSpace,
-        saveAndCancel(context, applyPassGroupNotifier),
       ],
+      15.verticalSpace,
+      saveAndCancel(context, applyPassGroupNotifier),
     ];
   }
 
@@ -607,7 +660,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade300),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: const Text('No devices added'),
+        child: Text(context.readLang.translate(AppLanguageText.noDeviceAdded)),
       );
     }
 
@@ -672,15 +725,26 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget saveAndCancel(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    final isEditing = applyPassGroupNotifier.isEditingDevice;
+    final showFields = applyPassGroupNotifier.showDeviceFields;
+
     return Row(
       children: [
         Expanded(
           child: CustomButton(
-            text: context.watchLang.translate(AppLanguageText.addDevice),
+            text: context.watchLang.translate(
+              isEditing ? AppLanguageText.updateDevice : AppLanguageText.addDevice,
+            ),
             height: 45,
             smallWidth: true,
             onPressed: () {
-              if (applyPassGroupNotifier.showDeviceFields) {
+
+              if (applyPassGroupNotifier.isDevicePartiallyFilled()) {
+                ToastHelper.showError(context.readLang.translate(AppLanguageText.fillDeviceDetails));
+                return;
+              }
+
+              if (showFields) {
                 applyPassGroupNotifier.saveDevice(); // Save or update
               } else {
                 applyPassGroupNotifier.showDeviceFieldsAgain(); // Show fields to add
@@ -689,17 +753,18 @@ class ApplyPassGroupScreen extends StatelessWidget {
           ),
         ),
         SizedBox(width: 10),
-        Expanded(
-          child: CustomButton(
-            text: context.watchLang.translate(AppLanguageText.cancel),
-            backgroundColor: Colors.white,
-            height: 45,
-            smallWidth: true,
-            borderColor: AppColors.buttonBgColor,
-            textFont: AppFonts.textBold14,
-            onPressed: () => applyPassGroupNotifier.cancelEditing(),
+        if (showFields)
+          Expanded(
+            child: CustomButton(
+              text: context.watchLang.translate(AppLanguageText.cancel),
+              backgroundColor: Colors.white,
+              height: 45,
+              smallWidth: true,
+              borderColor: AppColors.buttonBgColor,
+              textFont: AppFonts.textBold14,
+              onPressed: () => applyPassGroupNotifier.cancelEditing(),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -741,7 +806,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.deviceModel),
       isSmallFieldFont: true,
       skipValidation: true,
-      validator: CommonValidation().validateDeviceModel,
+      validator: (value) => CommonValidation().validateDeviceModel(context, value),
     );
   }
 
@@ -751,39 +816,47 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.serialNumber),
       isSmallFieldFont: true,
       skipValidation: true,
-      validator: CommonValidation().validateSerialNumber,
+      validator: (value) => CommonValidation().validateSerialNumber(context, value),
     );
   }
 
   Widget deviceTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.deviceType),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.deviceTypeController,
       items: applyPassGroupNotifier.deviceTypeDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedDeviceType = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDeviceType,
+      validator: (value) => CommonValidation().validateDeviceType(context, value),
     );
   }
 
   Widget devicePurposeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DeviceDropdownResult>(
       fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
-      hintText: 'Select...',
+      hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.devicePurposeController,
       items: applyPassGroupNotifier.devicePurposeDropdownData,
-      itemLabel: (item) => item.sDescE ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.sDescA,
+        getEnglish: () => item.sDescE,
+      ),
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
         applyPassGroupNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
       },
-      validator: CommonValidation().validateDevicePurpose,
+      validator: (value) => CommonValidation().validateDevicePurpose(context, value),
     );
   }
 
@@ -791,7 +864,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     List<Widget> children = [
       // addVisitorsButton(context, notifier),
       // 15.verticalSpace,
-      visitorTable(notifier),
+      visitorTable(context, notifier),
       15.verticalSpace,
     ];
 
@@ -812,17 +885,27 @@ class ApplyPassGroupScreen extends StatelessWidget {
         ..._buildIdTypeFields(context, notifier),
         expirationDateTextField(context, notifier),
         15.verticalSpace,
-        vehicleNumberTextField(context, notifier),
-        15.verticalSpace,
         buildUploadImageSection(context, notifier),
         15.verticalSpace,
         buildUploadDocumentSection(context, notifier),
         15.verticalSpace,
         buildUploadVehicleRegistrationSection(context, notifier),
         15.verticalSpace,
-        saveAndCancelVisitors(context, notifier),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "${context.watchLang.translate(AppLanguageText.note)}: ${context.watchLang.translate(
+                AppLanguageText.latestPhoto)} ",
+            style: AppFonts.textRegular14Red,
+          ),
+        ),
       ]);
     }
+
+    children.addAll([
+      20.verticalSpace,
+      saveAndCancelVisitors(context, notifier),
+    ]);
 
     return children;
   }
@@ -857,7 +940,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     return idWidgets;
   }
 
-  Widget visitorTable(ApplyPassGroupNotifier notifier) {
+  Widget visitorTable(BuildContext context, ApplyPassGroupNotifier notifier) {
     final visitors = notifier.addedVisitors;
 
     return Container(
@@ -876,17 +959,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
                   border: TableBorder(borderRadius: BorderRadius.circular(8)),
                   clipBehavior: Clip.antiAliasWithSaveLayer,
                   columnSpacing: 40,
-                  columns: const [
-                    DataColumn(label: Text('Visitor Name')),
-                    DataColumn(label: Text('Company Name')),
-                    DataColumn(label: Text('Email')),
-                    DataColumn(label: Text('Contact Number')),
-                    DataColumn(label: Text('ID Type')),
-                    DataColumn(label: Text('ID Number')),
-                    DataColumn(label: Text('ID Expiry Date')),
-                    DataColumn(label: Text('Nationality')),
-                    DataColumn(label: Text('Vehicle No.')),
-                    DataColumn(label: Text('Action')),
+                  columns: [
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.visitorName))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.companyName))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.email))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.mobileNumber))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idType))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idNumber))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idExpiryDate))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.nationality))),
+                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.action))),
                   ],
                   rows:
                       visitors.asMap().entries.map((entry) {
@@ -903,7 +985,6 @@ class ApplyPassGroupScreen extends StatelessWidget {
                             DataCell(Text(visitor.documentId)),
                             DataCell(Text(visitor.expiryDate)),
                             DataCell(Text(visitor.nationality)),
-                            DataCell(Text(visitor.vehicleNumber)),
                             DataCell(
                               _buildActionButtons(
                                 onEdit: () => notifier.startEditingVisitors(index),
@@ -960,6 +1041,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
 
   Widget buildUploadSection({
     required BuildContext context,
+    required ApplyPassGroupNotifier applyPassGroupNotifier,
     required String title,
     required String? fileName,
     required VoidCallback onUploadTap,
@@ -967,6 +1049,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     String? tooltipMessage,
     bool isRequired = false,
     bool showError = false,
+    Uint8List? viewAttachmentData,
     String? errorText,
   }) {
     return Column(
@@ -1009,16 +1092,55 @@ class ApplyPassGroupScreen extends StatelessWidget {
           ],
         ),
         const Divider(height: 10, indent: 0, thickness: 1),
+        if(viewAttachmentData != null) _buildViewAttachment(context, applyPassGroupNotifier, viewAttachmentData),
         if (showError && errorText != null) Text(errorText, style: AppFonts.errorTextRegular12),
       ],
     );
   }
 
+  Widget _buildViewAttachment(BuildContext context, ApplyPassGroupNotifier notifier, Uint8List? imageData) {
+    return GestureDetector(
+      onTap: () async {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (_) =>
+              AlertDialog(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
+                content: Column(
+                  children: [
+                    Align(
+                        alignment: Alignment.centerRight,
+                        child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Icon(LucideIcons.x))),
+                    5.verticalSpace,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Image.memory(imageData!),
+                    ),
+                  ],
+                ),
+              ),
+        );
+      },
+      child: Text(context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+    );
+  }
+
+
   Widget buildUploadImageSection(BuildContext context, ApplyPassGroupNotifier notifier) {
+    final langContext = context.readLang;
+
     return buildUploadSection(
       context: context,
+      applyPassGroupNotifier: notifier,
       title: context.watchLang.translate(AppLanguageText.uploadPhoto),
-      fileName: notifier.uploadedImageFile?.path.split('/').last,
+      fileName: notifier.uploadedImageFile?.path
+          .split('/')
+          .last,
       onUploadTap: () {
         showImageUploadBottomSheet(
           context: context,
@@ -1032,10 +1154,13 @@ class ApplyPassGroupScreen extends StatelessWidget {
       },
       isRequired: true,
       showTooltip: true,
+      viewAttachmentData: notifier.uploadedImageBytes,
       tooltipMessage:
-          "Upload a recent passport-sized\n photo (JPG, PNG, or JPEG).\n Ensure the image is clear and meets\n official guidelines.",
+      "${langContext.translate(AppLanguageText.uploadRecentPassport)}\n ${langContext.translate(
+          AppLanguageText.photoJpgPng)}\n ${langContext.translate(AppLanguageText.ensureTheImage)}\n ${langContext
+          .translate(AppLanguageText.officialGuidelines)}",
       showError: notifier.photoUploadValidation,
-      errorText: "Photo upload is required.",
+      errorText: context.readLang.translate(AppLanguageText.validationPhotoUploadRequired),
     );
   }
 
@@ -1067,7 +1192,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
                 children: [
                   uploadOptionCard(
                     icon: LucideIcons.camera,
-                    label: "Camera",
+                    label: context.readLang.translate(AppLanguageText.camera),
                     onTap: () {
                       Navigator.pop(context);
                       onCameraTap();
@@ -1075,7 +1200,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
                   ),
                   uploadOptionCard(
                     icon: LucideIcons.image,
-                    label: "Device",
+                    label: context.readLang.translate(AppLanguageText.device),
                     onTap: () {
                       Navigator.pop(context);
                       onGalleryTap();
@@ -1111,20 +1236,24 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget buildUploadDocumentSection(BuildContext context, ApplyPassGroupNotifier notifier) {
     return buildUploadSection(
       context: context,
+      applyPassGroupNotifier: notifier,
       title: 'Upload ${notifier.selectedIdType}',
       fileName: notifier.uploadedDocumentFile?.path.split('/').last,
       onUploadTap: () async => await notifier.uploadDocument(),
       isRequired: true,
+      viewAttachmentData: notifier.uploadedDocumentBytes,
       showError: notifier.documentUploadValidation,
-      errorText: "${notifier.selectedIdType} upload is required.",
+      errorText: "${notifier.selectedIdType} ${context.readLang.translate(AppLanguageText.upload)} ${context.readLang.translate(AppLanguageText.validationRequired)}",
     );
   }
 
   Widget buildUploadVehicleRegistrationSection(BuildContext context, ApplyPassGroupNotifier notifier) {
     return buildUploadSection(
       context: context,
+      applyPassGroupNotifier: notifier,
       title: context.watchLang.translate(AppLanguageText.vehicleRegistrationLicense),
       fileName: notifier.uploadedVehicleRegistrationFile?.path.split('/').last,
+      viewAttachmentData: notifier.uploadedVehicleImageBytes,
       onUploadTap: () async => await notifier.uploadVehicleRegistrationImage(),
     );
   }
@@ -1134,7 +1263,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.visitorNameController,
       fieldName: context.watchLang.translate(AppLanguageText.visitorName),
       isSmallFieldFont: true,
-      validator: CommonValidation().visitorNameValidator,
+      validator: (value) => CommonValidation().visitorNameValidator(context, value),
     );
   }
 
@@ -1143,7 +1272,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.companyNameController,
       fieldName: context.watchLang.translate(AppLanguageText.companyName),
       isSmallFieldFont: true,
-      validator: CommonValidation().companyValidator,
+      validator: (value) => CommonValidation().companyValidator(context, value),
     );
   }
 
@@ -1152,7 +1281,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.phoneNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateMobile,
+      keyboardType: TextInputType.phone,
+      validator: (value) => CommonValidation().validateMobile(context, value),
     );
   }
 
@@ -1161,7 +1291,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.emailController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateEmail,
+      validator: (value) => CommonValidation().validateEmail(context, value),
     );
   }
 
@@ -1170,7 +1300,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.nationalityIdController,
       fieldName: context.watchLang.translate(AppLanguageText.nationalID),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateNationalId,
+      validator: (value) => CommonValidation().validateNationalId(context, value),
     );
   }
 
@@ -1183,7 +1313,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
       startDate: DateTime.now(),
-      validator: idType.validator,
+      validator: (value) => idType.validator(context, value),
     );
   }
 
@@ -1193,7 +1323,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.vehicleNo),
       isSmallFieldFont: true,
       skipValidation: true,
-      validator: CommonValidation().vehicleNumberValidator,
+      validator: (value) => CommonValidation().vehicleNumberValidator(context, value),
     );
   }
 
@@ -1201,15 +1331,19 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget nationalityField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<CountryData>(
       fieldName: context.watchLang.translate(AppLanguageText.nationality),
-      hintText: 'Select Country',
+      hintText: context.readLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.nationalityController,
       items: applyPassGroupNotifier.nationalityMenu,
-      itemLabel: (item) => item.name ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.nameAr,
+        getEnglish: () => item.name,
+      ),
       isSmallFieldFont: true,
       onSelected: (country) {
         applyPassGroupNotifier.selectedNationality = country?.iso3 ?? "";
       },
-      validator: CommonValidation().nationalityValidator,
+      validator: (value) => CommonValidation().nationalityValidator(context, value),
     );
   }
 
@@ -1217,16 +1351,20 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget idTypeField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<DocumentIdModel>(
       fieldName: context.watchLang.translate(AppLanguageText.idType),
-      hintText: 'Select Id type',
+      hintText: context.readLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.idTypeController,
       items: applyPassGroupNotifier.idTypeMenu,
-      itemLabel: (item) => item.labelEn ?? 'Unknown',
+      itemLabel: (item) => CommonUtils.getLocalizedString(
+        currentLang: context.lang,
+        getArabic: () => item.labelAr,
+        getEnglish: () => item.labelEn,
+      ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
         applyPassGroupNotifier.selectedIdValue = menu?.value.toString() ?? "";
         applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
-      validator: CommonValidation().iDTypeValidator,
+      validator:(value) =>  CommonValidation().iDTypeValidator(context, value),
     );
   }
 
@@ -1235,9 +1373,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
     return CustomTextField(
       controller: applyPassGroupNotifier.iqamaController,
       fieldName: context.watchLang.translate(AppLanguageText.iqama),
-      keyboardType: TextInputType.phone,
       isSmallFieldFont: true,
-      validator: CommonValidation().validateIqama,
+      validator: (value) => CommonValidation().validateIqama(context, value),
     );
   }
 
@@ -1247,7 +1384,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.passportNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
       isSmallFieldFont: true,
-      validator: CommonValidation().validatePassport,
+      validator: (value) => CommonValidation().validatePassport(context, value),
     );
   }
 
@@ -1257,7 +1394,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.documentNameController,
       fieldName: context.watchLang.translate(AppLanguageText.documentNameOther),
       isSmallFieldFont: true,
-      validator: CommonValidation().documentNameValidator,
+      validator: (value) => CommonValidation().documentNameValidator(context, value),
     );
   }
 
@@ -1267,7 +1404,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.documentNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.documentNumberOther),
       isSmallFieldFont: true,
-      validator: CommonValidation().documentNumberValidator,
+      validator: (value) => CommonValidation().documentNumberValidator(context, value),
     );
   }
 }

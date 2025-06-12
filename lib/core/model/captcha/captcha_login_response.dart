@@ -152,3 +152,51 @@ class LoginOTPResult {
     "accountLockoutStatus": accountLockoutStatus,
   };
 }
+
+CaptchaFailureResponse captchaFailureResponseFromJson(String str) => CaptchaFailureResponse.fromJson(json.decode(str));
+
+String captchaFailureResponseToJson(CaptchaFailureResponse data) => json.encode(data.toJson());
+
+class CaptchaFailureResponse {
+  CaptchaFailureResult? result;
+  int? statusCode;
+  String? message;
+  bool? status;
+
+  CaptchaFailureResponse({
+    this.result,
+    this.statusCode,
+    this.message,
+    this.status,
+  });
+
+  factory CaptchaFailureResponse.fromJson(Map<String, dynamic> json) => CaptchaFailureResponse(
+    result: json["result"] == null ? null : CaptchaFailureResult.fromJson(json["result"]),
+    statusCode: json["statusCode"],
+    message: json["message"],
+    status: json["status"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "result": result?.toJson(),
+    "statusCode": statusCode,
+    "message": message,
+    "status": status,
+  };
+}
+
+class CaptchaFailureResult {
+  bool? isCaptchaValid;
+
+  CaptchaFailureResult({
+    this.isCaptchaValid,
+  });
+
+  factory CaptchaFailureResult.fromJson(Map<String, dynamic> json) => CaptchaFailureResult(
+    isCaptchaValid: json["isCaptchaValid"],
+  );
+
+  Map<String, dynamic> toJson() => {
+    "isCaptchaValid": isCaptchaValid,
+  };
+}

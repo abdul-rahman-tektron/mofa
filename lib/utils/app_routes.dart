@@ -77,13 +77,6 @@ class AppRouter {
               ),
         );
 
-      case AppRoutes.applyPassCategory:
-        final args = settings.arguments as ApplyPassCategory;
-        return MaterialPageRoute(
-          builder:
-              (_) => ApplyPassCategoryScreen(category: args, onNext: () {}),
-        );
-
       case AppRoutes.healthAndSafety:
         return MaterialPageRoute(
           builder:

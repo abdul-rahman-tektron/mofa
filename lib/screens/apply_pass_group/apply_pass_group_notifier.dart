@@ -12,6 +12,7 @@ import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/duplicate_appointment/duplicate_appointment_request.dart';
 import 'package:mofa/core/model/forget_password/forget_password_request.dart';
+import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
 import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
@@ -40,7 +41,8 @@ import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   // key
-  final formKey = GlobalKey<FormState>();
+  final visitFormKey = GlobalKey<FormState>();
+  final visitorFormKey = GlobalKey<FormState>();
 
   // bool
   bool _isChecked = false;
@@ -150,7 +152,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   }
 
   String _formatDate(DateTime date) {
-    final formatter = DateFormat("dd/MM/yyyy ،hh:mm a");
+    final formatter = DateFormat("dd/MM/yyyy, hh:mm a");
     return formatter.format(date);
   }
 
@@ -162,6 +164,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     visitEndDateController.text = _formatDate(now.add(Duration(hours: 1)));
 
     await fetchAllDropdownData(context);
+
+    // for (int i = 0; i < totalVisitors; i++) {
+    //   await initializePreviousGroupData(context, i);
+    // }
+
   }
 
   Future<void> fetchAllDropdownData(BuildContext context) async {
@@ -207,7 +214,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiLocationDropdown: $e");
-      ToastHelper.showError("Failed to load locations.");
     }
   }
 
@@ -222,7 +228,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiNationalityDropdown: $e");
-      ToastHelper.showError("Failed to load nationalities.");
     }
   }
 
@@ -240,7 +245,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiVisitPurposeDropdown: $e");
-      ToastHelper.showError("Failed to load visit purposes.");
     }
   }
 
@@ -257,7 +261,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiVisitRequestDropdown: $e");
-      ToastHelper.showError("Failed to load visit request types.");
     }
   }
 
@@ -275,7 +278,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiDeviceTypeDropdown: $e");
-      ToastHelper.showError("Failed to load device types.");
     }
   }
 
@@ -294,7 +296,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiDevicePurposeDropdown: $e");
-      ToastHelper.showError("Failed to load device purpose dropdown.");
     }
   }
 
@@ -310,7 +311,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiPlateSourceDropdown: $e");
-      ToastHelper.showError("Failed to load plate type dropdown.");
     }
   }
 
@@ -326,7 +326,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiPlateLetterDropdown: $e");
-      ToastHelper.showError("Failed to load plate letter dropdown.");
     }
   }
 
@@ -341,7 +340,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiVisitingHoursConfig: $e");
-      ToastHelper.showError("Failed to fetch visiting hours configuration.");
     }
   }
 
@@ -355,7 +353,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiValidatePhotoConfig: $e");
-      ToastHelper.showError("Failed to validate photo config");
     }
   }
 
@@ -432,6 +429,128 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     return null;
   }
 
+  // Future<void> initializePreviousGroupData(BuildContext context, int index) async {
+  //
+  //   if (jsonStringList != null && jsonStringList.isNotEmpty) {
+  //     final List<dynamic> decodedList = jsonDecode(jsonStringList);
+  //     final List<AddAppointmentRequest> requestList = decodedList
+  //         .map((e) => AddAppointmentRequest.fromJson(e))
+  //         .toList();
+  //
+  //     if (index < requestList.length) {
+  //       final visitor = requestList[index];
+  //       _populateVisitorFields(visitor);
+  //     }
+  //   }
+  //
+  //   if (jsonImageListString != null && jsonImageListString.isNotEmpty) {
+  //     final List<dynamic> imageList = jsonDecode(jsonImageListString);
+  //
+  //     if (index < imageList.length) {
+  //       final imageMap = imageList[index];
+  //
+  //       final Uint8List? imageBytes = _decodeUint8List(imageMap['imageUploaded']);
+  //       final Uint8List? documentBytes = _decodeUint8List(imageMap['documentUploaded']);
+  //       final Uint8List? vehicleBytes = _decodeUint8List(imageMap['vehicleRegistrationUploaded']);
+  //
+  //       uploadedImageBytes = imageBytes;
+  //       uploadedDocumentBytes = documentBytes;
+  //       uploadedVehicleImageBytes = vehicleBytes;
+  //
+  //       selectedIdType = imageMap['selectedIdType'] ?? '';
+  //     }
+  //   }
+  //
+  //   notifyListeners();
+  // }
+  //
+  // Uint8List? _decodeUint8List(dynamic rawData) {
+  //   if (rawData is List) {
+  //     try {
+  //       return Uint8List.fromList(rawData.cast<int>());
+  //     } catch (_) {
+  //       return null;
+  //     }
+  //   }
+  //   return null;
+  // }
+  //
+  // void _populateVisitorFields(AddAppointmentRequest userData) {
+  //   visitorNameController.text = userData.fullName ?? "";
+  //   companyNameController.text = userData.sponsor ?? "";
+  //   nationalityController.text = nationalityMenu
+  //       .firstWhere((item) => item.iso3 == userData.nationality, orElse: () => CountryData())
+  //       .name ?? "";
+  //   selectedNationality = userData.nationality ?? "";
+  //   phoneNumberController.text = userData.mobileNo ?? "";
+  //   emailController.text = userData.email ?? "";
+  //   idTypeController.text = idTypeMenu
+  //       .firstWhere((item) => item.value == userData.idType, orElse: () => DocumentIdModel(labelEn: '', labelAr: '', value: 0))
+  //       .labelEn;
+  //   selectedIdValue = userData.idType?.toString() ?? "";
+  //   selectedIdType = idTypeController.text;
+  //   iqamaController.text = userData.sIqama ?? "";
+  //   passportNumberController.text = userData.passportNumber ?? "";
+  //   nationalityIdController.text = userData.eidNumber ?? "";
+  //   documentNameController.text = userData.sOthersDoc ?? "";
+  //   documentNumberController.text = userData.sOthersValue ?? "";
+  //
+  //   expiryDateController.text = switch (IdTypeExtension.fromInt(userData.idType)) {
+  //     IdType.nationalId => userData.dtEidExpiryDate?.toDisplayDate() ?? "",
+  //     IdType.passport => userData.dtPassportExpiryDate?.toDisplayDate() ?? "",
+  //     IdType.iqama => userData.dtIqamaExpiry?.toDisplayDate() ?? "",
+  //     IdType.other => userData.dtOthersExpiry?.toDisplayDate() ?? "",
+  //     _ => ""
+  //   };
+  //
+  //   vehicleNumberController.text = userData.sVehicleNo ?? "";
+  //
+  //   // Set plate values (as done before)
+  //   // Set visit purpose, start/end, etc.
+  //   // Call addMultipleDevicesFromResult if userData.devices is not empty
+  //   final deviceResults = convertDeviceModelsToResults(userData.devices ?? []);
+  //   addMultipleDevicesFromResult(deviceResults);
+  // }
+  //
+  // List<DeviceResult> convertDeviceModelsToResults(List<DeviceModel> models) {
+  //   return models.map((model) {
+  //     return DeviceResult(
+  //       appointmentDeviceId: model.appointmentDeviceId,
+  //       deviceType: model.deviceType,
+  //       deviceTypeOthersValue: model.deviceTypeOthersValue,
+  //       deviceModel: model.deviceModel,
+  //       serialNumber: model.serialNumber,
+  //       devicePurpose: model.devicePurpose,
+  //       devicePurposeOthersValue: model.devicePurposeOthersValue,
+  //       approvalStatus: model.approvalStatus,
+  //     );
+  //   }).toList();
+  // }
+  //
+  // void addMultipleDevicesFromResult(List<DeviceResult>? results) {
+  //   if (results == null) return;
+  //
+  //   final deviceModels = results.map((r) {
+  //     return DeviceModel(
+  //       appointmentDeviceId: r.appointmentDeviceId ?? 0,
+  //       deviceType: r.deviceType,
+  //       deviceTypeString: r.deviceType.toString(),
+  //       deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
+  //       deviceModel: r.deviceModel ?? "",
+  //       serialNumber: r.serialNumber ?? "",
+  //       devicePurpose: r.devicePurpose,
+  //       devicePurposeString: r.devicePurpose.toString(),
+  //       devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+  //       approvalStatus: r.approvalStatus ?? 50,
+  //     );
+  //   }).toList();
+  //
+  //   addedDevices.addAll(deviceModels);
+  //   showDeviceFields = false;
+  //   notifyListeners();
+  // }
+
+
   // Update User Verify checkbox state
   void userVerifyChecked(BuildContext context, bool? value) {
     isChecked = value!;
@@ -465,6 +584,15 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   }
 
   void removeDevice(int index) {
+    // Check if the item being deleted is currently being edited
+    if (isEditingDevice && editDeviceIndex == index) {
+      // The edited device is being deleted
+      cancelEditing(); // Clear and hide fields
+    } else if (isEditingDevice && editDeviceIndex != null && index < editDeviceIndex!) {
+      // If deleting an item *before* the one being edited, shift the edit index
+      editDeviceIndex = editDeviceIndex! - 1;
+    }
+
     addedDevices.removeAt(index);
     notifyListeners();
   }
@@ -490,6 +618,18 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     deviceModelController.clear();
     serialNumberController.clear();
     devicePurposeController.clear();
+  }
+
+  bool isDevicePartiallyFilled() {
+    final isDeviceTypeEmpty = deviceTypeController.text.trim().isEmpty;
+    final isModelEmpty = deviceModelController.text.trim().isEmpty;
+    final isSerialEmpty = serialNumberController.text.trim().isEmpty;
+    final isPurposeEmpty = devicePurposeController.text.trim().isEmpty;
+
+    final allEmpty = isDeviceTypeEmpty && isModelEmpty && isSerialEmpty && isPurposeEmpty;
+    final allFilled = !isDeviceTypeEmpty && !isModelEmpty && !isSerialEmpty && !isPurposeEmpty;
+
+    return !allEmpty && !allFilled; // return true if partially filled
   }
 
 
@@ -545,10 +685,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     uploadedImageFile = null;
     uploadedDocumentFile = null;
     uploadedVehicleRegistrationFile = null;
+    uploadedImageBytes = null;
+    uploadedDocumentBytes = null;
+    uploadedVehicleImageBytes = null;
   }
 
   void removeVisitors(int index) {
     addedVisitors.removeAt(index);
+    imageList.removeAt(index);
     notifyListeners();
   }
 
@@ -571,6 +715,10 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     documentNumberController.text = visitors.documentId;
     expiryDateController.text = visitors.expiryDate;
     vehicleNumberController.text = visitors.vehicleNumber;
+
+    uploadedImageBytes = visitors.uploadedPhoto.decodeBase64OrNull();
+    uploadedDocumentBytes = visitors.uploadedDocumentId.decodeBase64OrNull();
+    uploadedVehicleImageBytes = visitors.uploadedVehicleRegistration.decodeBase64OrNull();
   }
 
   void cancelVisitorsEditing() {
@@ -582,13 +730,16 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   }
 
   Future<void> saveVisitors(BuildContext context) async {
-    if (!_isVisitorFormValid()) return;
+    if (!_isVisitorFormValid(context)) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
+      return;
+    }
 
     if (isValidatePhotoFromFR && !await apiValidatePhoto(context)) return;
 
     if (!_isExpiryDateValid(context)) return;
 
-    final newVisitor = await _buildVisitorModel();
+    final newVisitor = await _buildVisitorModel(context);
     _updateVisitorList(newVisitor);
 
     showVisitorsFields = false;
@@ -596,21 +747,18 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
-  bool _isVisitorFormValid() {
-    return visitorNameController.text.isNotEmpty &&
-        companyNameController.text.isNotEmpty &&
-        phoneNumberController.text.isNotEmpty &&
-        emailController.text.isNotEmpty &&
-        nationalityController.text.isNotEmpty &&
-        iqamaController.text.isNotEmpty &&
-        expiryDateController.text.isNotEmpty;
+  bool _isVisitorFormValid(BuildContext context) {
+    final isFileValid = _isGroupVisitorFileValid(context);
+    final isFormValid = visitorFormKey.currentState?.validate() ?? false;
+
+    return isFileValid && isFormValid;
   }
 
   bool _isExpiryDateValid(BuildContext context) {
     try {
       final lang = context.readLang;
       final expiryDate = DateFormat("dd/MM/yyyy").parse(expiryDateController.text);
-      final visitEndDate = DateFormat("dd/MM/yyyy '،'hh:mm a").parse(visitEndDateController.text);
+      final visitEndDate = DateFormat("dd/MM/yyyy, hh:mm a").parse(visitEndDateController.text);
 
       if (expiryDate.isBefore(visitEndDate)) {
         ToastHelper.showError(lang.translate(AppLanguageText.expireVisitError));
@@ -619,14 +767,25 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       return true;
     } catch (e) {
       debugPrint("Date parsing error: $e");
+      debugPrint("Date parsing error: $e");
       return false;
     }
   }
 
-  Future<VisitorDetailModel> _buildVisitorModel() async {
-    final image = await uploadedImageFile?.toBase64() ?? "";
-    final document = await uploadedDocumentFile?.toBase64() ?? "";
-    final vehicleReg = await uploadedVehicleRegistrationFile?.toBase64() ?? "";
+  Future<VisitorDetailModel> _buildVisitorModel(BuildContext context) async {
+    final image = isEditingVisitors
+        ? await uploadedImageFile?.toBase64()
+        ?? (uploadedImageBytes != null ? base64Encode(uploadedImageBytes!) : null)
+        : await uploadedImageFile!.toBase64();
+
+    final document = isEditingVisitors ? await uploadedDocumentFile?.toBase64()
+        ?? (uploadedDocumentBytes != null ? base64Encode(uploadedDocumentBytes!) : null)
+    :await uploadedDocumentFile?.toBase64();
+
+    final vehicleReg = isEditingVisitors ? await uploadedVehicleRegistrationFile?.toBase64()
+        ?? (uploadedVehicleImageBytes != null ? base64Encode(uploadedVehicleImageBytes!) : null)
+    : await uploadedVehicleRegistrationFile?.toBase64();
+
 
     imageList.add({
       "imageUploaded": image,
@@ -640,7 +799,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       companyName: companyNameController.text,
       mobileNumber: phoneNumberController.text,
       email: emailController.text,
-      nationality: nationalityController.text,
+      nationality: selectedNationality ?? "",
       idType: idTypeController.text,
       documentId: iqamaController.text,
       expiryDate: expiryDateController.text,
@@ -649,6 +808,21 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       uploadedDocumentId: document,
       uploadedVehicleRegistration: vehicleReg,
     );
+  }
+
+  bool _isGroupVisitorFileValid(BuildContext context) {
+    final lang = context.readLang;
+
+    final hasPhoto = uploadedImageBytes != null || uploadedImageFile != null;
+    final hasDocument = uploadedDocumentBytes != null || uploadedDocumentFile != null;
+
+    if (!hasPhoto || !hasDocument) {
+      photoUploadValidation = uploadedImageFile == null;
+      documentUploadValidation = uploadedDocumentFile == null;
+      return false;
+    }
+
+    return true;
   }
 
   void _updateVisitorList(VisitorDetailModel visitor) {
@@ -671,16 +845,32 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     final lang = context.readLang;
 
     // Validate form
-    final formValid = formKey.currentState?.validate() ?? false;
-    photoUploadValidation = uploadedImageFile == null;
-    documentUploadValidation = uploadedDocumentFile == null;
+    final formValid = visitFormKey.currentState?.validate() ?? false;
 
     if (!formValid) {
       ToastHelper.showError(lang.translate(AppLanguageText.fillAllInformation));
       return false;
     }
 
-    // Validate visitor list
+    // ✅ Visit time range validation
+    final visitStart = CommonUtils.parseFullDateStringToTimeOfDay(visitStartDateController.text);
+    final visitEnd = CommonUtils.parseFullDateStringToTimeOfDay(visitEndDateController.text);
+    if (apiVisitStartTime != null && apiVisitEndTime != null && visitStart != null && visitEnd != null) {
+      final isVisitStartValid = !CommonUtils.isBeforeTimeOfDay(visitStart, apiVisitStartTime!);
+      final isVisitEndValid = !CommonUtils.isAfterTimeOfDay(visitEnd, apiVisitEndTime!);
+
+      if (!isVisitStartValid || !isVisitEndValid) {
+        final startTimeFormatted = apiVisitStartTime!.format(context);
+        final endTimeFormatted = apiVisitEndTime!.format(context);
+
+        ToastHelper.showError(
+          "Visit time should be between $startTimeFormatted - $endTimeFormatted",
+        );
+        return false;
+      }
+    }
+
+    // ✅ Check visitor list
     if (addedVisitors.isEmpty) {
       ToastHelper.showError(lang.translate(AppLanguageText.kindlyAddVisitor));
       return false;
@@ -690,12 +880,13 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     final isEmailValid = await apiValidateEmail(context);
     if (!isEmailValid) return false;
 
-    // Optional: Check for duplicates
+    // ✅ Duplicate check
     final isDuplicateFree = await apiDuplicateAppointment(context);
     if (!isDuplicateFree) return false;
 
     return true;
   }
+
 
   Future<bool> apiValidateEmail(BuildContext context) async {
     try {

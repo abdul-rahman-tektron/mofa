@@ -12,6 +12,7 @@ class CustomButton extends StatelessWidget {
   final IconData? iconData;
   final double? radius;
   final double? height;
+  final bool isLoading;
   final EdgeInsets? padding;
   final Color? borderColor;
   final bool smallWidth;
@@ -27,6 +28,7 @@ class CustomButton extends StatelessWidget {
     this.iconData,
     this.padding,
     this.borderColor,
+    this.isLoading = false,
     this.smallWidth = false,
   });
 
@@ -52,7 +54,7 @@ class CustomButton extends StatelessWidget {
           ), // Border color and width
         ),
       ),
-      child: Text(text, style: textFont ?? AppFonts.textButtonStyle),
+      child: isLoading ? const CircularProgressIndicator(color: Colors.white,) : Text(text, style: textFont ?? AppFonts.textButtonStyle),
     );
   }
 
@@ -77,7 +79,7 @@ class CustomButton extends StatelessWidget {
           ), // Border color and width
         ),
       ),
-      child: Row(
+      child: isLoading ? const CircularProgressIndicator(color: Colors.white,) : Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(text, style: textFont ?? AppFonts.textButtonStyle),

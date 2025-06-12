@@ -9,6 +9,7 @@ import 'package:logger/logger.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/main.dart';
 import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/error_handler.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
 import 'package:provider/provider.dart';
@@ -58,6 +59,20 @@ class NetworkProvider {
         handler.next(response);
       },
       onError: (DioError e, handler) async {
+        // Report to Crashlytics with context
+        await ErrorHandler.recordError(
+          e,
+          e.stackTrace,
+          fatal: false,
+          reason: 'Dio interceptor error',
+          context: {
+            'path': e.requestOptions.path,
+            'method': e.requestOptions.method,
+            'statusCode': e.response?.statusCode?.toString() ?? 'null',
+            'responseData': e.response?.data?.toString() ?? 'null',
+          },
+        );
+
         if (e.message!.contains("XMLHttpRequest error")) {
           MyApp.navigatorKey.currentState?.pushNamed(AppRoutes.networkError);
         }
@@ -122,11 +137,33 @@ class NetworkProvider {
       log("📨 Data: ${jsonEncode(response.data)}");
 
       return response;
-    } on DioError catch (e) {
+    } on DioError catch (e, stack) {
+      await ErrorHandler.recordError(
+        e,
+        stack,
+        fatal: false,
+        reason: 'API call failed',
+        context: {
+          'url': url,
+          'method': method.name,
+          'statusCode': e.response?.statusCode?.toString() ?? 'null',
+          'responseData': e.response?.data?.toString() ?? 'null',
+        },
+      );
       logger.e("❌ DioError [${e.response?.statusCode}] from ${e.requestOptions.path}");
       logger.e("🧾 Error Response: ${e.response?.data}");
       return await _handleError(e);
-    } catch (e) {
+    } catch (e, stack) {
+      await ErrorHandler.recordError(
+        e,
+        stack,
+        fatal: false,
+        reason: 'Unexpected API error',
+        context: {
+          'url': url,
+          'method': method.name,
+        },
+      );
       logger.e("🚨 Unexpected error during request to $url: $e");
       return null;
     }

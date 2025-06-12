@@ -6,6 +6,7 @@ import 'package:mofa/screens/apply_pass_group/apply_pass_group_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_screen.dart';
 import 'package:mofa/utils/enum_values.dart';
+import 'package:provider/provider.dart';
 
 class StepperHandlerNotifier extends BaseChangeNotifier {
   int _currentStep = 0;
@@ -18,7 +19,7 @@ StepperHandlerNotifier(BuildContext context, ApplyPassCategory category, bool is
   steps = [
       category == ApplyPassCategory.group
           ? ApplyPassGroupScreen(onNext: goToNextStep, category: category, isUpdate: isUpdate, id: id,)
-          : ApplyPassCategoryScreen(onNext: goToNextStep, category: category, isUpdate: isUpdate, id: id,),
+          : ApplyPassCategoryScreen(onNext: goToNextStep, category: category,isUpdate: isUpdate, id: id, ),
       HealthAndSafetyScreen(onNext: goToNextStep, onPrevious: goToPreviousStep, isUpdate: isUpdate,),
     FinishApplyPassScreen(onPrevious: goToPreviousStep),
   ];

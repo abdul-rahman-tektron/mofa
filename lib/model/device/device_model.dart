@@ -23,9 +23,9 @@ class VisitorDetailModel {
   final String documentId;
   final String expiryDate;
   final String vehicleNumber;
-  final String uploadedPhoto;
-  final String uploadedDocumentId;
-  final String uploadedVehicleRegistration;
+  final String? uploadedPhoto;
+  final String? uploadedDocumentId;
+  final String? uploadedVehicleRegistration;
 
   VisitorDetailModel({
     required this.visitorName,

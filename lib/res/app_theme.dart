@@ -39,6 +39,11 @@ class AppTheme {
       inputDecorationTheme: const InputDecorationTheme(
         border: OutlineInputBorder(),
       ),
+      textSelectionTheme: TextSelectionThemeData(
+        cursorColor: AppColors.buttonBgColor,
+        selectionColor: AppColors.buttonBgColor.withOpacity(0.4),
+        selectionHandleColor: AppColors.buttonBgColor,
+      ),
     );
   }
 }

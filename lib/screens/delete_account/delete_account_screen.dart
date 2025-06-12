@@ -110,7 +110,7 @@ class DeleteAccountScreen extends StatelessWidget {
       controller: deleteAccountNotifier.emailAddressController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       isSmallFieldFont: true,
-      validator: CommonValidation().validateEmail,
+      validator: (value) => CommonValidation().validateEmail(context, value),
     );
   }
 

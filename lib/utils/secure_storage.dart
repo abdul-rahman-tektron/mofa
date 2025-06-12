@@ -1,12 +1,33 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:mofa/res/app_strings.dart';
+import 'package:mofa/utils/error_handler.dart';
 
 class SecureStorageHelper {
   static FlutterSecureStorage? _secureStorage;
 
-  // Call this in main() before runApp()
+  // Initialize with encryptedSharedPreferences on Android
   static Future init() async {
-    _secureStorage = const FlutterSecureStorage();
+    _secureStorage = const FlutterSecureStorage(
+      aOptions: AndroidOptions(encryptedSharedPreferences: true),
+    );
+  }
+
+  // Safe read wrapper to handle BadPaddingException
+  static Future<String?> _safeRead(String key) async {
+    try {
+      return await _secureStorage?.read(key: key);
+    } catch (e, stack) {
+      await ErrorHandler.recordError(e, stack, context: {
+        'widget': 'Secure Storage',
+        'action': 'Fetching data from Local',
+      });
+
+      if (e is PlatformException && e.code == 'BadPaddingException') {
+        await _secureStorage?.deleteAll(); // Optional: clear on corruption
+      }
+      return null;
+    }
   }
 
   static Future<void> setUser(String value) async {
@@ -14,7 +35,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getUser() async {
-    return await _secureStorage?.read(key: AppStrings.userKey);
+    return await _safeRead(AppStrings.userKey);
   }
 
   static Future<void> setRememberMe(String value) async {
@@ -22,7 +43,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getRememberMe() async {
-    return await _secureStorage?.read(key: AppStrings.rememberMeKey);
+    return await _safeRead(AppStrings.rememberMeKey);
   }
 
   static Future<void> setToken(String value) async {
@@ -30,7 +51,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getToken() async {
-    return await _secureStorage?.read(key: AppStrings.accessToken);
+    return await _safeRead(AppStrings.accessToken);
   }
 
   static Future<void> setLanguageCode(String value) async {
@@ -38,7 +59,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getLanguageCode() async {
-    return await _secureStorage?.read(key: AppStrings.languageCode);
+    return await _safeRead(AppStrings.languageCode);
   }
 
   static Future<void> setAppointmentData(String value) async {
@@ -46,7 +67,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getAppointmentData() async {
-    return await _secureStorage?.read(key: AppStrings.appointmentData);
+    return await _safeRead(AppStrings.appointmentData);
   }
 
   static Future<void> setUploadedImage(String value) async {
@@ -54,7 +75,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getUploadedImage() async {
-    return await _secureStorage?.read(key: AppStrings.uploadedImageCode);
+    return await _safeRead(AppStrings.uploadedImageCode);
   }
 
   static Future<void> setCaptchaData(String value) async {
@@ -62,7 +83,7 @@ class SecureStorageHelper {
   }
 
   static Future<String?> getCaptchaData() async {
-    return await _secureStorage?.read(key: AppStrings.uploadedImageCode);
+    return await _safeRead(AppStrings.uploadedImageCode);
   }
 
   static Future<void> removeParticularKey(String key) async {
@@ -74,11 +95,10 @@ class SecureStorageHelper {
   }
 
   static Future<void> clearExceptRememberMe() async {
-    final rememberMeValue = await getRememberMe(); // Step 1: Save current rememberMe value
-    await _secureStorage?.deleteAll();             // Step 2: Clear everything
-    if (rememberMeValue != null) {                 // Step 3: Restore rememberMe value
+    final rememberMeValue = await getRememberMe();
+    await _secureStorage?.deleteAll();
+    if (rememberMeValue != null) {
       await setRememberMe(rememberMeValue);
     }
   }
 }
-

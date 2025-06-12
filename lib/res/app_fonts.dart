@@ -153,7 +153,7 @@ class AppFonts {
   static const textRegularGrey10 = TextStyle(
     fontSize: 10,
     fontWeight: FontWeight.normal,
-    color: AppColors.textFieldTextColor,
+    color: AppColors.greyColor,
     letterSpacing: 0.5,
   );
 
@@ -263,6 +263,14 @@ class AppFonts {
     color: AppColors.textColor,
     letterSpacing: 0.5,
   );
+
+  static const textMedium14White = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.whiteColor,
+    letterSpacing: 0.5,
+  );
+
   static const textMedium18 = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.w500,
@@ -329,6 +337,13 @@ class AppFonts {
     fontSize: 14,
     fontWeight: FontWeight.normal,
     color: AppColors.redColor,
+    letterSpacing: 0.5,
+  );
+
+  static const textRegular14Grey = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.normal,
+    color: AppColors.greyColor,
     letterSpacing: 0.5,
   );
 

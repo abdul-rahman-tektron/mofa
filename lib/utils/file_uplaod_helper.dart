@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -36,6 +37,13 @@ class FileUploadHelper {
     return await _saveToPermanentDirectory(imageFile);
   }
 
+  static File fromBase64(String base64Str) {
+    final bytes = base64Decode(base64Str);
+    final tempDir = Directory.systemTemp;
+    final file = File('${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}.tmp');
+    file.writeAsBytesSync(bytes); // just write, don't return
+    return file; // now return the file object
+  }
   /// Pick a document (PDF, Word, Excel, etc.)
   static Future<File?> pickDocument({List<String>? allowedExtensions}) async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(

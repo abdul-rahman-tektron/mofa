@@ -76,8 +76,8 @@ class _BulletListState extends State<BulletList> {
                 padding: const EdgeInsets.only(top: 5),
                 child: Text(
                   _expanded
-                      ? "Show less"
-                      : "Show more",
+                      ? context.watchLang.translate(AppLanguageText.showLess)
+                      : context.watchLang.translate(AppLanguageText.showMore),
                   style: AppFonts.textRegular14.copyWith(
                     color: Colors.blueAccent,
                   ),
