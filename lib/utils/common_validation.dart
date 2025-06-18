@@ -54,8 +54,16 @@ class CommonValidation {
   String? companyValidator(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.companyRequired);
 
-  String? visitorNameValidator(BuildContext context, String? value) =>
-      _requiredFieldValidator(context, value, AppLanguageText.visitorNameRequired);
+  String? visitorNameValidator(BuildContext context, String? value) {
+    if (value == null || value.isEmpty) {
+      return context.readLang.translate(AppLanguageText.visitorNameRequired);
+    }
+    if (!RegExp(LocalInputRegex.onlyAlphabets).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.visitorNameNumber);
+    }
+    return null;
+  }
+
 
   String? vehicleNumberValidator(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.vehicleNumberRequired);
@@ -166,8 +174,15 @@ class CommonValidation {
   String? validatePlateLetter3(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.plateLetter3Required);
 
-  String? validatePlateNumber(BuildContext context, String? value) =>
-      _requiredFieldValidator(context, value, AppLanguageText.plateNumberRequired);
+  String? validatePlateNumber(BuildContext context, String? value)  {
+    if (value == null || value.isEmpty) {
+      return context.readLang.translate(AppLanguageText.plateNumberRequired);
+    }
+    if (!RegExp(LocalInputRegex.plateNumber).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.plateNumberValid);
+    }
+    return null;
+  }
 
   // Helper method for common required field validations
   String? _requiredFieldValidator(BuildContext context, String? value, String key) {

@@ -54,7 +54,7 @@ class SearchPassNotifier extends BaseChangeNotifier {
   SearchPassNotifier(BuildContext context) {
     visitStartDateController.text = _getDefaultStartDate();
 
-    runWithLoadingVoid(_init(context));
+    runWithLoadingVoid(() => _init(context));
   }
 
   Future<void> _init(BuildContext context) async {

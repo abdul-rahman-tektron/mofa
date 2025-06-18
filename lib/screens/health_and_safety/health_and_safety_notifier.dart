@@ -177,9 +177,9 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     final base64Vehicle = jsonMap["vehicleRegistrationUploaded"] as String?;
     final selectedIdType = jsonMap["selectedIdType"] as String?;
 
-    final imageFile = await _decodeBase64File(base64Image, "uploadedImageFile.jpg");
-    final docFile = await _decodeBase64File(base64Doc, "uploadedDocumentFile.pdf");
-    final vehicleFile = await _decodeBase64File(base64Vehicle, "uploadedVehicleFile.jpg");
+    final imageFile = await _decodeBase64File(base64Image, "uploadedImageFile");
+    final docFile = await _decodeBase64File(base64Doc, "uploadedDocumentFile");
+    final vehicleFile = await _decodeBase64File(base64Vehicle, "uploadedVehicleFile");
 
     final uploadFutures = <Future<bool>>[];
 
@@ -205,9 +205,27 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
         : "⚠️ Partial failure for appointment $appointmentId");
   }
 
-  Future<File?> _decodeBase64File(String? base64Str, String fileName) async {
+  Future<File?> _decodeBase64File(String? base64Str, String baseFileNameWithoutExtension) async {
     if (base64Str == null || base64Str.isEmpty) return null;
-    return await base64Str.toFile(fileName: fileName);
+
+    final extension = _detectFileExtension(base64Str);
+    final finalFileName = "$baseFileNameWithoutExtension.$extension";
+
+    return await base64Str.toFile(fileName: finalFileName);
+  }
+
+  String _detectFileExtension(String base64Data) {
+    if (base64Data.startsWith('data:image/png') || base64Data.startsWith('iVBOR')) {
+      return 'png';
+    } else if (base64Data.startsWith('data:image/jpeg') || base64Data.startsWith('/9j/')) {
+      return 'jpg';
+    } else if (base64Data.startsWith('data:image/jpg')) {
+      return 'jpg';
+    } else if (base64Data.startsWith('data:application/pdf') || base64Data.startsWith('JVBERi0')) {
+      return 'pdf';
+    } else {
+      return 'bin'; // Fallback if unrecognized
+    }
   }
 
   Future<bool> _fileExists(File? file) async {
@@ -250,7 +268,7 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     try {
       final result = await ApplyPassRepository().apiAddAttachment(
         fieldName: fieldName,
-        imageFile: imageFile,
+        file: imageFile,
         fieldType: fieldType,
         context,
         id: appointmentId,
@@ -286,29 +304,28 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
   }
 
   Future<void> submitButtonPressed(BuildContext context, VoidCallback onNext) async {
-    if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
-      print("No appointments to send.");
-      return;
-    }
+    runWithLoadingVoid(() async {
+      if (addAppointmentRequest == null || addAppointmentRequest!.isEmpty) {
+        print("No appointments to send.");
+        return;
+      }
 
-    final imageDataList = await _loadUploadDataFromStorage();
+      final imageDataList = await _loadUploadDataFromStorage();
 
-    print("imageDataList.length");
-    print(imageDataList.length);
-    print(addAppointmentRequest?.length);
-    if (imageDataList.length != addAppointmentRequest!.length) {
-      print("Mismatch between appointments and image data.");
-      return;
-    }
+      if (imageDataList.length != addAppointmentRequest!.length) {
+        print("Mismatch between appointments and image data.");
+        return;
+      }
 
-    final futures = <Future<void>>[];
+      final futures = <Future<void>>[];
 
-    for (var i = 0; i < addAppointmentRequest!.length; i++) {
-      futures.add(_processSingleAppointment(context, addAppointmentRequest![i], imageDataList[i], i));
-    }
+      for (var i = 0; i < addAppointmentRequest!.length; i++) {
+        futures.add(_processSingleAppointment(context, addAppointmentRequest![i], imageDataList[i], i));
+      }
 
-    await Future.wait(futures);
-    onNext();
+      await Future.wait(futures);
+      onNext();
+    },);
   }
 
   // Use getters instead of fields

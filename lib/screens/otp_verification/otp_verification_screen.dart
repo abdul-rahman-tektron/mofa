@@ -85,7 +85,7 @@ class OtpVerificationScreen extends StatelessWidget {
         children: [
           Text(
             context.watchLang.translate(AppLanguageText.otpVerification),
-            style: AppFonts.textMedium30with600,
+            style: AppFonts.textMedium26with600,
           ),
           5.verticalSpace,
           Text(

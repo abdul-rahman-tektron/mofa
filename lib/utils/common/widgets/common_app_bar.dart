@@ -18,7 +18,7 @@ class CommonAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: Builder(
         builder: (context) => Padding(
           padding: const EdgeInsets.only(left: 15.0),
-          child: GestureDetector(
+          child: InkWell(
               onTap: () => Scaffold.of(context).openDrawer(),
               child: Icon(LucideIcons.menu, color: Colors.black, size: 25.r,)),
         ),

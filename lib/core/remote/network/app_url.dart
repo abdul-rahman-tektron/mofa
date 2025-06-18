@@ -25,6 +25,7 @@ class AppUrl {
   static final pathVisitPurposesDropdown = "/VisitPurposes/GetAllDropdown"; //POST
   static final pathPlateSourceDropdown = "/PlateSource/GetAll"; //POST
   static final pathPlateLetterDropdown = "/PlateLetters/GetAll"; //POST
+  static final pathSearchUser = "/Appointment/SearchUser"; //POST
   // static final pathGetById = "/ExternalUser/GetById"; //POST
   static final pathGetById = "/ExternalUser/GetLatestAppointmentData"; //POST
   static final pathGetByIdAppointment = "/ExternalAppointment/GetById"; //POST

@@ -22,6 +22,8 @@ import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dar
 import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/search_comment/search_comment_request.dart';
 import 'package:mofa/core/model/search_comment/search_comment_response.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_request.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_response.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_response.dart';
 import 'package:mofa/core/model/validate_photo_config/validate_photo_config_response.dart';
@@ -38,6 +40,7 @@ import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/search_pass/search_pass_screen.dart';
+import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/encrypt.dart';
@@ -47,11 +50,13 @@ import 'package:mofa/utils/file_uplaod_helper.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/toast_helper.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions, CommonUtils {
   // String
   String? _selectedNationality;
+  String? _selectedNationalityCodes;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
   String? _selectedVisitRequest;
@@ -69,6 +74,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   int _currentPage = 1;
   int _totalPages = 1;
   int _totalCount = 0;
+  int _havePhoto = 0;
+  int _haveDocument = 0;
+  int _haveVehicleRegistration = 0;
+  int _appointmentId = 0;
+  int _lastAppointmentId = 0;
   final int _pageSize = 10;
 
   // bool
@@ -82,6 +92,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   bool _documentUploadValidation = false;
   bool _isEnable = true;
   bool _isValidatePhotoFromFR = false;
+  bool _isPhotoLoading = false;
+  bool _isDocumentLoading = false;
+  bool _isTransportDocumentLoading = false;
 
   //File
   File? _uploadedImageFile;
@@ -111,11 +124,12 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   List<SearchCommentData> _searchCommentData = [];
 
   List<TableColumnConfig> columnConfigs = [
-    TableColumnConfig(labelKey: 'Comment Type', isMandatory: true),
-    TableColumnConfig(labelKey: 'Comment By', isMandatory: true),
-    TableColumnConfig(labelKey: 'Comment', isMandatory: true),
-    TableColumnConfig(labelKey: 'Comment Date', isVisible: true),
+    TableColumnConfig(labelKey: 'Comment Type', labelAr: 'نوع التعليق', isMandatory: true),
+    TableColumnConfig(labelKey: 'Comment By', labelAr: 'التعليق بواسطة', isMandatory: true),
+    TableColumnConfig(labelKey: 'Comment', labelAr: 'تعليق', isMandatory: true),
+    TableColumnConfig(labelKey: 'Comment Date', labelAr: 'تاريخ التعليق', isVisible: true),
   ];
+
 
   final List<DocumentIdModel> idTypeMenu = [
     DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
@@ -151,6 +165,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   TextEditingController _locationController = TextEditingController();
   TextEditingController _visitRequestTypeController = TextEditingController();
   TextEditingController _visitPurposeController = TextEditingController();
+  TextEditingController visitPurposeOtherController = TextEditingController();
   TextEditingController _mofaHostEmailController = TextEditingController();
   TextEditingController _visitStartDateController = TextEditingController();
   TextEditingController _visitEndDateController = TextEditingController();
@@ -158,9 +173,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   //Device Details
   TextEditingController _deviceTypeController = TextEditingController();
+  TextEditingController deviceTypeOtherController = TextEditingController();
   TextEditingController _deviceModelController = TextEditingController();
   TextEditingController _serialNumberController = TextEditingController();
   TextEditingController _devicePurposeController = TextEditingController();
+  TextEditingController devicePurposeOtherController = TextEditingController();
 
   //Vehicle Details
   TextEditingController plateTypeController = TextEditingController();
@@ -172,12 +189,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   //Re-submission Comment
   TextEditingController resubmissionCommentController = TextEditingController();
 
-  LoginTokenUserResponse? _userResponse;
+  //Search Field
+  TextEditingController iqamaSearchController = TextEditingController();
+  TextEditingController nationalityIdSearchController = TextEditingController();
+  TextEditingController passportSearchController = TextEditingController();
+  TextEditingController emailSearchController = TextEditingController();
+  TextEditingController phoneNumberSearchController = TextEditingController();
 
-  //Functions
-  ApplyPassCategoryNotifier(BuildContext context, ApplyPassCategory applyPassCategory, bool isUpdate, int? id) {
-    runWithLoadingVoid(initialize(context, applyPassCategory, isUpdate, id));
-  }
+  LoginTokenUserResponse? _userResponse;
 
   Future<void> initialize(BuildContext context, ApplyPassCategory category, bool isUpdate, int? id) async {
     applyPassCategory = category.name;
@@ -222,7 +241,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     }
   }
 
-  void initialDataForMySelf(BuildContext context, int? id) {
+  void initialDataForMySelf(BuildContext context, int? id) async {
     if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) {
       if (isUpdate) {
         final approvalStatus = getByIdResult?.user?.sApprovalStatusEn ?? "";
@@ -247,18 +266,19 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
           getLocalizedText(currentLang: context.lang, arabic: nationalityData.nameAr, english: nationalityData.name);
 
       selectedNationality = getByIdResult?.user?.iso3 ?? "";
+      selectedNationalityCodes = nationalityData.phonecode.toString() ?? "";
       phoneNumberController.text =
           isUpdate ? getByIdResult?.user?.visitorMobile ?? "" : getByIdResult?.user?.sMobileNumber ?? "";
       emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" : getByIdResult?.user?.sEmail ?? "";
-      print("getByIdResult?.user?.nDocumentType");
-      print(getByIdResult?.user?.nDocumentType);
-      idTypeController.text =
-          idTypeMenu
-              .firstWhere(
-                (item) => item.value == getByIdResult?.user?.nDocumentType,
-                orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
-              )
-              .labelEn;
+
+      idTypeController.text = (() {
+        final item = idTypeMenu.firstWhere(
+              (item) => item.value == getByIdResult?.user?.nDocumentType,
+          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        );
+        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+      })();
+
       selectedIdValue = getByIdResult?.user?.nDocumentType.toString() ?? "";
       selectedIdType = idTypeController.text ?? "";
 
@@ -279,55 +299,100 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
           (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
               ? decryptAES(getByIdResult!.user!.sOthersValue!)
               : "";
-      expiryDateController.text = getByIdResult?.user?.dTIqamaExpiry?.toDisplayDateOnly() ?? "";
+      expiryDateController.text = (getByIdResult?.user?.dTIqamaExpiry
+          ?.trim()
+          .isNotEmpty == true
+          ? getByIdResult?.user?.dTIqamaExpiry!
+          : getByIdResult?.user?.dtPassportExpiryDate
+          ?.trim()
+          .isNotEmpty == true
+          ? getByIdResult?.user?.dtPassportExpiryDate!
+          : getByIdResult?.user?.dtEidExpiryDate
+          ?.trim()
+          .isNotEmpty == true
+          ? getByIdResult?.user?.dtEidExpiryDate!
+          : getByIdResult?.user?.dTOthersExpiry?.trim() ?? '').toString().toDisplayDateOnly() ?? "";
+
       vehicleNumberController.text = getByIdResult?.user?.sVehicleNo ?? "";
 
       if(getByIdResult?.vehicle == null) isCheckedVehicle = false;
 
       if(getByIdResult?.vehicle != null) {
         selectedPlateType = getByIdResult?.vehicle?.nPlateSource ?? 0;
-        plateTypeController.text =
-            plateTypeDropdownData
-                .firstWhere((item) => item.nDetailedCode == selectedPlateType, orElse: () => DeviceDropdownResult())
-                .sDescE ??
-                "";
+        plateTypeController.text = (() {
+          final item = plateTypeDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateType,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
         selectedPlateLetter1 = getByIdResult?.vehicle?.nPlateLetter1 ?? 0;
-        plateLetter1Controller.text =
-            plateLetterDropdownData
-                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter1, orElse: () => DeviceDropdownResult())
-                .sDescE ??
-                "";
+        plateLetter1Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter1,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
         selectedPlateLetter2 = getByIdResult?.vehicle?.nPlateLetter2 ?? 0;
-        plateLetter2Controller.text =
-            plateLetterDropdownData
-                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter2, orElse: () => DeviceDropdownResult())
-                .sDescE ??
-                "";
+        plateLetter2Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter2,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
         selectedPlateLetter3 = getByIdResult?.vehicle?.nPlateLetter3 ?? 0;
-        plateLetter3Controller.text =
-            plateLetterDropdownData
-                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter3, orElse: () => DeviceDropdownResult())
-                .sDescE ??
-                "";
+        plateLetter3Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter3,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
         plateNumberController.text = getByIdResult?.vehicle?.sPlateNumber ?? "";
       }
+
+      // fetchRequiredFiles(context);
+
       //Update Part
       if (isUpdate) {
         apiGetSearchComment(context, id);
         selectedLocationId = getByIdResult?.user?.nLocationId;
-        locationController.text = locationDropdownData
-            .firstWhere((item) => item.nLocationId == getByIdResult?.user?.nLocationId, orElse: () => LocationDropdownResult())
-            .sLocationNameEn ?? "";
+        locationController.text = (() {
+          final item = locationDropdownData.firstWhere(
+                (item) => item.nLocationId == getByIdResult?.user?.nLocationId,
+            orElse: () => LocationDropdownResult(),
+          );
+          return context.lang == LanguageCode.ar.name
+              ? (item.sLocationNameAr ?? "")
+              : (item.sLocationNameEn ?? "");
+        })();
 
-        visitRequestTypeController.text = visitRequestTypesDropdownData
-            .firstWhere((item) => item.nDetailedCode == getByIdResult?.user?.nVisitType, orElse: () => VisitRequestDropdownResult())
-            .sDescE ?? "";
+        visitRequestTypeController.text = (() {
+          final item = visitRequestTypesDropdownData.firstWhere(
+                (item) => item.nDetailedCode == getByIdResult?.user?.nVisitType,
+            orElse: () => VisitRequestDropdownResult(),
+          );
+          return context.lang == LanguageCode.ar.name
+              ? (item.sDescA ?? "")
+              : (item.sDescE ?? "");
+        })();
+
         selectedVisitRequest = getByIdResult?.user?.nVisitType?.toString() ?? "";
 
-        visitPurposeController.text = visitPurposeDropdownData
-            .firstWhere((item) => item.nPurposeId == getByIdResult?.user?.purpose, orElse: () => VisitPurposeDropdownResult())
-            .sPurposeEn ?? "";
+        visitPurposeController.text = (() {
+          final item = visitPurposeDropdownData.firstWhere(
+                (item) => item.nPurposeId == getByIdResult?.user?.purpose,
+            orElse: () => VisitPurposeDropdownResult(),
+          );
+          return context.lang == LanguageCode.ar.name
+              ? (item.sPurposeAr ?? "")
+              : (item.sPurposeEn ?? "");
+        })();
+
         selectedVisitPurpose = getByIdResult?.user?.purpose.toString() ?? "";
+        if(getByIdResult?.user?.purpose == 60) visitPurposeOtherController.text = getByIdResult?.user?.purposeOtherValue ?? "";
 
         mofaHostEmailController.text = getByIdResult?.user?.sVisitingPersonEmail ?? "";
         visitStartDateController.text = getByIdResult?.user?.dtAppointmentStartTime?.toDisplayDateTime() ?? "";
@@ -352,16 +417,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
               .name ??
               "";
       selectedNationality = userData.nationality ?? "";
+      selectedNationalityCodes =  nationalityMenu
+          .firstWhere((item) => item.iso3 == userData.nationality, orElse: () => CountryData())
+          .phonecode.toString() ?? "";
       phoneNumberController.text =
           userData.mobileNo ?? "";
       emailController.text = userData.email ?? "";
-      idTypeController.text =
-          idTypeMenu
-              .firstWhere(
-                (item) => item.value == userData.idType,
-            orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
-          )
-              .labelEn;
+      idTypeController.text = (() {
+        final item = idTypeMenu.firstWhere(
+              (item) => item.value == userData.idType,
+          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        );
+        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+      })();
+
       selectedIdValue = userData.idType?.toString() ?? "";
       selectedIdType = idTypeController.text ?? "";
       iqamaController.text = userData.sIqama ?? "";
@@ -386,48 +455,77 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       vehicleNumberController.text = userData.sVehicleNo ?? "";
 
       selectedPlateType = userData.nPlateSource ?? 0;
-      plateTypeController.text =
-          plateTypeDropdownData
-              .firstWhere((item) => item.nDetailedCode == selectedPlateType, orElse: () => DeviceDropdownResult())
-              .sDescE ??
-              "";
+      plateTypeController.text = (() {
+        final item = plateTypeDropdownData.firstWhere(
+              (item) => item.nDetailedCode == selectedPlateType,
+          orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+        );
+        return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+      })();
       selectedPlateLetter1 = userData.nPlateLetter1 ?? 0;
-      plateLetter1Controller.text =
-          plateLetterDropdownData
-              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter1, orElse: () => DeviceDropdownResult())
-              .sDescE ??
-              "";
+      plateLetter1Controller.text = (() {
+        final item = plateLetterDropdownData.firstWhere(
+              (item) => item.nDetailedCode == selectedPlateLetter1,
+          orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+        );
+        return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+      })();
       selectedPlateLetter2 = userData.nPlateLetter2 ?? 0;
-      plateLetter2Controller.text =
-          plateLetterDropdownData
-              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter2, orElse: () => DeviceDropdownResult())
-              .sDescE ??
-              "";
+      plateLetter2Controller.text = (() {
+        final item = plateLetterDropdownData.firstWhere(
+              (item) => item.nDetailedCode == selectedPlateLetter2,
+          orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+        );
+        return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+      })();
       selectedPlateLetter3 = userData.nPlateLetter3 ?? 0;
-      plateLetter3Controller.text =
-          plateLetterDropdownData
-              .firstWhere((item) => item.nDetailedCode == selectedPlateLetter3, orElse: () => DeviceDropdownResult())
-              .sDescE ?? "";
+      plateLetter3Controller.text = (() {
+        final item = plateLetterDropdownData.firstWhere(
+              (item) => item.nDetailedCode == selectedPlateLetter3,
+          orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+        );
+        return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+      })();
 
       plateNumberController.text = userData.sPlateNumber ?? "";
-      print("userData.nLocationId");
-      print(userData.nLocationId);
-      selectedLocationId = userData.nLocationId;
-      locationController.text = locationDropdownData
-          .firstWhere((item) => item.nLocationId == userData.nLocationId, orElse: () => LocationDropdownResult())
-          .sLocationNameEn ?? "";
 
-        visitRequestTypeController.text = visitRequestTypesDropdownData
-          .firstWhere((item) => item.nDetailedCode == userData.nVisitType, orElse: () => VisitRequestDropdownResult())
-          .sDescE ?? "";
+      selectedLocationId = userData.nLocationId;
+      locationController.text = (() {
+        final item = locationDropdownData.firstWhere(
+              (item) => item.nLocationId == userData.nLocationId,
+          orElse: () => LocationDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sLocationNameAr ?? "")
+            : (item.sLocationNameEn ?? "");
+      })();
+
+      visitRequestTypeController.text = (() {
+        final item = visitRequestTypesDropdownData.firstWhere(
+              (item) => item.nDetailedCode == userData.nVisitType,
+          orElse: () => VisitRequestDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sDescA ?? "")
+            : (item.sDescE ?? "");
+      })();
 
         selectedVisitRequest = userData.nVisitType?.toString() ?? "";
 
-        visitPurposeController.text = visitPurposeDropdownData
-            .firstWhere((item) => item.nPurposeId == userData.purpose, orElse: () => VisitPurposeDropdownResult())
-            .sPurposeEn ?? "";
+      visitPurposeController.text = (() {
+        final item = visitPurposeDropdownData.firstWhere(
+              (item) => item.nPurposeId == userData.purpose,
+          orElse: () => VisitPurposeDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sPurposeAr ?? "")
+            : (item.sPurposeEn ?? "");
+      })();
+
         selectedVisitPurpose = userData.purpose.toString() ?? "";
-        mofaHostEmailController.text = userData.sVisitingPersonEmail ?? "";
+      if(userData.purpose == 60) visitPurposeOtherController.text = userData.purposeOtherValue ?? "";
+
+      mofaHostEmailController.text = userData.sVisitingPersonEmail ?? "";
         visitStartDateController.text = userData.dtAppointmentStartTime.toString().toDisplayDateTimeString() ?? "";
         visitEndDateController.text = userData.dtAppointmentEndTime.toString().toDisplayDateTimeString() ?? "";
       final deviceResults = convertDeviceModelsToResults(userData.devices ?? []);
@@ -476,6 +574,55 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     }).toList();
   }
 
+  void fetchRequiredFiles(BuildContext context) {
+    final user = getByIdResult?.user;
+
+    final Set<int> typesToFetch = {};
+
+    // File type 1: Photo
+    if (user?.havePhoto == 1) typesToFetch.add(1);
+
+    // File type 4: Vehicle registration
+    if (user?.haveVehicleRegistration == 1) typesToFetch.add(4);
+
+    // ID-based types
+    final idType = selectedIdType; // e.g. "National ID", "Passport", etc.
+
+    // Your idTypeMenu list (make sure this is accessible here)
+    final List<DocumentIdModel> idTypeMenu = [
+      DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
+      DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
+      DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
+      DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
+    ];
+
+    // Map from idTypeMenu.value to typesToFetch code
+    final fetchCodeMap = {
+      24: 2,    // National ID → 2
+      26: 3,    // Passport → 3
+      2244: 5,  // Iqama → 5
+      2245: 6,  // Other → 6
+    };
+
+    // Find matching item by English label (idType)
+    final matchingItem = idTypeMenu.firstWhere(
+          (item) => item.labelEn == idType,
+      orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+    );
+
+    if (matchingItem.value != 0) {
+      final code = fetchCodeMap[matchingItem.value];
+      if (code != null) {
+        typesToFetch.add(code);
+      }
+    }
+
+    // Now call the API for each required type
+    for (final type in typesToFetch) {
+      apiGetFile(context, type: type);
+    }
+  }
+
 
   void evaluateEditableStatus(GetByIdUser? details) {
     final currentOrder = details?.nCurrentApproverOrderNo ?? -1;
@@ -491,7 +638,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   Future<void> apiGetFile(BuildContext context, {required int type}) async {
     try {
       final response = await ApplyPassRepository().apiGetFile(
-        GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? 0, type: type),
+        GetFileRequest(id: getByIdResult?.user?.nAppointmentId ?? appointmentId, type: type),
         context,
       );
 
@@ -499,6 +646,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
       final decodedBytes = base64Decode(response.photoFile ?? "");
 
+      print(type);
       if (type == 1) {
         uploadedImageBytes = decodedBytes;
         return;
@@ -543,6 +691,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
               contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
               content: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Align(
                       alignment: Alignment.centerRight,
@@ -599,6 +748,144 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
     }
   }
+
+
+
+  Future<void> apiSearchVisitor(BuildContext context) async {
+    try {
+      // Check if all fields are empty
+      final isAllFieldsEmpty = emailSearchController.text.trim().isEmpty &&
+          nationalityIdSearchController.text.trim().isEmpty &&
+          iqamaSearchController.text.trim().isEmpty &&
+          phoneNumberSearchController.text.trim().isEmpty &&
+          passportSearchController.text.trim().isEmpty;
+
+      if (isAllFieldsEmpty) {
+        // Show a message or just return silently
+        debugPrint("Search fields are all empty. Aborting API call.");
+        return;
+      }
+
+      final result = await ApplyPassRepository().apiSearchUser(
+        SearchVisitorRequest(
+          nEmployeeId: int.parse(userResponse?.userId ?? "0"),
+          nHostId: 0,
+          nUserId: int.parse(userResponse?.userId ?? "0"),
+          sEmail: emailSearchController.text,
+          sId: nationalityIdSearchController.text,
+          sIqama: iqamaSearchController.text,
+          sNumber: phoneNumberSearchController.text,
+          sPassportNumber: passportSearchController.text
+        ),
+        context,
+      );
+
+      if (result is SearchVisitorResult) {
+        if (result.appointment == null) {
+          ToastHelper.showError(context.readLang.translate(AppLanguageText.visitorNotFound));
+          return;
+        }
+
+        clearSearchField();
+        setSearchVisitorData(context, result);
+      } else {
+        debugPrint("Unexpected result type in Search apiGetById");
+      }
+    } catch (e) {
+      debugPrint("Error in Search apiGetById: $e");
+
+    }
+  }
+
+  void setSearchVisitorData(BuildContext context, SearchVisitorResult searchResult) {
+
+      visitorNameController.text = searchResult.appointment?.sVisitorNameEn ?? "";
+      companyNameController.text = searchResult.appointment?.sSponsor ?? "" ;
+
+      final nationalityData = nationalityMenu
+          .firstWhere((item) => item.iso3 == searchResult.appointment?.nationality, orElse: () => CountryData());
+      nationalityController.text =
+          getLocalizedText(currentLang: context.lang, arabic: nationalityData.nameAr, english: nationalityData.name);
+
+      selectedNationality = searchResult.appointment?.nationality ?? "";
+      selectedNationalityCodes = nationalityData.phonecode.toString();
+      phoneNumberController.text = searchResult.appointment?.sMobileNo ?? "";
+      emailController.text = searchResult.appointment?.sEmail ?? "";
+
+      idTypeController.text = (() {
+        final item = idTypeMenu.firstWhere(
+              (item) => item.value == searchResult.appointment?.nDocumentType,
+          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        );
+        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+      })();
+
+      selectedIdValue = searchResult.appointment?.nDocumentType.toString() ?? "";
+      selectedIdType = idTypeController.text ?? "";
+
+      iqamaController.text = searchResult.appointment?.sIqama ?? "";
+      passportNumberController.text = searchResult.appointment?.passportNumber ?? "";
+
+      nationalityIdController.text = searchResult.appointment?.eidNumber ?? "";
+
+      documentNameController.text = searchResult.appointment?.sOthersDoc ?? "";
+
+      documentNumberController.text = searchResult.appointment?.sOthersValue ?? "";
+
+      expiryDateController.text = (
+          searchResult.appointment?.dtIqamaExpiry?.trim().isNotEmpty == true
+              ? searchResult.appointment!.dtIqamaExpiry
+              : searchResult.appointment?.dtPassportExpiryDate?.trim().isNotEmpty == true
+              ? searchResult.appointment!.dtPassportExpiryDate
+              : searchResult.appointment?.dtEidExpiryDate?.trim().isNotEmpty == true
+              ? searchResult.appointment!.dtEidExpiryDate
+              : searchResult.appointment?.dtOthersExpiry?.trim()
+      )?.toString().toDisplayDateOnly() ?? '';
+
+      vehicleNumberController.text = searchResult.appointment!.sVehicleNo ?? "";
+
+      if(searchResult.vehicle == null) isCheckedVehicle = false;
+
+      if(searchResult.vehicle != null) {
+        selectedPlateType = searchResult.vehicle?.nPlateSource ?? 0;
+        plateTypeController.text =
+            plateTypeDropdownData
+                .firstWhere((item) => item.nDetailedCode == selectedPlateType, orElse: () => DeviceDropdownResult())
+                .sDescE ??
+                "";
+        selectedPlateLetter1 = searchResult.vehicle?.nPlateLetter1 ?? 0;
+        plateLetter1Controller.text =
+            plateLetterDropdownData
+                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter1, orElse: () => DeviceDropdownResult())
+                .sDescE ??
+                "";
+        selectedPlateLetter2 = searchResult.vehicle?.nPlateLetter2 ?? 0;
+        plateLetter2Controller.text =
+            plateLetterDropdownData
+                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter2, orElse: () => DeviceDropdownResult())
+                .sDescE ??
+                "";
+        selectedPlateLetter3 = searchResult.vehicle?.nPlateLetter3 ?? 0;
+        plateLetter3Controller.text =
+            plateLetterDropdownData
+                .firstWhere((item) => item.nDetailedCode == selectedPlateLetter3, orElse: () => DeviceDropdownResult())
+                .sDescE ??
+                "";
+        plateNumberController.text = searchResult.vehicle?.sPlateNumber ?? "";
+      }
+
+      appointmentId = searchResult.appointment?.nAppointmentId ?? 0;
+      lastAppointmentId = searchResult.appointment?.nAppointmentId ?? 0;
+      havePhoto = searchResult.appointment?.havePhoto ?? 0;
+      haveDocument = (searchResult.appointment?.havePassport == 1 ||
+          searchResult.appointment?.haveIqama == 1 ||
+          searchResult.appointment?.haveEid == 1 ||
+          searchResult.appointment?.haveOthers == 1) ? 1 : 0;
+      haveVehicleRegistration = searchResult.appointment?.haveVehicleRegistration ?? 0;
+       notifyListeners();
+
+  }
+
 
   // Location dropdown
   Future<void> apiLocationDropdown(BuildContext context) async {
@@ -869,6 +1156,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       final Map<String, String?> expiryMap = {'National ID': null, 'Iqama': null, 'Passport': null, 'Other': null};
       expiryMap[selectedIdType ?? ''] = expiryDate;
 
+      // Assign expiry based on ID type
+      final Map<String, int?> expiryImageMap = {'National ID': 0, 'Iqama': 0, 'Passport': 0, 'Other': 0};
+      expiryImageMap[selectedIdType ?? ''] = haveDocument;
+
       final user = getByIdResult?.user;
       final userId = int.tryParse(userResponse?.userId ?? "0") ?? 0;
 
@@ -895,19 +1186,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         nLocationId: selectedLocationId,
         nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
         purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
+        purposeOtherValue: visitPurposeOtherController.text,
         remarks: noteController.text,
         sVisitingPersonEmail: mofaHostEmailController.text,
-        haveEid: user?.haveEid ?? 0,
-        havePassport: user?.havePassport ?? 0,
-        haveIqama: user?.haveIqama ?? 0,
-        havePhoto: user?.havePhoto ?? 0,
-        haveVehicleRegistration: user?.haveVehicleRegistration ?? 0,
-        haveOthers: user?.haveOthers ?? 0,
+        haveEid: user?.haveEid ?? expiryImageMap['National ID'],
+        havePassport: user?.havePassport ?? expiryImageMap['Passport'],
+        haveIqama: user?.haveIqama ?? expiryImageMap['Iqama'],
+        havePhoto: user?.havePhoto ?? havePhoto,
+        haveVehicleRegistration: user?.haveVehicleRegistration ?? haveVehicleRegistration,
+        haveOthers: user?.haveOthers ?? expiryImageMap['Other'],
         userId: userId,
         nExternalRegistrationId: userId,
-        nAppointmentId: user?.nAppointmentId ?? 0,
+        nAppointmentId: isUpdate ? user?.nAppointmentId ?? 0 : 0,
         nCreatedByExternal: userId,
-        lastAppointmentId: user?.nAppointmentId ?? 0,
+        lastAppointmentId: user?.nAppointmentId ?? lastAppointmentId,
         nSelfPass: user?.nSelfPass ?? (applyPassCategory == ApplyPassCategory.myself.name ? 1 : 2),
         nVisitCreatedFrom: 2,
         nVisitUpdatedFrom: 2,
@@ -1041,6 +1333,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     deviceModelController.clear();
     serialNumberController.clear();
     devicePurposeController.clear();
+    deviceTypeOtherController.clear();
+    devicePurposeOtherController.clear();
   }
 
   void removeDevice(int index) {
@@ -1067,6 +1361,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     deviceModelController.text = device.deviceModel ?? "";
     serialNumberController.text = device.serialNumber ?? "";
     devicePurposeController.text = device.devicePurposeString ?? "";
+    deviceTypeOtherController.text = device.deviceTypeOthersValue ?? "";
+    devicePurposeOtherController.text = device.devicePurposeOthersValue ?? "";
   }
 
   void cancelEditing() {
@@ -1078,15 +1374,33 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     deviceModelController.clear();
     serialNumberController.clear();
     devicePurposeController.clear();
+    deviceTypeOtherController.clear();
+    devicePurposeOtherController.clear();
+  }
+
+  void clearSearchField() {
+
+    iqamaSearchController.clear();
+    nationalityIdSearchController.clear();
+    passportSearchController.clear();
+    emailSearchController.clear();
+    phoneNumberSearchController.clear();
   }
 
   void saveDevice() {
+    final isDeviceTypeOther = selectedDeviceType == 2250;
+    final isDevicePurposeOther = selectedDevicePurpose == 2254;
+
+    // Validate fields
     if (deviceTypeController.text.isEmpty ||
         deviceModelController.text.isEmpty ||
         serialNumberController.text.isEmpty ||
-        devicePurposeController.text.isEmpty) {
+        devicePurposeController.text.isEmpty ||
+        (isDeviceTypeOther && deviceTypeOtherController.text.isEmpty) ||
+        (isDevicePurposeOther && devicePurposeOtherController.text.isEmpty)) {
       return;
     }
+
     final newDevice = DeviceModel(
       deviceTypeString: deviceTypeController.text,
       deviceType: selectedDeviceType,
@@ -1094,6 +1408,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       serialNumber: serialNumberController.text,
       devicePurposeString: devicePurposeController.text,
       devicePurpose: selectedDevicePurpose,
+      deviceTypeOthersValue: isDeviceTypeOther ? deviceTypeOtherController.text : null,
+      devicePurposeOthersValue: isDevicePurposeOther ? devicePurposeOtherController.text : null,
     );
 
     if (isEditingDevice && editDeviceIndex != null) {
@@ -1171,10 +1487,13 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   Future<void> nextButton(BuildContext context, VoidCallback onNext) async {
     final isValid = await validation(context);
-    if (isValid) {
-      await addData();
-      onNext();
-    }
+
+    runWithLoadingVoid(() async {
+      if (isValid) {
+        await addData();
+        onNext();
+      }
+    },);
   }
 
   bool isPhotoFileValid(BuildContext context) {
@@ -1192,16 +1511,35 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   }
 
   bool isDevicePartiallyFilled() {
+    final isDeviceTypeOther = selectedDeviceType == 2250;
+    final isPurposeOther = selectedDevicePurpose == 2254;
+
     final isDeviceTypeEmpty = deviceTypeController.text.trim().isEmpty;
+    final isDeviceTypeOtherEmpty = isDeviceTypeOther && deviceTypeOtherController.text.trim().isEmpty;
+
     final isModelEmpty = deviceModelController.text.trim().isEmpty;
     final isSerialEmpty = serialNumberController.text.trim().isEmpty;
-    final isPurposeEmpty = devicePurposeController.text.trim().isEmpty;
 
-    final allEmpty = isDeviceTypeEmpty && isModelEmpty && isSerialEmpty && isPurposeEmpty;
-    final allFilled = !isDeviceTypeEmpty && !isModelEmpty && !isSerialEmpty && !isPurposeEmpty;
+    final isPurposeEmpty = devicePurposeController.text.trim().isEmpty;
+    final isPurposeOtherEmpty = isPurposeOther && devicePurposeOtherController.text.trim().isEmpty;
+
+    final allEmpty = isDeviceTypeEmpty &&
+        !isDeviceTypeOther &&
+        isModelEmpty &&
+        isSerialEmpty &&
+        isPurposeEmpty &&
+        !isPurposeOther;
+
+    final allFilled = !isDeviceTypeEmpty &&
+        (!isDeviceTypeOther || !isDeviceTypeOtherEmpty) &&
+        !isModelEmpty &&
+        !isSerialEmpty &&
+        !isPurposeEmpty &&
+        (!isPurposeOther || !isPurposeOtherEmpty);
 
     return !allEmpty && !allFilled; // return true if partially filled
   }
+
 
   bool get isFormActionAllowed {
     final status = getByIdResult?.user?.sApprovalStatusEn;
@@ -1209,16 +1547,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   }
 
   Future<bool> validation(BuildContext context) async {
-    if (!formKey.currentState!.validate()) {
+
+    final isFormValid = formKey.currentState!.validate();
+    final isPhotoValid = _isPhotoValid(context);
+    final isDocumentValid = _isDocumentValid(context);
+
+    final allValid = isFormValid && isPhotoValid && isDocumentValid;
+
+    if (!allValid) {
       ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
-      documentUploadValidation = uploadedDocumentFile == null;
-      photoUploadValidation = uploadedImageFile == null;
       return false;
     }
 
-    if (!_isPhotoValid(context) || !_isDocumentValid(context)) {
+    if(isCheckedDevice && addedDevices.isEmpty) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.kindlyAddADevice));
       return false;
     }
+
 
     if (!_isVisitTimeWithinApiRange(context)) {
       return false;
@@ -1246,14 +1591,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   bool _isPhotoValid(BuildContext context) {
     final user = getByIdResult?.user;
 
-    final hasApiPhoto = (user?.havePhoto ?? 0) == 1;
+    final hasApiPhoto = (user?.havePhoto ?? 0) == 1 || havePhoto == 1;
     final hasLocalPhoto = uploadedImageBytes != null || uploadedImageFile != null;
 
     final isValid = hasApiPhoto || hasLocalPhoto;
-
-    if (!isValid) {
-      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
-    }
 
     return isValid;
   }
@@ -1262,19 +1603,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   bool _isDocumentValid(BuildContext context) {
     final user = getByIdResult?.user;
 
-    final hasApiDocument = (user?.haveIqama ?? 0) == 1 ||
+    final hasApiDocument = ((user?.haveIqama ?? 0) == 1 ||
         (user?.havePassport ?? 0) == 1 ||
         (user?.haveEid ?? 0) == 1 ||
-        (user?.haveOthers ?? 0) == 1;
+        (user?.haveOthers ?? 0) == 1) || haveDocument == 1;
 
     final hasLocalDocument = uploadedDocumentBytes != null || uploadedDocumentFile != null;
 
     final isValid = hasApiDocument || hasLocalDocument;
-
-    if (!isValid) {
-      ToastHelper.showError(context.readLang.translate(AppLanguageText.fillAllInformation));
-    }
-
     return isValid;
   }
 
@@ -1327,6 +1663,42 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   Future<bool> _hasNoDuplicates(BuildContext context) async {
     return await apiDuplicateAppointment(context);
+  }
+
+  Future<void> runWithViewAttachmentPhotoLoader(Future<void> Function() task) async {
+    isPhotoLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isPhotoLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> runWithViewAttachmentDocumentLoader(Future<void> Function() task) async {
+    isDocumentLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isDocumentLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> runWithViewAttachmentTransportLoader(Future<void> Function() task) async {
+    isTransportDocumentLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isTransportDocumentLoading = false;
+      notifyListeners();
+    }
   }
 
   void notifyDataListeners() {
@@ -1451,6 +1823,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   set selectedNationality(String? value) {
     if (_selectedNationality == value) return;
     _selectedNationality = value;
+    notifyListeners();
+  }
+
+  String? get selectedNationalityCodes => _selectedNationalityCodes;
+
+  set selectedNationalityCodes(String? value) {
+    if (_selectedNationalityCodes == value) return;
+    _selectedNationalityCodes = value;
     notifyListeners();
   }
 
@@ -1818,6 +2198,30 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     notifyListeners();
   }
 
+  bool get isPhotoLoading => _isPhotoLoading;
+
+  set isPhotoLoading(bool value) {
+    if (_isPhotoLoading == value) return;
+    _isPhotoLoading = value;
+    notifyListeners();
+  }
+
+  bool get isDocumentLoading => _isDocumentLoading;
+
+  set isDocumentLoading(bool value) {
+    if (_isDocumentLoading == value) return;
+    _isDocumentLoading = value;
+    notifyListeners();
+  }
+
+  bool get isTransportDocumentLoading => _isTransportDocumentLoading;
+
+  set isTransportDocumentLoading(bool value) {
+    if (_isTransportDocumentLoading == value) return;
+    _isTransportDocumentLoading = value;
+    notifyListeners();
+  }
+
   int get currentPage => _currentPage;
 
   set currentPage(int value) {
@@ -1843,6 +2247,46 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   set selectedPlateLetter1(int? value) {
     if (_selectedPlateLetter1 == value) return;
     _selectedPlateLetter1 = value;
+    notifyListeners();
+  }
+
+  int get havePhoto => _havePhoto;
+
+  set havePhoto(int value) {
+    if (_havePhoto == value) return;
+    _havePhoto = value;
+    notifyListeners();
+  }
+
+  int get haveDocument => _haveDocument;
+
+  set haveDocument(int value) {
+    if (_haveDocument == value) return;
+    _haveDocument = value;
+    notifyListeners();
+  }
+
+  int get haveVehicleRegistration => _haveVehicleRegistration;
+
+  set haveVehicleRegistration(int value) {
+    if (_haveVehicleRegistration == value) return;
+    _haveVehicleRegistration = value;
+    notifyListeners();
+  }
+
+  int get appointmentId => _appointmentId;
+
+  set appointmentId(int value) {
+    if (_appointmentId == value) return;
+    _appointmentId = value;
+    notifyListeners();
+  }
+
+  int get lastAppointmentId => _lastAppointmentId;
+
+  set lastAppointmentId(int value) {
+    if (_lastAppointmentId == value) return;
+    _lastAppointmentId = value;
     notifyListeners();
   }
 

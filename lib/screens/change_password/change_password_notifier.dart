@@ -28,7 +28,7 @@ class ChangePasswordNotifier extends BaseChangeNotifier {
 
   void saveButtonFunctionality(BuildContext context) async {
     if (formKey.currentState!.validate()) {
-      await apiChangePassword(context);
+      runWithLoadingVoid(() => apiChangePassword(context));
     }
   }
 

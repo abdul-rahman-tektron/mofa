@@ -69,11 +69,13 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       await SecureStorageHelper.setToken(loginTokenResponse.result?.token ?? "");
 
 
-      await SecureStorageHelper.setUser(loginTokenUserResponseToJson(LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? ""))) );
+      await SecureStorageHelper.setUser(loginTokenUserResponseToJson(
+          LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? ""))));
 
       // Update CommonNotifier
       final commonNotifier = Provider.of<CommonNotifier>(context, listen: false);
-      commonNotifier.updateUser(LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")));
+      commonNotifier.updateUser(
+          LoginTokenUserResponse.fromJson(decodeJwtPayload(loginTokenResponse.result?.token ?? "")));
 
       return "Success"; //Success message
     } else {
@@ -102,9 +104,6 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       headers: headerUrlEncodedWithCredentials,
     );
 
-    print("Data status code");
-    print(response?.statusCode);
-    print("Data");
     if (response?.statusCode == HttpStatus.ok) {
       final result = response?.data['result'];
       if (result.containsKey('token')) {
@@ -158,8 +157,6 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       GetCaptchaResponse getCaptchaResponse =
       getCaptchaResponseFromJson(jsonEncode(response?.data));
 
-      print("getCaptchaResponse.dntCaptchaTextValue");
-      print(getCaptchaResponse.dntCaptchaTextValue);
 
       return getCaptchaResponse; //Success message
     } else {
@@ -209,7 +206,13 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       registerResponseFromJson(jsonEncode(response?.data));
 
       registerSuccessPopup(context, "Registered Successfully",
-          "An account activation link has been sent to your email address. Please check your inbox and follow the instructions to activate your account.");
+          "An account activation link has been sent to your email address.\nPlease check your inbox and follow the instructions to activate your account.");
+    } if (response?.statusCode == HttpStatus.badRequest) {
+
+      RegisterResponse registerResponse =
+      registerResponseFromJson(jsonEncode(response?.data));
+
+      ToastHelper.showError(registerResponse.message ?? "");
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;
@@ -302,8 +305,8 @@ class AuthRepository extends BaseRepository with CommonFunctions {
 
       if(forgetPasswordResponse.statusCode == HttpStatus.ok){
         Navigator.pop(context);
-        commonPopup(context, LucideIcons.checkCircle2, "Password Reset Requested!",
-            "A password reset link has been sent to your email address. Please check your inbox and follow the instructions to reset your password.");
+        commonPopup(context, LucideIcons.checkCircle2, context.readLang.translate(AppLanguageText.passwordResetRequested),
+            "A password reset link has been sent to your email address.\nPlease check your inbox and follow the instructions to reset your password.");
       } else {
         ToastHelper.showError(forgetPasswordResponse.message ?? "");
       }
@@ -332,8 +335,21 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       UpdateProfileResponse updateProfileResponse =
       updateProfileResponseFromJson(jsonEncode(response?.data));
 
-      if(updateProfileResponse.statusCode == HttpStatus.ok){
-        ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.profileUpdated) ?? "");
+
+      if (updateProfileResponse.statusCode == HttpStatus.ok) {
+        ToastHelper.showSuccess(
+          context.readLang.translate(AppLanguageText.profileUpdated) ?? "",
+        );
+
+        // Step 1: Convert update result to LoginTokenUserResponse
+        final updatedUser = mapUpdateProfileToLoginTokenUser(updateProfileResponse.result);
+
+        // Step 2: Save to secure storage
+        await SecureStorageHelper.setUser(loginTokenUserResponseToJson(updatedUser));
+
+        // Step 3: Update the notifier with updated user data
+        final commonNotifier = Provider.of<CommonNotifier>(context, listen: false);
+        commonNotifier.updateUser(updatedUser);
       }
     } else {
       ForgetPasswordResponse forgetPasswordResponse =
@@ -342,6 +358,15 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       ToastHelper.showError(forgetPasswordResponse.message ?? "");
     }
     return null;
+  }
+
+  LoginTokenUserResponse mapUpdateProfileToLoginTokenUser(UpdateProfileResult? result) {
+    return LoginTokenUserResponse(
+      fullName: result?.sFullName ?? "",
+      email: result?.sEmail ?? "",
+      username: result?.sUserName ?? "",
+      // All other fields will remain `null`
+    );
   }
 
   //api: Get Profile
@@ -382,6 +407,8 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       forgetPasswordResponseFromJson(jsonEncode(response?.data));
 
       if(deleteAccountResponse.statusCode == HttpStatus.ok){
+        await SecureStorageHelper.clearExceptRememberMe();
+        Provider.of<CommonNotifier>(context, listen: false).clearUser();
         ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.accountDeleted) ?? "");
         Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (Route<dynamic> route) => false);
       }

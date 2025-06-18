@@ -43,15 +43,15 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
-  static const textMedium30with600 = TextStyle(
-    fontSize: 26,
+  static final textMedium26with600 = TextStyle(
+    fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.textColor,
     letterSpacing: 0.5,
   );
 
-  static const textMedium30with600Red = TextStyle(
-    fontSize: 26,
+  static const textMedium26with600Red = TextStyle(
+    fontSize: 22,
     fontWeight: FontWeight.w600,
     color: AppColors.textRedColor,
     letterSpacing: 0.5,
@@ -206,6 +206,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textRegular18White = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.normal,
+    color: AppColors.whiteColor,
+    letterSpacing: 0.5,
+  );
+
   static const textRegular18withUnderline = TextStyle(
     fontSize: 18,
     fontWeight: FontWeight.normal,
@@ -291,6 +298,13 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
+  static const textBold22 = TextStyle(
+    fontSize: 22,
+    fontWeight: FontWeight.bold,
+    color: AppColors.textColor,
+    letterSpacing: 0.5,
+  );
+
   static const textSemiBold22 = TextStyle(
     fontSize: 22,
     fontWeight: FontWeight.w600,
@@ -319,8 +333,8 @@ class AppFonts {
     letterSpacing: 0.5,
   );
 
-  static const textButtonStyle = TextStyle(
-    fontSize: 14,
+  static final textButtonStyle = TextStyle(
+    fontSize: 14.sp,
     fontWeight: FontWeight.bold,
     color: AppColors.textButtonColor,
     letterSpacing: 0.5,

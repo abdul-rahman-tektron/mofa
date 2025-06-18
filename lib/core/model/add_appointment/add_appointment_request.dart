@@ -193,7 +193,6 @@ class AddAppointmentRequest {
     gender: json["Gender"] ?? "",
     nVisitType: json["N_VisitType"] ?? 0,
     nVisaType: json["N_VisaType"] ?? 0,
-    sVehicleNo: json["S_VehicleNo"] ?? "",
     devices:
         json["Devices"] == null
             ? []
@@ -290,7 +289,6 @@ class AddAppointmentRequest {
     "Gender": gender,
     "N_VisitType": nVisitType,
     "N_VisaType": nVisaType,
-    "S_VehicleNo": sVehicleNo,
     "Devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
     "N_LocationID": nLocationId,
     "N_DepartmentID": nDepartmentId,

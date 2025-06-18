@@ -43,6 +43,7 @@ class CountryData {
   String? iso3;
   String? folderflag;
   String? flag;
+  int? phonecode;
 
   CountryData({
     this.id,
@@ -51,6 +52,7 @@ class CountryData {
     this.iso3,
     this.folderflag,
     this.flag,
+    this.phonecode,
   });
 
   factory CountryData.fromJson(Map<String, dynamic> json) => CountryData(
@@ -60,6 +62,7 @@ class CountryData {
     iso3: json["iso3"],
     folderflag: json["folderflag"],
     flag: json["flag"],
+    phonecode: json["phonecode"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -69,5 +72,7 @@ class CountryData {
     "iso3": iso3,
     "folderflag": folderflag,
     "flag": flag,
+    "phonecode": phonecode,
   };
+
 }

@@ -27,6 +27,7 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
 
   // String
   String? _selectedNationality;
+  String? _selectedNationalityCodes;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
 
@@ -96,7 +97,7 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
         sOthersValue: encryptOtherDocumentNumber,
       );
 
-      runWithLoadingVoid(registerApiCall(context, registerRequest));
+      runWithLoadingVoid(() => registerApiCall(context, registerRequest));
     }
   }
 
@@ -204,6 +205,14 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   set selectedNationality(String? value) {
     if (_selectedNationality == value) return;
     _selectedNationality = value;
+    notifyListeners();
+  }
+
+  String? get selectedNationalityCodes => _selectedNationalityCodes;
+
+  set selectedNationalityCodes(String? value) {
+    if (_selectedNationalityCodes == value) return;
+    _selectedNationalityCodes = value;
     notifyListeners();
   }
 

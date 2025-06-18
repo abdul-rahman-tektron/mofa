@@ -11,8 +11,12 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/login/login_screen.dart';
 import 'package:mofa/screens/search_pass/search_pass_notifier.dart';
+import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
+import 'package:mofa/utils/common_validation.dart';
+import 'package:mofa/utils/regex.dart';
+import 'package:mofa/utils/toast_helper.dart';
 
 registerSuccessPopup(BuildContext context, String heading, String subHeading) {
   return showDialog(
@@ -39,7 +43,7 @@ registerSuccessPopup(BuildContext context, String heading, String subHeading) {
 
                     // Then navigate to the login screen
                     Future.delayed(Duration.zero, () {
-                      Navigator.pop(context);
+                      Navigator.pushReplacementNamed(context, AppRoutes.login);
                     });
                   },
                   child: const Icon(Icons.close),
@@ -101,7 +105,7 @@ commonPopup(BuildContext context,IconData icon, String heading, String subHeadin
                 children: [
                   Icon(icon, color: Colors.green, size: 30),
                   SizedBox(width: 15),
-                  Text(heading, style: AppFonts.textBold20),
+                  Expanded(child: Text(heading, style: AppFonts.textBold20)),
                 ],
               ),
               const SizedBox(height: 15),
@@ -183,19 +187,20 @@ void showNoInternetPopup(BuildContext context) {
 
 void showForgotPasswordPopup(BuildContext context) {
   final TextEditingController emailController = TextEditingController();
+  final ValueNotifier<bool> isLoading = ValueNotifier(false);
 
   showDialog(
     context: context,
     barrierDismissible: false,
     barrierColor: AppColors.primaryColor.withOpacity(0.4),
-    builder:
-        (popupContext) => Dialog(
-          backgroundColor: AppColors.whiteColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Padding(
+    builder: (popupContext) => Dialog(
+      backgroundColor: AppColors.whiteColor,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      child: ValueListenableBuilder<bool>(
+        valueListenable: isLoading,
+        builder: (_, loading, __) {
+          return Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -204,43 +209,55 @@ void showForgotPasswordPopup(BuildContext context) {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Forgot Password',
-                      style: AppFonts.textBold24,
-                      textAlign: TextAlign.center,
+                      context.readLang.translate(AppLanguageText.forgotPassword),
+                      style: AppFonts.textBold22,
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.pop(popupContext);
-                        },
-                        child: const Icon(Icons.close),
-                      ),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(popupContext),
+                      child: const Icon(Icons.close),
                     ),
                   ],
                 ),
                 const SizedBox(height: 15),
                 CustomTextField(
                   controller: emailController,
-                  fieldName: context.watchLang.translate(
-                    AppLanguageText.emailAddress,
-                  ),
+                  fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
                 ),
                 const SizedBox(height: 20),
                 CustomButton(
                   text: context.watchLang.translate(AppLanguageText.submit),
-                  onPressed: () {
-                    AuthRepository().apiForgetPassword(
-                        ForgetPasswordRequest(sEmail: emailController.text),
-                        context);
+                  isLoading: loading,
+                  onPressed: () async {
+                    if (emailController.text.trim().isEmpty) {
+                      ToastHelper.show(context.readLang.translate(AppLanguageText.emailRequired));
+                      return;
+                    }
+
+                    if (!RegExp(LocalInputRegex.email).hasMatch(emailController.text)) {
+                      ToastHelper.show(context.readLang.translate(AppLanguageText.emailInvalid));
+                      return;
+                    }
+
+                    isLoading.value = true;
+                    await AuthRepository()
+                        .apiForgetPassword(
+                      ForgetPasswordRequest(sEmail: emailController.text),
+                      context,
+                    )
+                        .whenComplete(() {
+                      isLoading.value = false;
+                    });
                   },
                 ),
               ],
             ),
-          ),
-        ),
+          );
+        },
+      ),
+    ),
   );
 }
+
 
 
 void columnVisibilityPopup(BuildContext context, SearchPassNotifier searchPassNotifier) {
@@ -266,7 +283,7 @@ void columnVisibilityPopup(BuildContext context, SearchPassNotifier searchPassNo
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Customize Columns", style: AppFonts.textBold20),
+                Text(context.readLang.translate(AppLanguageText.customizeColumns), style: AppFonts.textBold20),
                 10.verticalSpace,
                 ...editableColumns.map((config) {
                   return Row(

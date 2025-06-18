@@ -1,11 +1,13 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
+import 'package:mofa/core/notifier/language_notifier.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_images.dart';
@@ -39,59 +41,70 @@ class LoginScreen extends StatelessWidget {
     return SafeArea(
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: 25.h,
-              right: 25.w,
-              left: 25.w,
-              top: 5.w,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                LanguageButton(),
-                10.verticalSpace,
-                Container(
-                  padding: EdgeInsets.symmetric(
-                    vertical: 25.h,
-                    horizontal: 20.w,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.whiteColor,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Form(
-                    key: loginNotifier.formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        logoImage(),
-                        20.verticalSpace,
-                        welcomeHeading(context),
-                        20.verticalSpace,
-                        emailField(context, loginNotifier),
-                        20.verticalSpace,
-                        passwordField(context, loginNotifier),
-                        3.verticalSpace,
-                        if(loginNotifier.loginError.isNotEmpty) loginErrorText(context, loginNotifier),
-                        3.verticalSpace,
-                        forgotPassword(context, loginNotifier),
-                        15.verticalSpace,
-                        captchaWidget(context, loginNotifier),
-                        16.verticalSpace,
-                        captchaField(context, loginNotifier),
-                        10.verticalSpace,
-                        rememberMeWidget(context, loginNotifier),
-                        10.verticalSpace,
-                        loginButton(context, loginNotifier),
-                        10.verticalSpace,
-                        createAccount(context, loginNotifier),
-                      ],
-                    ),
+        body: Center(
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.only(
+                bottom: 10.h,
+                right: 25.w,
+                left: 25.w,
+                top: 10.h,
+              ),
+              child: Container(
+                padding: EdgeInsets.symmetric(
+                  vertical: 20.h,
+                  horizontal: 20.w,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.whiteColor,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Form(
+                  key: loginNotifier.formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      logoImage(),
+                      20.verticalSpace,
+                      welcomeHeading(context),
+                      20.verticalSpace,
+                      emailField(context, loginNotifier),
+                      15.verticalSpace,
+                      passwordField(context, loginNotifier),
+                      3.verticalSpace,
+                      if(loginNotifier.loginError.isNotEmpty) loginErrorText(context, loginNotifier),
+                      3.verticalSpace,
+                      forgotPassword(context, loginNotifier),
+                      15.verticalSpace,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          captchaField(context, loginNotifier),
+                          10.horizontalSpace,
+                          captchaWidget(context, loginNotifier),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(top: 15.h),
+                            child: rememberMeWidget(context, loginNotifier),
+                          ),
+                          IconButton(
+                            icon: Icon(LucideIcons.refreshCcw),
+                            onPressed: ()=> loginNotifier.apiGetCaptcha(context),
+                          ),
+                        ],
+                      ),
+                      10.verticalSpace,
+                      loginButton(context, loginNotifier),
+                      10.verticalSpace,
+                      createAccount(context, loginNotifier),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -103,7 +116,7 @@ class LoginScreen extends StatelessWidget {
   Widget logoImage() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 45.0),
-      child: Center(child: Image.asset(AppImages.logo)),
+      child: Center(child: Image.asset(AppImages.logo, width: 150.h,)),
     );
   }
 
@@ -118,11 +131,11 @@ class LoginScreen extends StatelessWidget {
             TextSpan(
               text:
                   "${context.watchLang.translate(AppLanguageText.welcomeTo)} ",
-              style: AppFonts.textMedium30with600,
+              style: AppFonts.textMedium26with600,
               children: [
                 TextSpan(
                   text: context.watchLang.translate(AppLanguageText.mofaShort),
-                  style: AppFonts.textMedium30with600Red,
+                  style: AppFonts.textMedium26with600Red,
                 ),
               ],
             ),
@@ -130,14 +143,14 @@ class LoginScreen extends StatelessWidget {
           5.verticalSpace,
           Text(
             context.watchLang.translate(AppLanguageText.visitorPortal),
-            style: AppFonts.textMedium30with600,
+            style: AppFonts.textMedium26with600,
           ),
-          5.verticalSpace,
-          Text(
-            context.watchLang.translate(AppLanguageText.loginToContinue),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.textColor, fontSize: 18),
-          ),
+          // 5.verticalSpace,
+          // Text(
+          //   context.watchLang.translate(AppLanguageText.loginToContinue),
+          //   textAlign: TextAlign.center,
+          //   style: TextStyle(color: AppColors.textColor, fontSize: 18),
+          // ),
         ],
       ),
     );
@@ -149,6 +162,7 @@ class LoginScreen extends StatelessWidget {
       controller: loginNotifier.userNameController,
       fieldName: context.watchLang.translate(AppLanguageText.emailAddress),
       validator: (value) => CommonValidation().validateEmail(context, value),
+      showAsterisk: false,
       keyboardType: TextInputType.emailAddress,
     );
   }
@@ -159,6 +173,7 @@ class LoginScreen extends StatelessWidget {
       controller: loginNotifier.passwordController,
       isPassword: true,
       isAutoValidate: false,
+      showAsterisk: false,
       fieldName: context.watchLang.translate(AppLanguageText.password),
       onChanged: (value) {
         loginNotifier.loginError = '';
@@ -176,13 +191,13 @@ class LoginScreen extends StatelessWidget {
 
   // Function to create the captcha field widget
   Widget captchaField(BuildContext context, LoginNotifier loginNotifier) {
-    return SizedBox(
-      width: 220,
+    return Expanded(
       child: TextFormField(
         controller: loginNotifier.captchaController,
         decoration: InputDecoration(
           fillColor: AppColors.whiteColor,
           filled: true,
+          contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 10),
           hintText: context.watchLang.translate(AppLanguageText.enterCaptcha),
           border: OutlineInputBorder(
             borderSide: BorderSide(color: AppColors.fieldBorderColor, width: 2.5),
@@ -223,16 +238,23 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget captchaWidget(BuildContext context, LoginNotifier loginNotifier) {
-    return Row(
+    return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         // CaptchaWidget(renderData: loginNotifier.renderData),
-        if(loginNotifier.captchaImage != null) Image.network(loginNotifier.captchaImage ?? "", height: 70,  fit: BoxFit.fill,),
-        IconButton(
-          icon: Icon(LucideIcons.refreshCcw),
-          onPressed: ()=> loginNotifier.apiGetCaptcha(context),
-        ),
+        if(loginNotifier.captchaImage != null) Image.network(
+          loginNotifier.captchaImage ?? "", errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 55,
+            width: 100,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.greyColor),
+              color: AppColors.fieldBorderColor,
+            ),
+            child: Center(child: Text("Refresh captcha", textAlign: TextAlign.center,),),
+          );
+        }, height: 55, fit: BoxFit.fill,),
       ],
     );
   }
@@ -323,6 +345,31 @@ class LoginScreen extends StatelessWidget {
             child: Text(
               context.watchLang.translate(AppLanguageText.createAccount),
               style: AppFonts.textRegular18withUnderline,
+            ),
+          ),
+          15.verticalSpace,
+          Text.rich(
+            textAlign: TextAlign.center,
+            TextSpan(
+              text:
+              context.watchLang.translate(AppLanguageText.changeLanguage),
+              style: AppFonts.textRegular16,
+              children: [
+                TextSpan(
+                    text: " ",
+                    style: AppFonts.textRegular16Red,
+                ),
+                TextSpan(
+                  text: context.watchLang.translate(AppLanguageText.switchLng),
+                  style: AppFonts.textRegular16Red,
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        final provider = context.read<LanguageNotifier>();
+                        final nextLang = provider.currentLang == 'en' ? 'ar' : 'en';
+                        context.switchLang(nextLang);
+                      }
+                ),
+              ],
             ),
           ),
         ],

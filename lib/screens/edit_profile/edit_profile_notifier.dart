@@ -11,6 +11,7 @@ import 'package:mofa/utils/common_utils.dart';
 class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
 
   String? _selectedNationality;
+  String? _selectedNationalityCodes;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
 
@@ -44,8 +45,10 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
   }
 
   Future<void> _init(BuildContext context) async {
-    await _fetchProfileAndNationality(context);
-    _initializeData(context);
+    runWithLoadingVoid(() async {
+      await _fetchProfileAndNationality(context);
+      _initializeData(context);
+    },);
   }
 
   Future<void> _fetchProfileAndNationality(BuildContext context) async {
@@ -87,12 +90,17 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
       orElse: () => CountryData(name: "Unknown", iso3: ""),
     );
     _selectedNationality = data?.iso3;
+    _selectedNationalityCodes = matchedNationality.phonecode.toString();
     nationalityController.text = getLocalizedText(currentLang: context.lang, english: matchedNationality.name, arabic: matchedNationality.nameAr);
 
     notifyListeners();
   }
 
   Future<void> saveData(BuildContext context) async {
+    runWithLoadingVoid(() => saveApiCall(context));
+  }
+
+  Future<void> saveApiCall(BuildContext context) async {
     String? iqama;
     String? eidNumber;
     String? passportNumber;
@@ -156,6 +164,14 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
   set selectedNationality(String? value) {
     if (_selectedNationality == value) return;
     _selectedNationality = value;
+    notifyListeners();
+  }
+
+  String? get selectedNationalityCodes => _selectedNationalityCodes;
+
+  set selectedNationalityCodes(String? value) {
+    if (_selectedNationalityCodes == value) return;
+    _selectedNationalityCodes = value;
     notifyListeners();
   }
 

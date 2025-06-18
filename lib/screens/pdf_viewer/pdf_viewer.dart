@@ -8,6 +8,9 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_language_text.dart';
+import 'package:mofa/utils/common/widgets/common_app_bar.dart';
+import 'package:mofa/utils/common/widgets/common_buttons.dart';
+import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:path_provider/path_provider.dart';
 
 class PdfFullScreenViewer extends StatefulWidget {
@@ -60,53 +63,54 @@ class _PdfFullScreenViewerState extends State<PdfFullScreenViewer> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("PDF Viewer"),
-      ),
-      body: _errorMessage != null
-          ? Center(child: Text(_errorMessage!))
-          : _localPdfPath == null
-          ? const Center(child: CircularProgressIndicator())
-          : Stack(
-        children: [
-          PDFView(
-            filePath: _localPdfPath,
-            enableSwipe: true,
-            swipeHorizontal: true,
-            autoSpacing: false,
-            pageFling: true,
-            onRender: (_pages) {
-              setState(() {
-                this._pages = _pages!;
-                _isReady = true;
-              });
-            },
-            onViewCreated: (controller) {
-              _pdfViewController = controller;
-            },
-            onPageChanged: (int? page, int? total) {
-              setState(() {
-                _currentPage = page ?? 0;
-              });
-            },
-            onError: (error) {
-              setState(() {
-                _errorMessage = error.toString();
-              });
-            },
-            onPageError: (page, error) {
-              setState(() {
-                _errorMessage = 'Page $page error: $error';
-              });
-            },
-          ),
-          if (_isReady)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 10,
-              child: Padding(
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundColor,
+        appBar: CommonAppBar(),
+        drawer: CommonDrawer(),
+        body: _errorMessage != null
+            ? Center(child: Text(context.watchLang.translate(AppLanguageText.failedToLoadPDF)))
+            : _localPdfPath == null
+            ? const Center(child: CircularProgressIndicator())
+            : Column(
+          children: [
+            15.verticalSpace,
+            Expanded(
+              child: PDFView(
+                filePath: _localPdfPath,
+                enableSwipe: true,
+                swipeHorizontal: true,
+                autoSpacing: true,
+                pageFling: true,
+                onRender: (_pages) {
+                  setState(() {
+                    this._pages = _pages!;
+                    _isReady = true;
+                  });
+                },
+                onViewCreated: (controller) {
+                  _pdfViewController = controller;
+                },
+                onPageChanged: (int? page, int? total) {
+                  setState(() {
+                    _currentPage = page ?? 0;
+                  });
+                },
+                onError: (error) {
+                  setState(() {
+                    _errorMessage = error.toString();
+                  });
+                },
+                onPageError: (page, error) {
+                  setState(() {
+                    _errorMessage = 'Page $page error: $error';
+                  });
+                },
+              ),
+            ),
+            15.verticalSpace,
+            if (_isReady)
+              Padding(
                 padding: EdgeInsets.symmetric(horizontal: 15.w),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -163,8 +167,14 @@ class _PdfFullScreenViewerState extends State<PdfFullScreenViewer> {
                   ],
                 ),
               ),
+            15.verticalSpace,
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.w),
+              child: CustomButton(text: context.watchLang.translate(AppLanguageText.close), onPressed: () => Navigator.pop(context),),
             ),
-        ],
+            15.verticalSpace,
+          ],
+        ),
       ),
     );
   }

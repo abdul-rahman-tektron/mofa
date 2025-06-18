@@ -90,9 +90,11 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
           smallWidth: true,
           height: 45,
           onPressed: () {
-            searchPassNotifier.currentPage = 1;
-            searchPassNotifier.filtersCleared = false; // Allow API to work again
-            searchPassNotifier.apiGetAllExternalAppointment(context);
+            searchPassNotifier.runWithLoadingVoid(() {
+              searchPassNotifier.currentPage = 1;
+              searchPassNotifier.filtersCleared = false; // Allow API to work again
+              return searchPassNotifier.apiGetAllExternalAppointment(context);
+            },);
           },
         ),
         15.horizontalSpace,
@@ -139,11 +141,12 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: searchPassNotifier.locationController,
       items: searchPassNotifier.locationDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sLocationNameAr,
-        getEnglish: () => item.sLocationNameEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sLocationNameAr,
+          getEnglish: () => item.sLocationNameEn,
+        ),
       skipValidation: true,
       isSmallFieldFont: true,
       onSelected: (LocationDropdownResult? menu) {
@@ -160,11 +163,12 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
       controller: searchPassNotifier.statusController,
       items: searchPassNotifier.statusDropdownData,
       skipValidation: true,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       onSelected: (DeviceDropdownResult? menu) {
         searchPassNotifier.selectedStatusId = menu?.nDetailedCode ?? 0;
@@ -213,22 +217,19 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
   }
 
   Widget columnNameVisibility(BuildContext context, SearchPassNotifier searchPassNotifier) {
-    return SizedBox(
-      height: 30.h,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          CustomButton(
-            text: context.watchLang.translate(AppLanguageText.columnChooser),
-            smallWidth: true,
-            backgroundColor: AppColors.backgroundColor,
-            borderColor: AppColors.buttonBgColor,
-            textFont: AppFonts.textBold14,
-            padding: EdgeInsets.symmetric(horizontal: 10.w),
-            onPressed: () => columnVisibilityPopup(context, searchPassNotifier),
-          ),
-        ],
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        CustomButton(
+          text: context.watchLang.translate(AppLanguageText.columnChooser),
+          smallWidth: true,
+          backgroundColor: AppColors.backgroundColor,
+          borderColor: AppColors.buttonBgColor,
+          textFont: AppFonts.textBold14,
+          padding: EdgeInsets.symmetric(horizontal: 10.w),
+          onPressed: () => columnVisibilityPopup(context, searchPassNotifier),
+        ),
+      ],
     );
   }
 
@@ -460,7 +461,7 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
         cellContent = Center(
           child: InkWell(
             onTap: isExpired
-                ? null
+                ? () {}
                 : () {
               cancelAppointmentPopup(context, searchPassNotifier, appointment);
             },
@@ -568,12 +569,14 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
 }
 
 class TableColumnConfig {
-  final String labelKey; // Use a translation key
+  final String labelKey;
+  final String? labelAr;
   final bool isMandatory;
   bool isVisible;
 
   TableColumnConfig({
     required this.labelKey,
+    this.labelAr,
     this.isMandatory = false,
     this.isVisible = true,
   });

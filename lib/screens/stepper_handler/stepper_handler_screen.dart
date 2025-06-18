@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
@@ -30,20 +33,24 @@ class StepperHandlerScreen extends StatelessWidget {
               await SecureStorageHelper.removeParticularKey(AppStrings.appointmentData);
               await SecureStorageHelper.removeParticularKey(AppStrings.uploadedImageCode);
             },
-            child: Scaffold(
-              backgroundColor: AppColors.backgroundColor,
-              appBar: CommonAppBar(),
-              drawer: CommonDrawer(),
-              body: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Extract stepper to a separate widget to prevent rebuilds
-                    _StepperIndicator(notifier: stepperHandlerNotifier),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: stepperHandlerNotifier.steps[stepperHandlerNotifier.currentStep],
+            child: SafeArea(
+              child: LoadingOverlay<StepperHandlerNotifier>(
+                child: Scaffold(
+                  backgroundColor: AppColors.backgroundColor,
+                  appBar: CommonAppBar(),
+                  drawer: CommonDrawer(),
+                  body: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        // Extract stepper to a separate widget to prevent rebuilds
+                        _StepperIndicator(notifier: stepperHandlerNotifier),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: stepperHandlerNotifier.steps[stepperHandlerNotifier.currentStep],
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -82,8 +89,8 @@ class _StepperIndicator extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.only(left: 15.w),
-                    child: Text("Progress", style: AppFonts.textRegular16),
+                    padding: EdgeInsets.only(left: 15.w, right: 15.w),
+                    child: Text(context.watchLang.translate(AppLanguageText.progress), style: AppFonts.textRegular16),
                   ),
                   10.verticalSpace,
                   Row(

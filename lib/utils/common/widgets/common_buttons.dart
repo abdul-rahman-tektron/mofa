@@ -3,6 +3,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -54,7 +55,8 @@ class CustomButton extends StatelessWidget {
           ), // Border color and width
         ),
       ),
-      child: isLoading ? const CircularProgressIndicator(color: Colors.white,) : Text(text, style: textFont ?? AppFonts.textButtonStyle),
+      child: isLoading ? const DotCircleSpinner(size: 40, dotSize: 3,) : Text(
+          text, style: textFont ?? AppFonts.textButtonStyle),
     );
   }
 
@@ -93,7 +95,11 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: height ?? 52,
+      height: height != null ? (MediaQuery
+          .of(context)
+          .devicePixelRatio >= 3.0 ? height! - 5 : height) : (MediaQuery
+          .of(context)
+          .devicePixelRatio >= 3.0 ? 43 : 48),
       width: smallWidth ? null : double.infinity,
       child: iconData != null ? buttonWithIcon(context) : buttonWithText(context),
     );

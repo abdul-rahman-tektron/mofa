@@ -70,7 +70,7 @@ class DashboardScreen extends StatelessWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 10.h,
         crossAxisSpacing: 10.w,
-        childAspectRatio: 1.3.w,
+        childAspectRatio: 1.6.w,
       ),
       itemCount: dashboardNotifier.cardData?.length ?? 0,
       itemBuilder: (context, index) {
@@ -158,8 +158,8 @@ class DashboardScreen extends StatelessWidget {
           child: Column(
             children: [
               dashboardNotifier.selectedIndex == 0
-                  ? buildAppointmentList(dashboardNotifier)
-                  : buildAppointmentList(dashboardNotifier),
+                  ? buildAppointmentList(context, dashboardNotifier)
+                  : buildAppointmentList(context, dashboardNotifier),
             ],
           ),
         );
@@ -167,7 +167,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget buildAppointmentList(DashboardNotifier dashboardNotifier) {
+  Widget buildAppointmentList(BuildContext context, DashboardNotifier dashboardNotifier) {
     final appointments =
         dashboardNotifier.isUpcoming ? dashboardNotifier.upcomingAppointments : dashboardNotifier.pastAppointments;
 
@@ -178,7 +178,7 @@ class DashboardScreen extends StatelessWidget {
             15.verticalSpace,
             Icon(LucideIcons.minusCircle, color: AppColors.primaryColor, size: 50),
             15.verticalSpace,
-            Text('No Result found.', style: AppFonts.textRegular16),
+            Text(context.watchLang.translate(AppLanguageText.noResultFound), style: AppFonts.textRegular16),
           ],
         ),
       );

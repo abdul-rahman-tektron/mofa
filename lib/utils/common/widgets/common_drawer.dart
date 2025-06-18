@@ -39,6 +39,7 @@ class CommonDrawer extends StatelessWidget {
                   Text(
                     "${context.watchLang.translate(AppLanguageText.hello)} ${user?.fullName ?? ""}",
                     style: AppFonts.textMedium18,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

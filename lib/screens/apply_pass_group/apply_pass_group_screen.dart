@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
@@ -18,9 +19,11 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_notifier.dart';
+import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
+import 'package:mofa/utils/common/widgets/common_mobile_number.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
@@ -40,7 +43,19 @@ class ApplyPassGroupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => ApplyPassGroupNotifier(context, category),
+      create: (context) {
+        final notifier = ApplyPassGroupNotifier();
+
+        // Delay initialization to avoid build-phase issues
+        Future.microtask(() async {
+          final stepperHandler = Provider.of<StepperHandlerNotifier>(context, listen: false);
+          await stepperHandler.runWithLoadingVoid(() async {
+            await notifier.initialize(context, category);
+          });
+        });
+
+        return notifier;
+      },
       child: Consumer<ApplyPassGroupNotifier>(
         builder: (context, applyPassGroupNotifier, child) {
           return buildBody(context, applyPassGroupNotifier);
@@ -150,6 +165,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
         CustomButton(
           text: context.watchLang.translate(AppLanguageText.next),
           iconData: LucideIcons.chevronRight,
+          isLoading: applyPassGroupNotifier.loadingState == LoadingState.Busy,
           smallWidth: true,
           onPressed:
               !applyPassGroupNotifier.isChecked
@@ -225,6 +241,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
       15.verticalSpace,
       visitPurposeTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
+      if(applyPassGroupNotifier.selectedVisitPurpose == "60") visitPurposeOtherTextField(context, applyPassGroupNotifier),
+      if(applyPassGroupNotifier.selectedVisitPurpose == "60") 15.verticalSpace,
       mofaHostEmailTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
       visitStartDateTextField(context, applyPassGroupNotifier),
@@ -314,11 +332,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.locationController,
       items: applyPassGroupNotifier.locationDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sLocationNameAr,
-        getEnglish: () => item.sLocationNameEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sLocationNameAr,
+          getEnglish: () => item.sLocationNameEn,
+        ),
       isSmallFieldFont: true,
       onSelected: (LocationDropdownResult? menu) {
         applyPassGroupNotifier.selectedLocationId = menu?.nLocationId ?? 0;
@@ -334,11 +353,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.visitRequestTypeController,
       items: applyPassGroupNotifier.visitRequestTypesDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       onSelected: (VisitRequestDropdownResult? menu) {
         applyPassGroupNotifier.selectedVisitRequest = menu?.nDetailedCode.toString() ?? "";
@@ -354,17 +374,26 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.visitPurposeController,
       items: applyPassGroupNotifier.visitPurposeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sPurposeAr,
-        getEnglish: () => item.sPurposeEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sPurposeAr,
+          getEnglish: () => item.sPurposeEn,
+        ),
       isSmallFieldFont: true,
       onSelected: (VisitPurposeDropdownResult? menu) {
         applyPassGroupNotifier.selectedVisitPurpose = menu?.nPurposeId.toString() ?? "";
         // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: (value) => CommonValidation().validateVisitPurpose(context, value),
+    );
+  }
+
+  Widget visitPurposeOtherTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.visitPurposeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.visitPurposeOther),
+      isSmallFieldFont: true,
     );
   }
 
@@ -451,11 +480,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateTypeController,
       items: applyPassGroupNotifier.plateTypeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -471,11 +501,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter1Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -491,11 +522,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter2Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -511,11 +543,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.plateLetter3Controller,
       items: applyPassGroupNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassGroupNotifier.isCheckedVehicle ? false : true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -542,12 +575,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
       15.verticalSpace,
       if (applyPassGroupNotifier.showDeviceFields) ...[
         deviceTypeTextField(context, applyPassGroupNotifier),
+        if(applyPassGroupNotifier.selectedDeviceType == 2250) 15.verticalSpace,
+        if(applyPassGroupNotifier.selectedDeviceType == 2250) deviceTypeOtherTextField(context, applyPassGroupNotifier),
         15.verticalSpace,
         deviceModelTextField(context, applyPassGroupNotifier),
         15.verticalSpace,
         serialNumberTextField(context, applyPassGroupNotifier),
         15.verticalSpace,
         devicePurposeTextField(context, applyPassGroupNotifier),
+        if(applyPassGroupNotifier.selectedDevicePurpose == 2254) 15.verticalSpace,
+        if(applyPassGroupNotifier.selectedDevicePurpose == 2254) devicePurposeOtherTextField(context, applyPassGroupNotifier),
       ],
       15.verticalSpace,
       saveAndCancel(context, applyPassGroupNotifier),
@@ -565,7 +602,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
           borderRadius: const BorderRadius.only(topLeft: Radius.circular(8), topRight: Radius.circular(8)),
         ),
         padding: const EdgeInsets.all(12),
-        child: const Text('Device Details', style: AppFonts.textBoldWhite14),
+        child:  Text('Device Details', style: AppFonts.textBoldWhite14),
       );
     }
 
@@ -810,6 +847,24 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
+  Widget deviceTypeOtherTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.deviceTypeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.deviceTypeOther),
+      isSmallFieldFont: true,
+      skipValidation: true,
+    );
+  }
+
+  Widget devicePurposeOtherTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.devicePurposeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.devicePurposeOther),
+      isSmallFieldFont: true,
+      skipValidation: true,
+    );
+  }
+
   Widget serialNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomTextField(
       controller: applyPassGroupNotifier.serialNumberController,
@@ -826,11 +881,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.deviceTypeController,
       items: applyPassGroupNotifier.deviceTypeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -846,11 +902,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.devicePurposeController,
       items: applyPassGroupNotifier.devicePurposeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: true,
       onSelected: (DeviceDropdownResult? menu) {
@@ -874,11 +931,11 @@ class ApplyPassGroupScreen extends StatelessWidget {
         15.verticalSpace,
         companyNameTextField(context, notifier),
         15.verticalSpace,
+        nationalityField(context, notifier),
+        15.verticalSpace,
         phoneNumberTextField(context, notifier),
         15.verticalSpace,
         emailTextField(context, notifier),
-        15.verticalSpace,
-        nationalityField(context, notifier),
         15.verticalSpace,
         idTypeField(context, notifier),
         15.verticalSpace,
@@ -950,7 +1007,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       ),
       child:
           visitors.isEmpty
-              ? _buildEmptyTableHeader(title: 'Visitors Details')
+              ? _buildEmptyTableHeader(context, title: context.watchLang.translate(AppLanguageText.visitorDetails))
               : SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
@@ -999,7 +1056,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyTableHeader({required String title}) {
+  Widget _buildEmptyTableHeader(BuildContext context, {required String title}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1012,7 +1069,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Text(title, style: AppFonts.textBoldWhite14),
         ),
-        const Padding(padding: EdgeInsets.all(16), child: Text('No result found')),
+        Padding(padding: EdgeInsets.all(16), child: Text(context.watchLang.translate(AppLanguageText.noResultFound))),
       ],
     );
   }
@@ -1277,12 +1334,11 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget phoneNumberTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return CustomTextField(
-      controller: applyPassGroupNotifier.phoneNumberController,
+    return MobileNumberField(
+      mobileController: applyPassGroupNotifier.phoneNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
       isSmallFieldFont: true,
-      keyboardType: TextInputType.phone,
-      validator: (value) => CommonValidation().validateMobile(context, value),
+      countryCode: "+${applyPassGroupNotifier.selectedNationalityCodes ?? "966"}" ,
     );
   }
 
@@ -1334,14 +1390,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.readLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.nationalityController,
       items: applyPassGroupNotifier.nationalityMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.nameAr,
-        getEnglish: () => item.name,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.nameAr,
+          getEnglish: () => item.name,
+        ),
       isSmallFieldFont: true,
       onSelected: (country) {
         applyPassGroupNotifier.selectedNationality = country?.iso3 ?? "";
+        applyPassGroupNotifier.selectedNationalityCodes = country?.phonecode.toString() ?? "";
       },
       validator: (value) => CommonValidation().nationalityValidator(context, value),
     );
@@ -1354,11 +1412,12 @@ class ApplyPassGroupScreen extends StatelessWidget {
       hintText: context.readLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.idTypeController,
       items: applyPassGroupNotifier.idTypeMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.labelAr,
-        getEnglish: () => item.labelEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.labelAr,
+          getEnglish: () => item.labelEn,
+        ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
         applyPassGroupNotifier.selectedIdValue = menu?.value.toString() ?? "";
@@ -1374,6 +1433,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
       controller: applyPassGroupNotifier.iqamaController,
       fieldName: context.watchLang.translate(AppLanguageText.iqama),
       isSmallFieldFont: true,
+      keyboardType: TextInputType.number,
       validator: (value) => CommonValidation().validateIqama(context, value),
     );
   }

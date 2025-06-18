@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
+import 'package:mofa/res/app_language_text.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -21,9 +23,9 @@ class CustomBottomNavBar extends StatelessWidget {
   ];
 
   final List<String> _labels = [
-    'Dashboard',
-    'Apply Pass',
-    'Search Pass',
+    AppLanguageText.dashboard,
+    AppLanguageText.applyPass,
+    AppLanguageText.searchPass,
   ];
 
   @override
@@ -74,7 +76,7 @@ class CustomBottomNavBar extends StatelessWidget {
                               color: AppColors.buttonBgColor,
                             ),
                             5.verticalSpace,
-                            Text(_labels[index], style: isSelected ? AppFonts.textRegular10 : AppFonts.textRegular10,),
+                            Text(context.watchLang.translate(_labels[index]), style: isSelected ? AppFonts.textRegular10 : AppFonts.textRegular10,),
                           ],
                         ),
                       ),

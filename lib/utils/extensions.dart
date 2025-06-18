@@ -50,6 +50,8 @@ extension BackendDateFormat on String {
     }
   }
 
+  bool get isNotNullOrEmpty => this != null && this!.trim().isNotEmpty;
+
   String formatDateTime() {
     try {
       // Step 1: Parse using the correct format
@@ -154,14 +156,20 @@ extension Base64ToFileExtension on String {
 
 extension IdTypeExtension on IdType {
   static IdType? fromString(String? value) {
-    switch (value?.toLowerCase()) {
+    if (value == null) return IdType.nationalId;
+
+    switch (value.toLowerCase()) {
       case "iqama":
+      case "الإقامة":
         return IdType.iqama;
       case "national id":
+      case "الهوية_الوطنية":
         return IdType.nationalId;
       case "passport":
+      case "جواز_السفر":
         return IdType.passport;
       case "other":
+      case "أخرى":
         return IdType.other;
       default:
         return IdType.nationalId;

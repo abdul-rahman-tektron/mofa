@@ -19,10 +19,11 @@ class VisitorDetailModel {
   final String mobileNumber;
   final String email;
   final String nationality;
+  final String nationalityId;
   final String idType;
   final String documentId;
+  final String documentTypeValue;
   final String expiryDate;
-  final String vehicleNumber;
   final String? uploadedPhoto;
   final String? uploadedDocumentId;
   final String? uploadedVehicleRegistration;
@@ -33,10 +34,11 @@ class VisitorDetailModel {
     required this.mobileNumber,
     required this.email,
     required this.nationality,
+    required this.nationalityId,
     required this.idType,
+    required this.documentTypeValue,
     required this.documentId,
     required this.expiryDate,
-    required this.vehicleNumber,
     required this.uploadedPhoto,
     required this.uploadedDocumentId,
     required this.uploadedVehicleRegistration,

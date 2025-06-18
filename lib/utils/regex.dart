@@ -13,6 +13,9 @@ class LocalInputRegex {
   // Regular expression for validating phone numbers
   static const String phone = r'^\d{8,14}$';
 
+  // Regular expression for validating plate numbers
+  static const String plateNumber = r'^\d{0,6}$';
+
   // Regular expression for matching only alphabetic characters
   static const String onlyAlphabets = r'[a-zA-Z]';
 

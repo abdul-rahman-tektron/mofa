@@ -17,6 +17,8 @@ import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
 import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_request.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_response.dart';
 import 'package:mofa/core/model/validate_email/validate_email_response.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_response.dart';
@@ -349,6 +351,30 @@ class ApplyPassRepository extends BaseRepository {
     }
   }
 
+  //api: Visiting Hours Config
+  Future<Object?> apiSearchUser(SearchVisitorRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathSearchUser,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      SearchVisitorResponse searchVisitorResponse =
+      searchVisitorResponseFromJson(jsonEncode(response?.data));
+
+      return searchVisitorResponse.result;
+
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
   //api: Validate Photo Config
   Future<Object?> apiValidatePhotoConfig(Map requestParams, BuildContext context) async {
 
@@ -397,37 +423,59 @@ class ApplyPassRepository extends BaseRepository {
     }
   }
 
-  Future<Object?> apiAddAttachment(BuildContext context,
-      {required String id, required String fieldName,
-        required String fieldType, File? imageFile,}) async {
+  Future<Object?> apiAddAttachment(
+      BuildContext context, {
+        required String id,
+        required String fieldName,
+        required String fieldType,
+        File? file,
+      }) async {
     final token = await SecureStorageHelper.getToken();
 
-    // Prepare the multipart image file if available
-    MultipartFile? multipartImage;
-    if (imageFile != null) {
-      final fileName = imageFile.path
-          .split('/')
-          .last;
-      multipartImage = await MultipartFile.fromFile(
-        imageFile.path,
+    // Get file extension safely
+    final filePath = file?.path ?? '';
+    final fileExtension = filePath.toLowerCase();
+
+    // Default MIME and MediaType
+    String mimeType = 'application/octet-stream';
+    MediaType mediaType = MediaType('application', 'octet-stream');
+
+    // Match file extension manually
+    print("fileExtension");
+    print(fileExtension);
+    if (fileExtension.endsWith('.jpg') || fileExtension.endsWith('.jpeg')) {
+      mimeType = 'image/jpeg';
+      mediaType = MediaType('image', 'jpeg');
+    } else if (fileExtension.endsWith('.png')) {
+      mimeType = 'image/png';
+      mediaType = MediaType('image', 'png');
+    } else if (fileExtension.endsWith('.pdf')) {
+      mimeType = 'application/pdf';
+      mediaType = MediaType('application', 'pdf');
+    }
+
+
+    print(mimeType);
+    MultipartFile? multipartFile;
+    if (file != null) {
+      final fileName = file.path.split('/').last;
+      multipartFile = await MultipartFile.fromFile(
+        file.path,
         filename: fileName,
-        contentType: MediaType('image', 'jpeg'), // or dynamically get the type
+        contentType: mediaType,
       );
     }
 
-    // Append fields as per your API
     final formDataMap = {
-      'Id': id, // or correct field
-      'S_FileType': 'image/jpeg',
+      'Id': id,
+      'S_FileType': mimeType,
       'S_FileFieldName': fieldName,
       'S_FiledFileType': fieldType,
-      if (multipartImage != null) 'File': multipartImage,
+      if (multipartFile != null) 'File': multipartFile,
     };
 
-    // Build FormData
     final formData = FormData.fromMap(formDataMap);
 
-    // Perform the API call
     Response? response = await networkProvider.call(
       method: Method.POST,
       pathUrl: AppUrl.pathAddAttachment,

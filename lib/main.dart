@@ -11,6 +11,7 @@ import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/core/notifier/language_notifier.dart';
 import 'package:mofa/res/app_theme.dart';
 import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/error_handler.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -78,16 +79,21 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
+          print("MediaQuery.of(context).devicePixelRatio");
+          print(MediaQuery.of(context).devicePixelRatio);
+          print(MediaQuery.of(context).textScaleFactor);
+          print(MediaQuery.of(context).size);
           return ScreenUtilInit(
             designSize: const Size(375, 812),
-            minTextAdapt: true,
+            minTextAdapt: true,               // adapt text for smaller screens
+            splitScreenMode: true,
             child: ToastificationWrapper(
               child: MaterialApp(
                 debugShowCheckedModeBanner: false,
                 locale: Locale(context.watch<LanguageNotifier>().currentLang),
-                supportedLocales: const [
-                  Locale('en'),
-                  Locale('ar'),
+                supportedLocales: [
+                  Locale(LanguageCode.en.name),
+                  Locale(LanguageCode.ar.name),
                 ],
                 localizationsDelegates: const [
                   GlobalMaterialLocalizations.delegate,
@@ -99,9 +105,25 @@ class MyApp extends StatelessWidget {
                 // initialRoute: snapshot.data == true ? AppRoutes.home : AppRoutes.login,
                 home: token != null ?  BottomBarScreen() : const LoginScreen(),
                 theme: AppTheme.getTheme(
-                  context.watchLang.currentLang == 'ar' ? 'DroidKufi' : 'Lexend',
+                  context.watchLang.currentLang == LanguageCode.ar.name ? 'DroidKufi' : 'Lexend',
                 ),
                 title: 'Mofa',
+                builder: (context, child) {
+                    final mediaQueryData = MediaQuery.of(context);
+                    final pixelRatio = mediaQueryData.devicePixelRatio;
+
+                    // Apply custom logic based on density threshold
+                    final textScale = pixelRatio > 3.0 ? 0.8 : 1.0;
+
+                    print("textScale");
+                    print(pixelRatio);
+                    print(textScale);
+
+                    return MediaQuery(
+                      data: mediaQueryData.copyWith(textScaleFactor: textScale),
+                      child: child!,
+                    );
+                },
               ),
             ),
           );

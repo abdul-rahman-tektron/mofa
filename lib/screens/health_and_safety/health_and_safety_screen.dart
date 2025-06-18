@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/notifier/language_notifier.dart';
 import 'package:mofa/res/app_colors.dart';
@@ -109,7 +110,7 @@ class HealthAndSafetyScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Padding(
               padding: const EdgeInsets.only(top: 5.0),
@@ -168,6 +169,7 @@ class HealthAndSafetyScreen extends StatelessWidget {
         CustomButton(
           text: context.watchLang.translate(AppLanguageText.submit),
           smallWidth: true,
+          isLoading: healthAndSafetyNotifier.loadingState == LoadingState.Busy,
           onPressed: !healthAndSafetyNotifier.isChecked ? null :() {
             healthAndSafetyNotifier.submitButtonPressed(context, onNext);
           },

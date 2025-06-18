@@ -83,6 +83,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   String? _selectedVisitRequest;
   String? _selectedVisitPurpose;
   String? _selectedNationality;
+  String? _selectedNationalityCodes;
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
   String? _applyPassCategory;
@@ -107,6 +108,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   TextEditingController _locationController = TextEditingController();
   TextEditingController _visitRequestTypeController = TextEditingController();
   TextEditingController _visitPurposeController = TextEditingController();
+  TextEditingController visitPurposeOtherController = TextEditingController();
   TextEditingController _mofaHostEmailController = TextEditingController();
   TextEditingController _visitStartDateController = TextEditingController();
   TextEditingController _visitEndDateController = TextEditingController();
@@ -117,6 +119,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   TextEditingController _deviceModelController = TextEditingController();
   TextEditingController _serialNumberController = TextEditingController();
   TextEditingController _devicePurposeController = TextEditingController();
+  TextEditingController deviceTypeOtherController = TextEditingController();
+  TextEditingController devicePurposeOtherController = TextEditingController();
 
   //Vehicle Details
   TextEditingController plateTypeController = TextEditingController();
@@ -147,9 +151,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
   ];
 
-  ApplyPassGroupNotifier(BuildContext context, ApplyPassCategory category) {
-    initialize(context, category);
-  }
+
 
   String _formatDate(DateTime date) {
     final formatter = DateFormat("dd/MM/yyyy, hh:mm a");
@@ -581,6 +583,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     deviceModelController.clear();
     serialNumberController.clear();
     devicePurposeController.clear();
+    deviceTypeOtherController.clear();
+    devicePurposeOtherController.clear();
   }
 
   void removeDevice(int index) {
@@ -607,6 +611,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     deviceModelController.text = device.deviceModel ?? "";
     serialNumberController.text = device.serialNumber ?? "";
     devicePurposeController.text = device.devicePurposeString ?? "";
+    deviceTypeOtherController.text = device.deviceTypeOthersValue ?? "";
+    devicePurposeOtherController.text = device.devicePurposeOthersValue ?? "";
   }
 
   void cancelEditing() {
@@ -618,27 +624,52 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     deviceModelController.clear();
     serialNumberController.clear();
     devicePurposeController.clear();
+    deviceTypeOtherController.clear();
+    devicePurposeOtherController.clear();
   }
 
   bool isDevicePartiallyFilled() {
+    final isDeviceTypeOther = selectedDeviceType == 2250;
+    final isPurposeOther = selectedDevicePurpose == 2254;
+
     final isDeviceTypeEmpty = deviceTypeController.text.trim().isEmpty;
+    final isDeviceTypeOtherEmpty = isDeviceTypeOther && deviceTypeOtherController.text.trim().isEmpty;
+
     final isModelEmpty = deviceModelController.text.trim().isEmpty;
     final isSerialEmpty = serialNumberController.text.trim().isEmpty;
-    final isPurposeEmpty = devicePurposeController.text.trim().isEmpty;
 
-    final allEmpty = isDeviceTypeEmpty && isModelEmpty && isSerialEmpty && isPurposeEmpty;
-    final allFilled = !isDeviceTypeEmpty && !isModelEmpty && !isSerialEmpty && !isPurposeEmpty;
+    final isPurposeEmpty = devicePurposeController.text.trim().isEmpty;
+    final isPurposeOtherEmpty = isPurposeOther && devicePurposeOtherController.text.trim().isEmpty;
+
+    final allEmpty = isDeviceTypeEmpty &&
+        !isDeviceTypeOther &&
+        isModelEmpty &&
+        isSerialEmpty &&
+        isPurposeEmpty &&
+        !isPurposeOther;
+
+    final allFilled = !isDeviceTypeEmpty &&
+        (!isDeviceTypeOther || !isDeviceTypeOtherEmpty) &&
+        !isModelEmpty &&
+        !isSerialEmpty &&
+        !isPurposeEmpty &&
+        (!isPurposeOther || !isPurposeOtherEmpty);
 
     return !allEmpty && !allFilled; // return true if partially filled
   }
 
 
   void saveDevice() {
+    final isDeviceTypeOther = selectedDeviceType == 2250;
+    final isDevicePurposeOther = selectedDevicePurpose == 2254;
+
     final isAnyFieldEmpty =
         deviceTypeController.text.isEmpty ||
         deviceModelController.text.isEmpty ||
         serialNumberController.text.isEmpty ||
-        devicePurposeController.text.isEmpty;
+        devicePurposeController.text.isEmpty ||
+            (isDeviceTypeOther && deviceTypeOtherController.text.isEmpty) ||
+            (isDevicePurposeOther && devicePurposeOtherController.text.isEmpty);
 
     if (isAnyFieldEmpty) return;
 
@@ -649,6 +680,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       serialNumber: serialNumberController.text,
       devicePurpose: selectedDevicePurpose,
       devicePurposeString: devicePurposeController.text,
+      deviceTypeOthersValue: isDeviceTypeOther ? deviceTypeOtherController.text : null,
+      devicePurposeOthersValue: isDevicePurposeOther ? devicePurposeOtherController.text : null,
     );
 
     if (isEditingDevice && editDeviceIndex != null && editDeviceIndex! < addedDevices.length) {
@@ -714,7 +747,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     documentNameController.text = visitors.documentId;
     documentNumberController.text = visitors.documentId;
     expiryDateController.text = visitors.expiryDate;
-    vehicleNumberController.text = visitors.vehicleNumber;
 
     uploadedImageBytes = visitors.uploadedPhoto.decodeBase64OrNull();
     uploadedDocumentBytes = visitors.uploadedDocumentId.decodeBase64OrNull();
@@ -786,6 +818,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         ?? (uploadedVehicleImageBytes != null ? base64Encode(uploadedVehicleImageBytes!) : null)
     : await uploadedVehicleRegistrationFile?.toBase64();
 
+    // 🔁 Determine document ID value based on selectedIdType
+    final String documentId = _getDocumentIdByType();
 
     imageList.add({
       "imageUploaded": image,
@@ -799,15 +833,31 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       companyName: companyNameController.text,
       mobileNumber: phoneNumberController.text,
       email: emailController.text,
-      nationality: selectedNationality ?? "",
-      idType: idTypeController.text,
-      documentId: iqamaController.text,
+      nationality: nationalityController.text ?? "",
+      idType: selectedIdType ?? "",
+      documentId: documentId,
+      documentTypeValue: selectedIdValue ?? "",
+      nationalityId: selectedNationality ?? "",
       expiryDate: expiryDateController.text,
-      vehicleNumber: vehicleNumberController.text,
       uploadedPhoto: image,
       uploadedDocumentId: document,
       uploadedVehicleRegistration: vehicleReg,
     );
+  }
+
+  String _getDocumentIdByType() {
+    switch (selectedIdType) {
+      case "National ID":
+        return nationalityIdController.text;
+      case "Passport":
+        return passportNumberController.text;
+      case "Iqama":
+        return iqamaController.text;
+      case "Other":
+        return documentNumberController.text;
+      default:
+        return ""; // fallback if none selected
+    }
   }
 
   bool _isGroupVisitorFileValid(BuildContext context) {
@@ -835,10 +885,12 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
   Future<void> nextButton(BuildContext context, VoidCallback onNext) async {
     final isValid = await validation(context);
-    if (isValid) {
-      await addData();
-      onNext();
-    }
+    runWithLoadingVoid(() async {
+      if (isValid) {
+        await addData();
+        onNext();
+      }
+    });
   }
 
   Future<bool> validation(BuildContext context) async {
@@ -849,6 +901,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
     if (!formValid) {
       ToastHelper.showError(lang.translate(AppLanguageText.fillAllInformation));
+      return false;
+    }
+
+    if(isCheckedDevice && addedDevices.isEmpty) {
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.kindlyAddADevice));
       return false;
     }
 
@@ -928,7 +985,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
     for (var visitor in addedVisitors) {
       final expiryDate = visitor.expiryDate.toDateTime().toString();
-      final idTypeInt = int.tryParse(visitor.idType) ?? 0;
+      final idTypeInt = int.tryParse(visitor.documentTypeValue) ?? 0;
       final encryptedDocId = encryptAES(visitor.documentId);
 
       // Prepare expiry dates and document IDs based on ID type
@@ -974,7 +1031,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     return AddAppointmentRequest(
       fullName: visitor.visitorName,
       sponsor: visitor.companyName,
-      nationality: visitor.nationality,
+      nationality: visitor.nationalityId,
       mobileNo: visitor.mobileNumber,
       email: visitor.email,
       idType: idTypeInt,
@@ -989,11 +1046,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       dtOthersExpiry: othersExpiry,
       dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
       dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
-      sVehicleNo: visitor.vehicleNumber,
       devices: addedDevices,
       nLocationId: selectedLocationId,
       nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
       purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
+      purposeOtherValue: visitPurposeOtherController.text,
       remarks: noteController.text,
       sVisitingPersonEmail: mofaHostEmailController.text,
       userId: int.parse(userResponse?.userId ?? "0"),
@@ -1351,6 +1408,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   set userResponse(LoginTokenUserResponse? value) {
     if (_userResponse == value) return;
     _userResponse = value;
+    notifyListeners();
+  }
+
+  String? get selectedNationalityCodes => _selectedNationalityCodes;
+
+  set selectedNationalityCodes(String? value) {
+    if (_selectedNationalityCodes == value) return;
+    _selectedNationalityCodes = value;
     notifyListeners();
   }
 

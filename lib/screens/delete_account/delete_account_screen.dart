@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/model/token_user_response.dart';
@@ -91,10 +92,25 @@ class DeleteAccountScreen extends StatelessWidget {
         ),
         style: AppFonts.textRegular16,
       ),
-      Text(
-        "${context.watchLang.translate(AppLanguageText.thisWillPermanentlyDelete)} ${user?.email ?? ""} ${context.watchLang.translate(AppLanguageText.account)}",
-        style: AppFonts.textRegular16,
+      Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: "${context.watchLang.translate(AppLanguageText.thisWillPermanentlyDelete)} ",
+              style: AppFonts.textRegular16,
+            ),
+            TextSpan(
+              text: user?.email ?? "",
+              style: AppFonts.textRegular16.copyWith(color: Colors.red), // Change the color here
+            ),
+            TextSpan(
+              text: " ${context.watchLang.translate(AppLanguageText.account)}",
+              style: AppFonts.textRegular16,
+            ),
+          ],
+        ),
       ),
+      10.verticalSpace,
       Text(
         "${context.watchLang.translate(AppLanguageText.pleaseType)} ${user?.email ?? ""} ${context.watchLang.translate(AppLanguageText.toConfirm)}",
         style: AppFonts.textRegular16,
@@ -126,6 +142,7 @@ class DeleteAccountScreen extends StatelessWidget {
             smallWidth: true,
             height: 45,
             backgroundColor: AppColors.redColor,
+            isLoading: deleteAccountNotifier.loadingState == LoadingState.Busy,
             onPressed: () {
               final formValid = deleteAccountNotifier.formKey.currentState!.validate();
               final enteredEmail = deleteAccountNotifier.emailAddressController.text;
@@ -140,7 +157,7 @@ class DeleteAccountScreen extends StatelessWidget {
                 return;
               }
 
-              deleteAccountNotifier.apiDeleteAccount(context);
+              deleteAccountNotifier.runWithLoadingVoid(() => deleteAccountNotifier.apiDeleteAccount(context));
             },
         ),
         10.horizontalSpace,

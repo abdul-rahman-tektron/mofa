@@ -25,6 +25,7 @@ class AppLanguageText {
   static const searchPass = 'searchPass';
   static const editProfile = 'editProfile';
   static const changePassword = 'changePassword';
+  static const changeLanguage = 'changeLanguage';
   static const deleteAccount = 'deleteAccount';
   static const cancel = 'cancel';
   static const approvedPasses = 'approvedPasses';
@@ -89,6 +90,7 @@ class AppLanguageText {
   static const name = 'name';
   static const status = 'status';
   static const hostName = 'hostName';
+  static const host = 'host';
   static const hostStatus = 'hostStatus';
   static const action = 'action';
   static const save = 'save';
@@ -347,6 +349,7 @@ class AppLanguageText {
 
   static const companyRequired = 'validation.company.required';
   static const visitorNameRequired = 'validation.visitor_name.required';
+  static const visitorNameNumber = 'validation.visitor_name.number';
   static const vehicleNumberRequired = 'validation.vehicle_number.required';
   static const nationalityRequired = 'validation.nationality.required';
   static const idTypeRequired = 'validation.id_type.required';
@@ -387,6 +390,7 @@ class AppLanguageText {
   static const plateLetter2Required = 'validation.plate_letter2.required';
   static const plateLetter3Required = 'validation.plate_letter3.required';
   static const plateNumberRequired = 'validation.plate_number.required';
+  static const plateNumberValid = 'validation.plate_number.valid';
   static const String mofaEmailRequired = 'mofaEmailRequired';
   static const String invalidMofaEmail = 'invalidMofaEmail';
   static const String pleaseEnterData = 'pleaseEnterData';
@@ -410,6 +414,11 @@ class AppLanguageText {
   static const String requestInfo = 'requestInfo';
   static const String noResultFound = 'noResultFound';
   static const String updateDevice = 'updateDevice';
+  static const String entre10digitIqama = 'entre10digitIqama';
+  static const String numberAsPerRecords = 'numberAsPerRecords';
+  static const String customizeColumns = 'customizeColumns';
+  static const String failedToLoadPDF = 'failedToLoadPDF';
+  static const String loading = 'loading';
 
 // Add the rest of the keys here...
 }

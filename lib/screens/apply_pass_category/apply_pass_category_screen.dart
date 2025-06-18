@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
@@ -16,15 +17,17 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/apply_pass_category/apply_pass_category_notifier.dart';
 import 'package:mofa/screens/search_pass/search_pass_screen.dart';
+import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
+import 'package:mofa/utils/common/widgets/bullet_list.dart';
+import 'package:mofa/utils/common/widgets/common_buttons.dart';
+import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
+import 'package:mofa/utils/common/widgets/common_mobile_number.dart';
+import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/enum_values.dart';
 import 'package:mofa/utils/extensions.dart';
-import 'package:mofa/utils/common/widgets/bullet_list.dart';
-import 'package:mofa/utils/common/widgets/common_buttons.dart';
-import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
-import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/toast_helper.dart';
 import 'package:provider/provider.dart';
 
@@ -45,7 +48,19 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => ApplyPassCategoryNotifier(context, category, isUpdate, id),
+      create: (context) {
+        final notifier = ApplyPassCategoryNotifier();
+
+        // Delay initialization to avoid build-phase issues
+        Future.microtask(() async {
+          final stepperHandler = Provider.of<StepperHandlerNotifier>(context, listen: false);
+          await stepperHandler.runWithLoadingVoid(() async {
+            await notifier.initialize(context, category, isUpdate, id);
+          });
+        });
+
+        return notifier;
+      },
       child: Consumer<ApplyPassCategoryNotifier>(
         builder: (context, applyPassCategoryNotifier, child) {
           return buildBody(context, applyPassCategoryNotifier);
@@ -60,7 +75,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     int stepCounter = 1;
     List<Widget> children = [];
 
-    String buildStepTitle(String title) => "${stepCounter++}. ${lang.translate(title)}";
+    String buildStepTitle(String title, {bool numbered = true}) {
+      return numbered ? "${stepCounter++}. ${lang.translate(title)}" : lang.translate(title);
+    }
+
 
     void addSection(Widget section, {bool addSpacing = true}) {
       if (children.isNotEmpty && addSpacing) {
@@ -71,6 +89,18 @@ class ApplyPassCategoryScreen extends StatelessWidget {
 
     if (applyPassCategoryNotifier.isUpdate) {
       addSection(commentWidgetSection(context, applyPassCategoryNotifier), addSpacing: false);
+    }
+
+    if (category == ApplyPassCategory.someoneElse && !applyPassCategoryNotifier.isUpdate) {
+      addSection(
+        buildExpansionTile(
+          context,
+          applyPassCategoryNotifier,
+          initiallyExpanded: false,
+          title: buildStepTitle(AppLanguageText.searchExistingVisitorInformation, numbered: false),
+          children: searchUserSection(context, applyPassCategoryNotifier),
+        ),
+      );
     }
 
     // Step 1: Visitor Details
@@ -199,6 +229,105 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
+  List<Widget> searchUserSection( BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return [
+      iqamaSearchField(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      nationalityIdSearchField(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      passportSearchField(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      emailSearchField(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      phoneNumberSearchField(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      searchAndClearExistingVisitor(context, applyPassCategoryNotifier),
+    ];
+  }
+
+  Widget iqamaSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.iqamaSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.iqamaNumber),
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digitIqama)}\n${context.readLang.translate(AppLanguageText.numberAsPerRecords)}",
+      isSmallFieldFont: true,
+      skipValidation: true,
+      keyboardType: TextInputType.number,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget nationalityIdSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.nationalityIdSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.nationalID),
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digit)}\n${context.readLang.translate(AppLanguageText.idAsPerRecords)}",
+      isSmallFieldFont: true,
+      skipValidation: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget passportSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.passportSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
+      isSmallFieldFont: true,
+      skipValidation: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget emailSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.emailSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.email),
+      isSmallFieldFont: true,
+      skipValidation: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget phoneNumberSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.phoneNumberSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
+      isSmallFieldFont: true,
+      skipValidation: true,
+      keyboardType: TextInputType.phone,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget searchAndClearExistingVisitor(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return Row(
+      children: [
+        Expanded(
+          child: CustomButton(
+            text: context.watchLang.translate(AppLanguageText.search),
+            height: 45,
+            smallWidth: true,
+            onPressed: () {
+              applyPassCategoryNotifier.apiSearchVisitor(context);
+            },
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: CustomButton(
+            text: context.watchLang.translate(AppLanguageText.clear),
+            backgroundColor: Colors.white,
+            height: 45,
+            smallWidth: true,
+            borderColor: AppColors.buttonBgColor,
+            textFont: AppFonts.textBold14,
+            onPressed: () => applyPassCategoryNotifier.clearSearchField(),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSearchCommentDataTable(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
     final visibleColumns = applyPassCategoryNotifier.columnConfigs.where((c) => c.isVisible).toList();
     final comments = applyPassCategoryNotifier.searchCommentData;
@@ -228,10 +357,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
               clipBehavior: Clip.antiAliasWithSaveLayer,
               columnSpacing: 20.w,
               dataRowMaxHeight: 65.h,
-              columns: _buildColumns(visibleColumns),
+              columns: _buildColumns(context,visibleColumns),
               rows:
               comments.isEmpty
-                  ? [_buildNoResultRow(visibleColumns.length)]
+                  ? [_buildNoResultRow(context, visibleColumns.length)]
                   : _buildCommentRows(context, comments, visibleColumns),
             ),
           ),
@@ -240,22 +369,24 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
-  List<DataColumn> _buildColumns(List<TableColumnConfig> visibleColumns) {
+  List<DataColumn> _buildColumns(BuildContext context, List<TableColumnConfig> visibleColumns) {
     return visibleColumns.map((config) {
       return DataColumn(
-        label: config.labelKey == "Status" ? Flexible(child: Center(child: Text(config.labelKey))) : Text(config.labelKey),
+        label: config.labelKey == "Status" ? Flexible(
+            child: Center(child: Text(context.lang == LanguageCode.ar.name ? config.labelAr ?? "" : config.labelKey))) : Text(
+            context.lang == LanguageCode.ar.name ? config.labelAr ?? "" : config.labelKey),
       );
     }).toList();
   }
 
-  DataRow _buildNoResultRow(int columnCount) {
+  DataRow _buildNoResultRow(BuildContext context, int columnCount) {
     return DataRow(
       cells: [
         DataCell(
           Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
-              child: Text('No result found', style: AppFonts.textRegularGrey16),
+              child: Text(context.watchLang.translate(AppLanguageText.noResultFound), style: AppFonts.textRegularGrey16),
             ),
           ),
         ),
@@ -289,7 +420,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
 
   DataCell _buildDataCell(BuildContext context, SearchCommentData comment, TableColumnConfig config) {
     final isActionCell = config.labelKey == 'Action';
-    final content = _buildCellContent(comment, config.labelKey);
+    final content = _buildCellContent(context, comment, config.labelKey);
 
     if (isActionCell) {
       return DataCell(content);
@@ -306,15 +437,15 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildCellContent(SearchCommentData comment, String label) {
+  Widget _buildCellContent(BuildContext context, SearchCommentData comment, String label) {
     switch (label) {
       case 'Comment Type':
         return SizedBox(
           width: 120.w,
-          child: Text(comment.sCommentTypeEn ?? "", maxLines: 2, overflow: TextOverflow.ellipsis),
+          child: Text(context.lang == LanguageCode.ar.name ? comment.sCommentTypeAr ?? "" : comment.sCommentTypeEn ?? "", maxLines: 2, overflow: TextOverflow.ellipsis),
         );
       case 'Comment By':
-        return Text(comment.sRoleNameEn ?? "");
+        return Text(context.lang == LanguageCode.ar.name ? comment.sRoleNameAr ?? "" : comment.sRoleNameEn ?? "");
       case 'Comment':
         return SizedBox(
           width: 160.w,
@@ -375,18 +506,19 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
-  Widget buildExpansionTile(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier,{required String title, required List<Widget> children, isVisitorDetails = false}) {
+  Widget buildExpansionTile(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier,
+      {required String title, required List<Widget> children, isVisitorDetails = false, bool initiallyExpanded = true,}) {
     return ExpansionTile(
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       collapsedBackgroundColor: AppColors.whiteColor,
       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       childrenPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      initiallyExpanded: true,
+      initiallyExpanded: initiallyExpanded,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: AppFonts.textRegular20),
+          Expanded(child: Text(title, style: AppFonts.textRegular20,)),
           if (!applyPassCategoryNotifier.isUpdate) if (isVisitorDetails) Text("(${category.label(context)})", style: AppFonts.textMedium12),
         ],
       ),
@@ -402,6 +534,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           text: context.watchLang.translate(AppLanguageText.next),
           iconData: LucideIcons.chevronRight,
           smallWidth: true,
+          isLoading: applyPassCategoryNotifier.loadingState == LoadingState.Busy,
           onPressed:
           !applyPassCategoryNotifier.isChecked
               ? null
@@ -531,13 +664,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   }
 
   Widget phoneNumberTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
-    return CustomTextField(
-      controller: applyPassCategoryNotifier.phoneNumberController,
+    return MobileNumberField(
+      mobileController: applyPassCategoryNotifier.phoneNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
       isSmallFieldFont: true,
-      keyboardType: TextInputType.phone,
+      countryCode: "+${applyPassCategoryNotifier.selectedNationalityCodes ?? "966"}" ,
       isEnable: applyPassCategoryNotifier.isEnable,
-      validator: (value) => CommonValidation().validateMobile(context, value),
     );
   }
 
@@ -556,6 +688,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       controller: applyPassCategoryNotifier.nationalityIdController,
       fieldName: context.watchLang.translate(AppLanguageText.nationalID),
       isSmallFieldFont: true,
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digit)}\n${context.readLang.translate(AppLanguageText.idAsPerRecords)}",
       isEnable: applyPassCategoryNotifier.isEnable,
       validator: (value) => CommonValidation().validateNationalId(context, value),
     );
@@ -597,15 +730,17 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.nationalityController,
       items: applyPassCategoryNotifier.nationalityMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.nameAr,
-        getEnglish: () => item.name,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.nameAr,
+          getEnglish: () => item.name,
+        ),
       isSmallFieldFont: true,
       isEnable: category == ApplyPassCategory.myself ? false : applyPassCategoryNotifier.isEnable,
       onSelected: (country) {
         applyPassCategoryNotifier.selectedNationality = country?.iso3 ?? "";
+        applyPassCategoryNotifier.selectedNationalityCodes = country?.phonecode.toString() ?? "";
       },
       validator: (value) => CommonValidation().nationalityValidator(context, value),
     );
@@ -618,11 +753,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.idTypeController,
       items: applyPassCategoryNotifier.idTypeMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.labelAr,
-        getEnglish: () => item.labelEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.labelAr,
+          getEnglish: () => item.labelEn,
+        ),
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (DocumentIdModel? menu) {
@@ -638,8 +774,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     return CustomTextField(
       controller: applyPassCategoryNotifier.iqamaController,
       fieldName: context.watchLang.translate(AppLanguageText.iqama),
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digitIqama)}\n${context.readLang.translate(AppLanguageText.numberAsPerRecords)}",
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
+      keyboardType: TextInputType.number,
       validator: (value) => CommonValidation().validateIqama(context, value),
     );
   }
@@ -697,11 +835,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.plateTypeController,
       items: applyPassCategoryNotifier.plateTypeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassCategoryNotifier.isCheckedVehicle ? false : true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -718,11 +857,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.plateLetter1Controller,
       items: applyPassCategoryNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassCategoryNotifier.isCheckedVehicle ? false : true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -739,11 +879,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.plateLetter2Controller,
       items: applyPassCategoryNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassCategoryNotifier.isCheckedVehicle ? false : true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -760,11 +901,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.plateLetter3Controller,
       items: applyPassCategoryNotifier.plateLetterDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: applyPassCategoryNotifier.isCheckedVehicle ? false : true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -795,6 +937,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       15.verticalSpace,
       visitPurposeTextField(context, applyPassCategoryNotifier),
       15.verticalSpace,
+      if(applyPassCategoryNotifier.selectedVisitPurpose == "60") visitPurposeOtherTextField(context, applyPassCategoryNotifier),
+      if(applyPassCategoryNotifier.selectedVisitPurpose == "60") 15.verticalSpace,
       mofaHostEmailTextField(context, applyPassCategoryNotifier),
       15.verticalSpace,
       visitStartDateTextField(context, applyPassCategoryNotifier),
@@ -884,11 +1028,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.locationController,
       items: applyPassCategoryNotifier.locationDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sLocationNameAr,
-        getEnglish: () => item.sLocationNameEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sLocationNameAr,
+          getEnglish: () => item.sLocationNameEn,
+        ),
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (LocationDropdownResult? menu) {
@@ -905,11 +1050,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.visitRequestTypeController,
       items: applyPassCategoryNotifier.visitRequestTypesDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (VisitRequestDropdownResult? menu) {
@@ -926,11 +1072,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.visitPurposeController,
       items: applyPassCategoryNotifier.visitPurposeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sPurposeAr,
-        getEnglish: () => item.sPurposeEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sPurposeAr,
+          getEnglish: () => item.sPurposeEn,
+        ),
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (VisitPurposeDropdownResult? menu) {
@@ -938,6 +1085,15 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: (value) => CommonValidation().validateVisitPurpose(context, value),
+    );
+  }
+
+  Widget visitPurposeOtherTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.visitPurposeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.visitPurposeOther),
+      isSmallFieldFont: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
     );
   }
 
@@ -1044,12 +1200,16 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       15.verticalSpace,
       if (applyPassCategoryNotifier.showDeviceFields) ...[
         deviceTypeTextField(context, applyPassCategoryNotifier),
+        if(applyPassCategoryNotifier.selectedDeviceType == 2250) 15.verticalSpace,
+        if(applyPassCategoryNotifier.selectedDeviceType == 2250) deviceTypeOtherTextField(context, applyPassCategoryNotifier),
         15.verticalSpace,
         deviceModelTextField(context, applyPassCategoryNotifier),
         15.verticalSpace,
         serialNumberTextField(context, applyPassCategoryNotifier),
         15.verticalSpace,
         devicePurposeTextField(context, applyPassCategoryNotifier),
+        if(applyPassCategoryNotifier.selectedDevicePurpose == 2254) 15.verticalSpace,
+        if(applyPassCategoryNotifier.selectedDevicePurpose == 2254) devicePurposeOtherTextField(context, applyPassCategoryNotifier),
       ],
       15.verticalSpace,
       saveAndCancel(context, applyPassCategoryNotifier),
@@ -1074,7 +1234,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         width: double.infinity,
         decoration: headerDecoration,
         padding: const EdgeInsets.all(12),
-        child: const Text('Device Details', style: AppFonts.textBoldWhite14),
+        child: Text('Device Details', style: AppFonts.textBoldWhite14),
       );
     }
 
@@ -1287,6 +1447,26 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
+  Widget deviceTypeOtherTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.deviceTypeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.deviceTypeOther),
+      isSmallFieldFont: true,
+      skipValidation: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
+  Widget devicePurposeOtherTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.devicePurposeOtherController,
+      fieldName: context.watchLang.translate(AppLanguageText.devicePurposeOther),
+      isSmallFieldFont: true,
+      skipValidation: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+    );
+  }
+
   Widget serialNumberTextField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
     return CustomTextField(
       controller: applyPassCategoryNotifier.serialNumberController,
@@ -1304,11 +1484,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.deviceTypeController,
       items: applyPassCategoryNotifier.deviceTypeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -1325,11 +1506,12 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.devicePurposeController,
       items: applyPassCategoryNotifier.devicePurposeDropdownData,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.sDescA,
-        getEnglish: () => item.sDescE,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
+        ),
       isSmallFieldFont: true,
       skipValidation: true,
       isEnable: applyPassCategoryNotifier.isEnable,
@@ -1434,7 +1616,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         if (applyPassCategoryNotifier.photoUploadValidation)
           Text(context.readLang.translate(AppLanguageText.validationPhotoUploadRequired), style: AppFonts.errorTextRegular12),
         const SizedBox(height: 5),
-        if ((applyPassCategoryNotifier.getByIdResult?.user?.havePhoto == 1 || applyPassCategoryNotifier.uploadedImageBytes != null) &&
+        if (((applyPassCategoryNotifier.getByIdResult?.user?.havePhoto == 1 || applyPassCategoryNotifier.havePhoto == 1) || applyPassCategoryNotifier.uploadedImageBytes != null) &&
             applyPassCategoryNotifier.uploadedImageFile == null)
           _buildViewAttachment(context, applyPassCategoryNotifier, lang),
       ],
@@ -1529,36 +1711,56 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   Widget _buildViewAttachment(BuildContext context, ApplyPassCategoryNotifier notifier, LanguageNotifier lang) {
     return GestureDetector(
       onTap: () async {
-        if (notifier.getByIdResult?.user?.havePhoto == 1) {
-          await notifier.apiGetFile(context, type: 1);
-        }
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (_) =>
-              AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
-                content: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Align(
-                          alignment: Alignment.centerRight,
-                          child: GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: Icon(LucideIcons.x))),
-                      5.verticalSpace,
-                      Image.memory(notifier.uploadedImageBytes!),
-                    ],
+        notifier.runWithViewAttachmentPhotoLoader(() async {
+          if (notifier.getByIdResult?.user?.havePhoto == 1 || notifier.havePhoto == 1) {
+            await notifier.apiGetFile(context, type: 1);
+          }
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder:
+                (_) =>
+                AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
+                  content: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: GestureDetector(
+                                onTap: () {
+                                  Navigator.pop(context);
+                                } ,
+                                child: Icon(LucideIcons.x))),
+                        5.verticalSpace,
+                        Image.memory(notifier.uploadedImageBytes!),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-        );
+          );
+        },);
       },
-      child: Text(lang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(lang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+          if (notifier.isPhotoLoading) ...[
+            8.horizontalSpace,
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: DotCircleSpinner(
+                color: AppColors.primaryColor,
+                dotSize: 1,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -1611,7 +1813,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           Text("$selectedIdType ${context.readLang.translate(AppLanguageText.upload)} ${context.readLang.translate(AppLanguageText.validationRequired)}", style: AppFonts.errorTextRegular12),
         const SizedBox(height: 5),
         if (_hasValidDocument(applyPassCategoryNotifier))
-          _buildViewAttachmentButton(context, applyPassCategoryNotifier, lang, selectedIdType ?? ""),
+          _buildViewAttachmentButton(context, applyPassCategoryNotifier, lang, selectedIdType ?? "", applyPassCategoryNotifier.runWithViewAttachmentDocumentLoader, applyPassCategoryNotifier.isDocumentLoading),
       ],
     );
   }
@@ -1638,18 +1840,19 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     print('isNotUploadingNewFile: $isNotUploadingNewFile');
 
     // If user is null, rely only on uploaded bytes
-    if (user == null) {
-      print('No user data available. Checking based on uploaded bytes.');
-      final result = hasStoredBytes && isNotUploadingNewFile;
-      print('Final result of _hasValidDocument (user null case): $result');
-      return result;
+    if(notifier.haveDocument == 0) {
+      if (user == null) {
+        print('No user data available. Checking based on uploaded bytes.');
+        final result = hasStoredBytes && isNotUploadingNewFile;
+        print('Final result of _hasValidDocument (user null case): $result');
+        return result;
+      }
     }
 
-    final hasApiDocument = user.haveEid == 1 ||
-        user.haveIqama == 1 ||
-        user.havePassport == 1 ||
-        user.haveOthers == 1;
-    print('hasApiDocument: $hasApiDocument');
+    final hasApiDocument = (user?.haveEid == 1 ||
+        user?.haveIqama == 1 ||
+        user?.havePassport == 1 ||
+        user?.haveOthers == 1) || notifier.haveDocument == 1;
 
     final result = (hasApiDocument || hasStoredBytes) && isNotUploadingNewFile;
     print('Final result of _hasValidDocument: $result');
@@ -1662,24 +1865,45 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   Widget _buildViewAttachmentButton(BuildContext context,
       ApplyPassCategoryNotifier notifier,
       LanguageNotifier lang,
-      String selectedIdType,) {
+      String selectedIdType,
+      Function runLoading,
+      bool loader,) {
     int type = _getFileType(selectedIdType);
 
     return GestureDetector(
       onTap: () async {
-        final user = notifier.getByIdResult?.user;
-        final hasAnyDocument = user?.havePassport == 1 ||
-            user?.haveIqama == 1 ||
-            user?.haveEid == 1 ||
-            user?.haveOthers == 1;
+        runLoading(() async {
+          final user = notifier.getByIdResult?.user;
+          final hasAnyDocument = (user?.havePassport == 1 ||
+              user?.haveIqama == 1 ||
+              user?.haveEid == 1 ||
+              user?.haveOthers == 1) || notifier.haveDocument == 1;
 
-        if (hasAnyDocument) {
-          await notifier.apiGetFile(context, type: type);
-        } else {
-          await notifier.localGetFile(context, type: type);
-        }
+          if (hasAnyDocument) {
+            await notifier.apiGetFile(context, type: type);
+          } else {
+            await notifier.localGetFile(context, type: type);
+          }
+        });
       },
-      child: Text(lang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+      child: Row(
+
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(lang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+          if (loader) ...[
+            8.horizontalSpace,
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: DotCircleSpinner(
+                color: AppColors.primaryColor,
+                dotSize: 1,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -1694,7 +1918,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       case "Other":
         return 6;
       default:
-        return 1;
+        return 4;
     }
   }
 
@@ -1743,13 +1967,13 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         const Divider(height: 10, thickness: 1),
         const SizedBox(height: 5),
         if (_hasVehicleRegistration(applyPassCategoryNotifier))
-          _buildViewAttachmentButton(context, applyPassCategoryNotifier, lang, "4"),
+          _buildViewAttachmentButton(context, applyPassCategoryNotifier, lang, "4", applyPassCategoryNotifier.runWithViewAttachmentTransportLoader, applyPassCategoryNotifier.isTransportDocumentLoading),
       ],
     );
   }
 
   bool _hasVehicleRegistration(ApplyPassCategoryNotifier notifier) {
     final user = notifier.getByIdResult?.user;
-    return user?.haveVehicleRegistration == 1 || notifier.uploadedVehicleImageBytes != null;
+    return (user?.haveVehicleRegistration == 1 || notifier.haveVehicleRegistration == 1) || notifier.uploadedVehicleImageBytes != null;
   }
 }

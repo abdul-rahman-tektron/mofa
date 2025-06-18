@@ -70,6 +70,8 @@ class NetworkProvider {
             'method': e.requestOptions.method,
             'statusCode': e.response?.statusCode?.toString() ?? 'null',
             'responseData': e.response?.data?.toString() ?? 'null',
+            'requestData': e.requestOptions.data?.toString() ?? 'null',
+            'headers': e.requestOptions.headers.toString(),
           },
         );
 
@@ -140,21 +142,23 @@ class NetworkProvider {
     } on DioError catch (e, stack) {
       await ErrorHandler.recordError(
         e,
-        stack,
+        e.stackTrace,
         fatal: false,
-        reason: 'API call failed',
+        reason: 'API Call Failed',
         context: {
-          'url': url,
-          'method': method.name,
+          'path': e.requestOptions.path,
+          'method': e.requestOptions.method,
           'statusCode': e.response?.statusCode?.toString() ?? 'null',
           'responseData': e.response?.data?.toString() ?? 'null',
+          'requestData': e.requestOptions.data?.toString() ?? 'null',
+          'headers': e.requestOptions.headers.toString(),
         },
       );
       logger.e("❌ DioError [${e.response?.statusCode}] from ${e.requestOptions.path}");
       logger.e("🧾 Error Response: ${e.response?.data}");
       return await _handleError(e);
     } catch (e, stack) {
-      await ErrorHandler.recordError(
+       await ErrorHandler.recordError(
         e,
         stack,
         fatal: false,
@@ -177,9 +181,6 @@ class NetworkProvider {
     final status = error.response?.statusCode ?? 0;
     final url = error.requestOptions.path;
 
-    print("AppUrl.baseUrl + AppUrl.pathCaptchaLogin");
-    print(AppUrl.baseUrl + AppUrl.pathCaptchaLogin);
-    print(url);
     switch (status) {
       case HttpStatus.unauthorized:
         if (![

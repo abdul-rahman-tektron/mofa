@@ -9,6 +9,7 @@ import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/common/widgets/ticket_dialog.dart';
 import 'package:mofa/utils/common_utils.dart';
+import 'package:mofa/utils/enum_values.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vector_math/vector_math.dart' as v_math;
 
@@ -27,7 +28,7 @@ class TicketCard extends StatelessWidget {
       child: Stack(
         children: [
           ClipPath(
-            clipper: DolDurmaClipper(left: 101.w, holeRadius: 10),
+            clipper: DolDurmaClipper(left: 101.w, holeRadius: 10, isRtl: context.lang == LanguageCode.ar.name),
             child: Container(
               height: 110.h,
               decoration: BoxDecoration(
@@ -71,16 +72,16 @@ class TicketCard extends StatelessWidget {
                   // Title and subtitle on the right
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 15.w, ),
+                      padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           Text(appointmentData?.sVisitorName ?? "",
                               overflow: TextOverflow.ellipsis,
-                              style: AppFonts.textRegular20),
+                              style: MediaQuery.of(context).size.width > 360 ? AppFonts.textRegular20 : AppFonts.textRegular16),
                           Text(formatAppointmentRangeFromString(appointmentData?.dtAppointmentStartTime, appointmentData?.dtAppointmentEndTime),
-                              style: AppFonts.textRegular12),
+                              style: MediaQuery.of(context).size.width > 360 ? AppFonts.textRegular12 : AppFonts.textRegular10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -120,7 +121,8 @@ class TicketCard extends StatelessWidget {
                   holeRadius: 10,
                   strokeWidth: 1,
                   color: CommonUtils.getStatusColor(
-                      appointmentData?.sApprovalStatusEn ?? "")),
+                      appointmentData?.sApprovalStatusEn ?? ""),
+                  isRtl: context.lang == LanguageCode.ar.name),
             ),
           ),
         ],
@@ -176,32 +178,64 @@ class TicketCard extends StatelessWidget {
   }
 }
 
-class DolDurmaClipper extends CustomClipper<Path> {
-  DolDurmaClipper({required this.left, required this.holeRadius});
 
-  final double left; // position where the arc should appear
+class DolDurmaClipper extends CustomClipper<Path> {
+  DolDurmaClipper({
+    required this.left,
+    required this.holeRadius,
+    this.isRtl = false,
+  });
+
+  final double left;
   final double holeRadius;
+  final bool isRtl;
 
   @override
   Path getClip(Size size) {
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(left - holeRadius, 0)
-      ..arcToPoint(
-        Offset(left + holeRadius, 0),
-        clockwise: false,
-        radius: Radius.circular(holeRadius),
-      )
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width, size.height)
-      ..lineTo(left + holeRadius, size.height)
-      ..arcToPoint(
-        Offset(left - holeRadius, size.height),
-        clockwise: false,
-        radius: Radius.circular(holeRadius),
-      )
-      ..lineTo(0, size.height)
-      ..close();
+    final path = Path();
+
+    if (!isRtl) {
+      // Left side arc (LTR)
+      path
+        ..moveTo(0, 0)
+        ..lineTo(left - holeRadius, 0)
+        ..arcToPoint(
+          Offset(left + holeRadius, 0),
+          radius: Radius.circular(holeRadius),
+          clockwise: false,
+        )
+        ..lineTo(size.width, 0)
+        ..lineTo(size.width, size.height)
+        ..lineTo(left + holeRadius, size.height)
+        ..arcToPoint(
+          Offset(left - holeRadius, size.height),
+          radius: Radius.circular(holeRadius),
+          clockwise: false,
+        )
+        ..lineTo(0, size.height)
+        ..close();
+    } else {
+      // Right side arc (RTL) — mirrored LTR
+      final arcCenterX = size.width - left;
+      path
+        ..moveTo(size.width, 0)
+        ..lineTo(arcCenterX + holeRadius, 0)
+        ..arcToPoint(
+          Offset(arcCenterX - holeRadius, 0),
+          radius: Radius.circular(holeRadius),
+          clockwise: true,
+        )
+        ..lineTo(0, 0)
+        ..lineTo(0, size.height)
+        ..lineTo(arcCenterX - holeRadius, size.height)
+        ..arcToPoint(
+          Offset(arcCenterX + holeRadius, size.height),
+          radius: Radius.circular(holeRadius),
+          clockwise: true,
+        )
+        ..lineTo(size.width, size.height)
+        ..close();
+    }
 
     return path;
   }
@@ -209,6 +243,8 @@ class DolDurmaClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(DolDurmaClipper oldClipper) => true;
 }
+
+
 
 class DottedLinePainter extends CustomPainter {
   final Color color;
@@ -238,12 +274,14 @@ class ArcBorderPainter extends CustomPainter {
   final double holeRadius;
   final Color color;
   final double strokeWidth;
+  final bool isRtl;
 
   ArcBorderPainter({
     required this.left,
     required this.holeRadius,
     this.color = Colors.grey,
     this.strokeWidth = 1.5,
+    this.isRtl = false,
   });
 
   @override
@@ -255,28 +293,30 @@ class ArcBorderPainter extends CustomPainter {
 
     final arcInset = strokeWidth / 2;
 
+    final arcCenterX = isRtl ? (size.width - left) : left;
+
     // Inner top arc
     final topArcRect = Rect.fromCircle(
-      center: Offset(left, arcInset),
+      center: Offset(arcCenterX, arcInset),
       radius: holeRadius - arcInset,
     );
     canvas.drawArc(
       topArcRect,
-      v_math.radians(0),         // start from right
-      -v_math.radians(-180),      // draw to the left (clockwise inside)
+      v_math.radians(0),         // start from right (clockwise)
+      -v_math.radians(-180),    // draw to the left (clockwise inside)
       false,
       paint,
     );
 
     // Inner bottom arc
     final bottomArcRect = Rect.fromCircle(
-      center: Offset(left, size.height - arcInset),
+      center: Offset(arcCenterX, size.height - arcInset),
       radius: holeRadius - arcInset,
     );
     canvas.drawArc(
       bottomArcRect,
-      v_math.radians(180),       // start from left
-      -v_math.radians(-180),      // draw to the right (clockwise inside)
+      v_math.radians(180),      // start from left
+      -v_math.radians(-180),    // draw to the right (clockwise inside)
       false,
       paint,
     );

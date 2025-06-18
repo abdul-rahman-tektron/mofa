@@ -18,7 +18,7 @@ class AppColors {
   static const Color greyColor = Color(0xFF9D9D9D);
   static const Color underscoreColor = Color(0xFFD45555);
   static const Color bottomBarColor = Color(0xFF1F1F1F);
-  static const Color textFieldTextColor = Color(0xFFC4C4C4);
+  static const Color textFieldTextColor = Color(0xFF9E9E9E);
   static const Color redColor = Color(0xFFF81313);
   static const Color textRedColor = Color(0xFFDB2525);
   static const Color membershipTileColor = Color(0xFF1B1A1A);

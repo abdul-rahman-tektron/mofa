@@ -22,7 +22,7 @@ class DashboardNotifier extends BaseChangeNotifier {
   int _selectedIndex = 0;
 
   DashboardNotifier(BuildContext context) {
-    runWithLoadingVoid(_init(context));
+    runWithLoadingVoid(() => _init(context));
   }
 
   Future<void> _init(BuildContext context) async {
@@ -67,7 +67,8 @@ class DashboardNotifier extends BaseChangeNotifier {
   }
 
   Future<void> apiGetAllExternalAppointment(BuildContext context, bool isUpcoming, {int? page}) async {
-    final today = DateTime.now();
+    final today = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    final todayPast = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day -1);
 
     // Calculate fromDate for past appointments safely
     final fromDate = isUpcoming
@@ -78,7 +79,7 @@ class DashboardNotifier extends BaseChangeNotifier {
       final response = await SearchPassRepository().apiGetExternalAppointment(
         GetExternalAppointmentRequest(
           dFromDate: fromDate.toIso8601String(),
-          dToDate: isUpcoming ? null : today.toIso8601String(),
+          dToDate: isUpcoming ? null : todayPast.toIso8601String(),
           nApprovalStatus: isUpcoming ? 49 : null,
           nPageNumber: page ?? 1,
           nPageSize: 100,

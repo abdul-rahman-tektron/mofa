@@ -241,10 +241,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
             children: [
               Row(
                 children: [
-                  Text(widget.fieldName, style: textColor),
+                  Text(widget.fieldName,
+                    style: (widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17),),
                   if (!widget.skipValidation) 3.horizontalSpace,
                   if (!widget.skipValidation)
-                    if(!widget.showAsterisk)
+                    if(widget.showAsterisk)
                     const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
                   if (widget.toolTipContent != null) ...[
                     const SizedBox(width: 3),
@@ -303,10 +304,11 @@ class _CustomTextFieldState extends State<CustomTextField> {
             decoration: InputDecoration(
               fillColor: widget.isEnable ? (widget.backgroundColor ?? AppColors.whiteColor) : AppColors.disabledFieldColor,
               filled: true,
+              contentPadding: EdgeInsets.symmetric(vertical: 15, horizontal: 12),
               hintText: widget.hintText,
               hintStyle: widget.hintStyle ?? AppFonts.textRegularGrey16,
               labelStyle: widget.isEnable ? AppFonts.textRegular17 : AppFonts.textRegularGrey16,
-              errorStyle: const TextStyle(color: AppColors.underscoreColor),
+              errorStyle: const TextStyle(color: AppColors.underscoreColor, fontSize: 14),
               border: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
               enabledBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),
               disabledBorder: _buildBorder(widget.borderColor ?? AppColors.fieldBorderColor),

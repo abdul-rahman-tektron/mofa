@@ -19,6 +19,7 @@ import 'package:mofa/utils/captcha_widget.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/error_handler.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/toast_helper.dart';
 
@@ -82,7 +83,7 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
       // final loginRequest = LoginTokenRequest(
       //     email: email, password: encryptedPassword);
 
-      runWithLoadingVoid(loginApiCall(context));
+      runWithLoadingVoid(() => loginApiCall(context));
     }
   }
 
@@ -144,11 +145,13 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
     } else if (result is CaptchaFailureResult) {
       await apiGetCaptcha(context);
       captchaController.clear();
-      ToastHelper.showError("Captcha code is not valid");
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.incorrectCaptcha));
     } else if (result is LoginFailureResult) {
       await _handleFailedLogin(result, context);
     } else {
-      ToastHelper.showError("Incorrect Email or Password");
+      captchaController.clear();
+      apiGetCaptcha(context);
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.incorrectEmailOrPassword));
     }
   }
 
@@ -173,7 +176,7 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
       "${context.readLang.translate(AppLanguageText.yourAccountWillUnlockAt)} ${CommonUtils.formatIsoToReadable(result.accountLockoutEndTime) ?? ""}";
     } else {
       passwordController.clear();
-      ToastHelper.showError("Incorrect Email or Password");
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.incorrectEmailOrPassword));
       loginError =
       "${context.readLang.translate(AppLanguageText.youHave)} ${result.remainingFailedLoginAttempts ?? 0} ${context.readLang.translate(AppLanguageText.attempts)} ${context.readLang.translate(AppLanguageText.remaining)}";
     }

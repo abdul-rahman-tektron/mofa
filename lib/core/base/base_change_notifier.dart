@@ -35,11 +35,11 @@ abstract class BaseChangeNotifier with ChangeNotifier {
     }
   }
 
-  Future<void> runWithLoadingVoid(Future<void> task, {BaseChangeNotifier? target}) async {
+  Future<void> runWithLoadingVoid(Future<void> Function() task, {BaseChangeNotifier? target}) async {
     final notifier = target ?? this;
     try {
       notifier.setLoadingState(LoadingState.Busy);
-      await task;
+      await task();
     } finally {
       notifier.setLoadingState(LoadingState.Idle);
     }

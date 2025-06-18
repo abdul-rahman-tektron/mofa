@@ -14,62 +14,110 @@ import 'package:mofa/utils/extensions.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vector_math/vector_math.dart' as v_math;
 
-void showTicketDialog(BuildContext context, GetExternalAppointmentData appointmentData) {
-  showDialog(
+showTicketDialog(BuildContext context, GetExternalAppointmentData appointmentData) async {
+  await showDialog(
     context: context,
     barrierDismissible: false,
     barrierColor: Colors.black.withOpacity(0.5),
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-      child: TicketDialogWrapper(appointmentData: appointmentData,),
+    builder: (context) => Center(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: 500, // Controls dialog width on large screens (e.g. tablets)
+          maxHeight: MediaQuery.of(context).size.height * 0.9,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16), // Space around the dialog
+          child: TicketDialogWrapper(appointmentData: appointmentData),
+        ),
+      ),
     ),
   );
 }
 
-class TicketDialogWrapper extends StatelessWidget {
+class TicketDialogWrapper extends StatefulWidget {
   final GetExternalAppointmentData? appointmentData;
   const TicketDialogWrapper({super.key, this.appointmentData});
 
   @override
+  State<TicketDialogWrapper> createState() => _TicketDialogWrapperState();
+}
+
+class _TicketDialogWrapperState extends State<TicketDialogWrapper> {
+  final GlobalKey _dottedLineKey = GlobalKey();
+   double _arcTop = 210; // Fixed top offset from your visual design
+
+  @override
+  void initState() {
+    super.initState();
+    // Delay to allow build to complete
+    WidgetsBinding.instance.addPostFrameCallback((_) => _calculateArcPosition());
+  }
+
+  void _calculateArcPosition() {
+    final RenderBox? box = _dottedLineKey.currentContext?.findRenderObject() as RenderBox?;
+    final offset = box?.localToGlobal(Offset.zero);
+    final dialogTop = context.findRenderObject() is RenderBox
+        ? (context.findRenderObject() as RenderBox).localToGlobal(Offset.zero).dy
+        : 0;
+
+    if (offset != null) {
+      setState(() {
+        _arcTop = offset.dy - dialogTop + 15.h; // Add 1px buffer to avoid clipping
+      });
+    }
+  }
+
+
+  @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        ClipPath(
-          clipper: DolDurmaClipper(top: 255.w, holeRadius: 15),
-          child: Material(
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-              side: BorderSide(width: 2, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
-            ),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: 400
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ClipPath(
+            clipper: DolDurmaClipper(top: _arcTop, holeRadius: 15),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  width: 2,
+                  color: CommonUtils.getStatusColor(widget.appointmentData?.sApprovalStatusEn ?? ""),
+                ),
               ),
-              child: Padding(
-                padding: EdgeInsets.only(top: 20.w),
-                child: TicketDialogContent(appointmentData: appointmentData),
+              padding: EdgeInsets.only(top: 20.w),
+              child: TicketDialogContent(
+                appointmentData: widget.appointmentData,
+                dottedLineKey: _dottedLineKey,
               ),
             ),
           ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: CustomPaint(
-              painter: ArcBorderPainter(top: 255.w, holeRadius: 15, color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""), strokeWidth: 2),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: ArcBorderPainter(
+                  top: _arcTop,
+                  holeRadius: 15,
+                  color: CommonUtils.getStatusColor(widget.appointmentData?.sApprovalStatusEn ?? ""),
+                  strokeWidth: 2,
+                ),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
+
+
 class TicketDialogContent extends StatelessWidget {
   final GetExternalAppointmentData? appointmentData;
+  final GlobalKey? dottedLineKey;
 
-  const TicketDialogContent({super.key, required this.appointmentData});
+  const TicketDialogContent({super.key, required this.appointmentData, this.dottedLineKey});
 
   @override
   Widget build(BuildContext context) {
@@ -77,11 +125,7 @@ class TicketDialogContent extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         ConstrainedBox(
-          constraints: BoxConstraints(
-              maxWidth: 250,
-              minWidth: 150,
-            maxHeight: 200
-          ),
+          constraints: BoxConstraints(maxWidth: 250, minWidth: 150, maxHeight: 200),
           child: appointmentData?.sQRCodeValue?.isNotEmpty ?? false ? QrImageView(
             data: appointmentData?.sQRCodeValue ?? "",
             // size: 150.w,
@@ -95,7 +139,7 @@ class TicketDialogContent extends StatelessWidget {
             ),
           ),
         ),
-        _dottedLine(context),
+        _dottedLineWithKey(context),
         _visitorDetails(context, appointmentData),
         _dottedLine(context),
         _dateDetails(context, appointmentData),
@@ -106,6 +150,26 @@ class TicketDialogContent extends StatelessWidget {
     );
   }
 
+// With GlobalKey — for arc positioning
+  Widget _dottedLineWithKey(BuildContext context) => Column(
+    key: dottedLineKey, // ✅ key added here
+    children: [
+      15.verticalSpace,
+      SizedBox(
+        height: 1,
+        child: CustomPaint(
+          size: const Size(double.infinity, 1),
+          painter: HorizontalDottedLinePainter(
+            color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+          ),
+        ),
+      ),
+      15.verticalSpace,
+    ],
+  );
+
+
+// Without key
   Widget _dottedLine(BuildContext context) => Column(
     children: [
       15.verticalSpace,
@@ -113,12 +177,15 @@ class TicketDialogContent extends StatelessWidget {
         height: 1,
         child: CustomPaint(
           size: const Size(double.infinity, 1),
-          painter: HorizontalDottedLinePainter(color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? "")),
+          painter: HorizontalDottedLinePainter(
+            color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+          ),
         ),
       ),
       15.verticalSpace,
     ],
   );
+
 
   Widget _visitorDetails(BuildContext context, GetExternalAppointmentData? data) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 15.0),
@@ -138,8 +205,8 @@ class TicketDialogContent extends StatelessWidget {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: "${context.watchLang.translate(AppLanguageText.hostName)}: ",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      text: "${context.watchLang.translate(AppLanguageText.host)}: ",
+                      style: AppFonts.textBold16,
                     ),
                     TextSpan(
                       text: data?.sSponsor ?? "",
@@ -174,17 +241,17 @@ class TicketDialogContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: Text(context.watchLang.translate(AppLanguageText.startDate), style: AppFonts.textRegularGrey14)),
+            Expanded(child: Text(context.watchLang.translate(AppLanguageText.startDate), style: AppFonts.textBold14)),
             15.horizontalSpace,
-            Expanded(child: Text(context.watchLang.translate(AppLanguageText.endDate), style: AppFonts.textRegularGrey14)),
+            Expanded(child: Text(context.watchLang.translate(AppLanguageText.endDate), style: AppFonts.textBold14)),
           ],
         ),
         3.verticalSpace,
         Row(
           children: [
-            Expanded(child: Text(data?.dtAppointmentStartTime?.toDisplayDateTime() ?? "", style: AppFonts.textRegular12,)),
+            Expanded(child: Text(data?.dtAppointmentStartTime?.toDisplayDateTime() ?? "", style: AppFonts.textRegular14,)),
             15.horizontalSpace,
-            Expanded(child: Text(data?.dtAppointmentEndTime?.toDisplayDateTime() ?? "", style: AppFonts.textRegular12,)),
+            Expanded(child: Text(data?.dtAppointmentEndTime?.toDisplayDateTime() ?? "", style: AppFonts.textRegular14,)),
           ],
         ),
       ],
@@ -197,9 +264,9 @@ class TicketDialogContent extends StatelessWidget {
       CustomButton(
         text: context.watchLang.translate(AppLanguageText.viewDetails),
         height: 40,
-        backgroundColor: AppColors.whiteColor,
-        borderColor: AppColors.buttonBgColor,
-        textFont: AppFonts.textBold14,
+        // backgroundColor: AppColors.whiteColor,
+        // borderColor: AppColors.buttonBgColor,
+        textFont: AppFonts.textMedium14White,
         smallWidth: true,
         onPressed: () {
           Navigator.pop(context);

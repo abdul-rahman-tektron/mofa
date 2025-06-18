@@ -32,14 +32,16 @@ class BottomBarScreen extends StatelessWidget {
       onPopInvokedWithResult: (didPop, result) {
         bottomBarNotifier.changeTab(0);
       },
-      child: Scaffold(
-        backgroundColor: AppColors.backgroundColor,
-        appBar: CommonAppBar(),
-        drawer: CommonDrawer(),
-        body: bottomBarNotifier.currentScreen,
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: bottomBarNotifier.currentIndex,
-          onTap: bottomBarNotifier.changeTab,
+      child: SafeArea(
+        child: Scaffold(
+          backgroundColor: AppColors.backgroundColor,
+          appBar: CommonAppBar(),
+          drawer: CommonDrawer(),
+          body: bottomBarNotifier.currentScreen,
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: bottomBarNotifier.currentIndex,
+            onTap: bottomBarNotifier.changeTab,
+          ),
         ),
       ),
     );

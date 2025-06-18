@@ -7,6 +7,8 @@ import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/screens/edit_profile/edit_profile_notifier.dart';
+import 'package:mofa/utils/common/widgets/common_mobile_number.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
@@ -25,7 +27,9 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
       create: (context) => EditProfileNotifier(context),
       child: Consumer<EditProfileNotifier>(
         builder: (context, editProfileNotifier, child) {
-          return buildBody(context, editProfileNotifier);
+          return LoadingOverlay<EditProfileNotifier>(
+            child: buildBody(context, editProfileNotifier),
+          );
         },
       ),
     );
@@ -109,26 +113,27 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: editProfileNotifier.nationalityController,
       items: editProfileNotifier.nationalityMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.nameAr,
-        getEnglish: () => item.name,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.nameAr,
+          getEnglish: () => item.name,
+        ),
       isSmallFieldFont: true,
       onSelected: (country) {
         editProfileNotifier.selectedNationality = country?.iso3 ?? "";
+        editProfileNotifier.selectedNationalityCodes = country?.phonecode.toString() ?? "";
       },
       validator: (value) => CommonValidation().nationalityValidator(context, value),
     );
   }
 
   Widget mobileNumberTextField(BuildContext context, EditProfileNotifier editProfileNotifier) {
-    return CustomTextField(
-      controller: editProfileNotifier.mobileNumberController,
+    return MobileNumberField(
+      mobileController: editProfileNotifier.mobileNumberController,
       fieldName: context.watchLang.translate(AppLanguageText.mobileNumber),
       isSmallFieldFont: true,
-      keyboardType: TextInputType.phone,
-      validator: (value) => CommonValidation().validateMobile(context, value),
+      countryCode: "+${editProfileNotifier.selectedNationalityCodes ?? "966"}" ,
     );
   }
 
@@ -151,11 +156,12 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: editProfileNotifier.idTypeController,
       items: editProfileNotifier.idTypeMenu,
-      itemLabel: (item) => CommonUtils.getLocalizedString(
-        currentLang: context.lang,
-        getArabic: () => item.labelAr,
-        getEnglish: () => item.labelEn,
-      ),
+      currentLang: context.lang,
+      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+          currentLang: lang,
+          getArabic: () => item.labelAr,
+          getEnglish: () => item.labelEn,
+        ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
         editProfileNotifier.selectedIdValue = menu?.value.toString() ?? "";
@@ -242,7 +248,9 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
 
   Widget saveButton(BuildContext context,
       EditProfileNotifier editProfileNotifier) {
-    return CustomButton(text: context.watchLang.translate(AppLanguageText.save),
-      onPressed: () => editProfileNotifier.saveData(context),);
+    return CustomButton(
+      text: context.watchLang.translate(AppLanguageText.save),
+      onPressed: () => editProfileNotifier.saveData(context),
+    );
   }
 }
