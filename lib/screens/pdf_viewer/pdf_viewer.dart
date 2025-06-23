@@ -11,6 +11,7 @@ import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/common/widgets/common_app_bar.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:path_provider/path_provider.dart';
 
 class PdfFullScreenViewer extends StatefulWidget {
@@ -71,7 +72,7 @@ class _PdfFullScreenViewerState extends State<PdfFullScreenViewer> {
         body: _errorMessage != null
             ? Center(child: Text(context.watchLang.translate(AppLanguageText.failedToLoadPDF)))
             : _localPdfPath == null
-            ? const Center(child: CircularProgressIndicator())
+            ?  Center(child: DotCircleSpinner(color: AppColors.buttonBgColor,))
             : Column(
           children: [
             15.verticalSpace,

@@ -441,5 +441,6 @@
   "changeLanguage": "Change Language to",
   "customizeColumns": "Customize Columns",
   "failedToLoadPDF": "Failed to load PDF document.",
-  "loading": "Loading"
+  "loading": "Loading",
+  "refreshCaptcha" : "Refresh captcha"
 }

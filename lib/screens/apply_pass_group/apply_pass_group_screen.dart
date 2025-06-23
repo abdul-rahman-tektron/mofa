@@ -20,11 +20,13 @@ import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_notifier.dart';
 import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
+import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common/widgets/bullet_list.dart';
 import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_mobile_number.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
+import 'package:mofa/utils/common/widgets/loading_overlay.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/common_validation.dart';
 import 'package:mofa/utils/enum_values.dart';
@@ -68,7 +70,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
     final lang = context.watchLang;
     int stepCounter = 1;
 
-    String stepTitle(String label) => "${stepCounter++}. ${lang.translate(label)}";
+    String stepTitle(String label, {bool numbered = true}) =>
+        numbered ? "${stepCounter++}. ${lang.translate(label)}" : lang.translate(label);
 
     List<Widget> children = [];
 
@@ -139,18 +142,18 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget buildExpansionTile({required String title, required List<Widget> children, isVisitorDetails = false}) {
+  Widget buildExpansionTile({required String title, required List<Widget> children, isVisitorDetails = false,  bool initiallyExpanded = true,}) {
     return ExpansionTile(
       backgroundColor: AppColors.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       collapsedBackgroundColor: AppColors.whiteColor,
       collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       childrenPadding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 10.h),
-      initiallyExpanded: true,
+      initiallyExpanded: initiallyExpanded,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: AppFonts.textRegular20),
+          Expanded(child: Text(title, style: AppFonts.textRegular20)),
           if (isVisitorDetails) Text("(${category.name})", style: AppFonts.textMedium12),
         ],
       ),
@@ -230,6 +233,112 @@ class ApplyPassGroupScreen extends StatelessWidget {
       points,
       onPrivacyPolicyTap: () => notifier.launchPrivacyUrl(),
       initiallyVisibleIndices: [2, 3], // Last 2 points
+    );
+  }
+
+  Widget searchVisitorVisibilityButton(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: CustomButton(
+          height: 40,
+          iconData: LucideIcons.search,
+          leftIcon: true,
+          text: context.watchLang.translate(AppLanguageText.searchVisitor),
+          onPressed: () => applyPassGroupNotifier.showSearchFields()),
+    );
+  }
+
+  List<Widget> searchUserSection( BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return [
+      iqamaSearchField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      nationalityIdSearchField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      passportSearchField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      emailSearchField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      phoneNumberSearchField(context, applyPassGroupNotifier),
+      15.verticalSpace,
+      searchAndClearExistingVisitor(context, applyPassGroupNotifier),
+    ];
+  }
+
+  Widget iqamaSearchField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.iqamaSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.iqamaNumber),
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digitIqama)}\n${context.readLang.translate(AppLanguageText.numberAsPerRecords)}",
+      isSmallFieldFont: true,
+      skipValidation: true,
+      keyboardType: TextInputType.number,
+    );
+  }
+
+  Widget nationalityIdSearchField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.nationalityIdSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.nationalID),
+      toolTipContent: "${context.readLang.translate(AppLanguageText.entre10digit)}\n${context.readLang.translate(AppLanguageText.idAsPerRecords)}",
+      isSmallFieldFont: true,
+      skipValidation: true,
+    );
+  }
+
+  Widget passportSearchField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.passportSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
+      isSmallFieldFont: true,
+      skipValidation: true,
+    );
+  }
+
+  Widget emailSearchField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.emailSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.email),
+      isSmallFieldFont: true,
+      skipValidation: true,
+    );
+  }
+
+  Widget phoneNumberSearchField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.phoneNumberSearchController,
+      fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.phone,
+      skipValidation: true,
+    );
+  }
+
+  Widget searchAndClearExistingVisitor(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return Row(
+      children: [
+        Expanded(
+          child: CustomButton(
+            text: context.watchLang.translate(AppLanguageText.search),
+            height: 45,
+            smallWidth: true,
+            onPressed: () {
+              applyPassGroupNotifier.apiSearchVisitor(context);
+            },
+          ),
+        ),
+        SizedBox(width: 10),
+        Expanded(
+          child: CustomButton(
+            text: context.watchLang.translate(AppLanguageText.clear),
+            backgroundColor: Colors.white,
+            height: 45,
+            smallWidth: true,
+            borderColor: AppColors.buttonBgColor,
+            textFont: AppFonts.textBold14,
+            onPressed: () => applyPassGroupNotifier.clearSearchField(),
+          ),
+        ),
+      ],
     );
   }
 
@@ -919,8 +1028,10 @@ class ApplyPassGroupScreen extends StatelessWidget {
 
   List<Widget> groupVisitorDetailsChildren(BuildContext context, ApplyPassGroupNotifier notifier) {
     List<Widget> children = [
-      // addVisitorsButton(context, notifier),
-      // 15.verticalSpace,
+      searchVisitorVisibilityButton(context, notifier),
+      15.verticalSpace,
+      if(notifier.isCheckedSearch) ...searchUserSection(context, notifier),
+      if(notifier.isCheckedSearch) 15.verticalSpace,
       visitorTable(context, notifier),
       15.verticalSpace,
     ];
@@ -1044,7 +1155,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
                             DataCell(Text(visitor.nationality)),
                             DataCell(
                               _buildActionButtons(
-                                onEdit: () => notifier.startEditingVisitors(index),
+                                onEdit: () => notifier.startEditingVisitors(context, index),
                                 onDelete: () => notifier.removeVisitors(index),
                               ),
                             ),
@@ -1102,6 +1213,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
     required String title,
     required String? fileName,
     required VoidCallback onUploadTap,
+    required Function runLoading,
+    required bool loader,
     bool showTooltip = false,
     String? tooltipMessage,
     bool isRequired = false,
@@ -1149,42 +1262,79 @@ class ApplyPassGroupScreen extends StatelessWidget {
           ],
         ),
         const Divider(height: 10, indent: 0, thickness: 1),
-        if(viewAttachmentData != null) _buildViewAttachment(context, applyPassGroupNotifier, viewAttachmentData),
+        if(viewAttachmentData != null) _buildViewAttachment(context, applyPassGroupNotifier, viewAttachmentData, runLoading, loader),
         if (showError && errorText != null) Text(errorText, style: AppFonts.errorTextRegular12),
       ],
     );
   }
 
-  Widget _buildViewAttachment(BuildContext context, ApplyPassGroupNotifier notifier, Uint8List? imageData) {
+  Widget _buildViewAttachment(BuildContext context, ApplyPassGroupNotifier notifier, Uint8List? imageData, Function runLoading,
+      bool loader,) {
     return GestureDetector(
       onTap: () async {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder:
-              (_) =>
-              AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
-                content: Column(
-                  children: [
-                    Align(
-                        alignment: Alignment.centerRight,
-                        child: GestureDetector(
+        runLoading (() async {
+          if (isPdf(imageData!)) {
+            Navigator.pushNamed(context, AppRoutes.pdfViewer, arguments: imageData);
+          } else {
+            showDialog(
+              context: context,
+              barrierDismissible: false,
+              builder:
+                  (_) =>
+                  AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 5.h),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: GestureDetector(
                             onTap: () => Navigator.pop(context),
-                            child: Icon(LucideIcons.x))),
-                    5.verticalSpace,
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.memory(imageData!),
+                            child: Icon(LucideIcons.x),
+                          ),
+                        ),
+                        5.verticalSpace,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.memory(imageData!),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-        );
+                  ),
+            );
+          }
+        });
       },
-      child: Text(context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.watchLang.translate(AppLanguageText.viewAttachment), style: AppFonts.textRegularAttachment14),
+          if (loader) ...[
+            8.horizontalSpace,
+            SizedBox(
+              width: 14,
+              height: 14,
+              child: DotCircleSpinner(
+                color: AppColors.primaryColor,
+                dotSize: 1,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
+  }
+
+  bool isPdf(Uint8List data) {
+    if (data.length < 5) return false;
+
+    // Compare the first 5 bytes to the PDF signature
+    return data[0] == 0x25 && // %
+        data[1] == 0x50 && // P
+        data[2] == 0x44 && // D
+        data[3] == 0x46 && // F
+        data[4] == 0x2D;   // -
   }
 
 
@@ -1217,6 +1367,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
           AppLanguageText.photoJpgPng)}\n ${langContext.translate(AppLanguageText.ensureTheImage)}\n ${langContext
           .translate(AppLanguageText.officialGuidelines)}",
       showError: notifier.photoUploadValidation,
+      runLoading: notifier.runWithViewAttachmentPhotoLoader,
+      loader: notifier.isPhotoLoading,
       errorText: context.readLang.translate(AppLanguageText.validationPhotoUploadRequired),
     );
   }
@@ -1300,6 +1452,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
       isRequired: true,
       viewAttachmentData: notifier.uploadedDocumentBytes,
       showError: notifier.documentUploadValidation,
+      runLoading: notifier.runWithViewAttachmentDocumentLoader,
+      loader: notifier.isDocumentLoading,
       errorText: "${notifier.selectedIdType} ${context.readLang.translate(AppLanguageText.upload)} ${context.readLang.translate(AppLanguageText.validationRequired)}",
     );
   }
@@ -1311,6 +1465,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
       title: context.watchLang.translate(AppLanguageText.vehicleRegistrationLicense),
       fileName: notifier.uploadedVehicleRegistrationFile?.path.split('/').last,
       viewAttachmentData: notifier.uploadedVehicleImageBytes,
+      runLoading: notifier.runWithViewAttachmentTransportLoader,
+      loader: notifier.isTransportDocumentLoading,
       onUploadTap: () async => await notifier.uploadVehicleRegistrationImage(),
     );
   }

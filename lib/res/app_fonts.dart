@@ -334,7 +334,7 @@ class AppFonts {
   );
 
   static final textButtonStyle = TextStyle(
-    fontSize: 14.sp,
+    fontSize: 16,
     fontWeight: FontWeight.bold,
     color: AppColors.textButtonColor,
     letterSpacing: 0.5,

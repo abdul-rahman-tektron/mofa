@@ -419,6 +419,7 @@ class AppLanguageText {
   static const String customizeColumns = 'customizeColumns';
   static const String failedToLoadPDF = 'failedToLoadPDF';
   static const String loading = 'loading';
+  static const String refreshCaptcha = 'refreshCaptcha';
 
 // Add the rest of the keys here...
 }

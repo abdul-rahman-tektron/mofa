@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/model/apply_pass/apply_pass_category.dart';
+import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/apply_pass_category/apply_pass_category_screen.dart';
 import 'package:mofa/screens/apply_pass_group/apply_pass_group_screen.dart';
 import 'package:mofa/screens/finish_apply_pass/finish_apply_pass_screen.dart';
 import 'package:mofa/screens/health_and_safety/health_and_safety_screen.dart';
 import 'package:mofa/utils/enum_values.dart';
+import 'package:mofa/utils/secure_storage.dart';
 import 'package:provider/provider.dart';
 
 class StepperHandlerNotifier extends BaseChangeNotifier {
@@ -52,5 +54,16 @@ StepperHandlerNotifier(BuildContext context, ApplyPassCategory category, bool is
     if (_steps == value) return;
     _steps = value;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    // disposeItem();
+    super.dispose();
+  }
+
+  void disposeItem() async {
+    await SecureStorageHelper.removeParticularKey(AppStrings.appointmentData);
+    await SecureStorageHelper.removeParticularKey(AppStrings.uploadedImageCode);
   }
 }

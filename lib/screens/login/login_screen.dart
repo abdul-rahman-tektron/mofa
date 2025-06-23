@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                       forgotPassword(context, loginNotifier),
                       15.verticalSpace,
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           captchaField(context, loginNotifier),
                           10.horizontalSpace,
@@ -238,24 +238,42 @@ class LoginScreen extends StatelessWidget {
   }
 
   Widget captchaWidget(BuildContext context, LoginNotifier loginNotifier) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // CaptchaWidget(renderData: loginNotifier.renderData),
-        if(loginNotifier.captchaImage != null) Image.network(
-          loginNotifier.captchaImage ?? "", errorBuilder: (context, error, stackTrace) {
-          return Container(
-            height: 55,
-            width: 100,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.greyColor),
-              color: AppColors.fieldBorderColor,
+    if (loginNotifier.captchaImage == null) {
+      return Container(
+        height: 55,
+        width: 100,
+        decoration: BoxDecoration(
+          border: Border.all(color: AppColors.greyColor),
+          color: AppColors.fieldBorderColor,
+        ),
+        child: Center(
+          child: Text(
+            context.watchLang.translate(AppLanguageText.refreshCaptcha),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ); // or placeholder if you want
+    }
+    return Image.network(
+      loginNotifier.captchaImage!,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          height: 55,
+          width: 100,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.greyColor),
+            color: AppColors.fieldBorderColor,
+          ),
+          child: Center(
+            child: Text(
+              context.watchLang.translate(AppLanguageText.refreshCaptcha),
+              textAlign: TextAlign.center,
             ),
-            child: Center(child: Text("Refresh captcha", textAlign: TextAlign.center,),),
-          );
-        }, height: 55, fit: BoxFit.fill,),
-      ],
+          ),
+        );
+      },
+      height: 55,
+      fit: BoxFit.fill,
     );
   }
 

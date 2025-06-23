@@ -17,6 +17,7 @@ class CustomButton extends StatelessWidget {
   final EdgeInsets? padding;
   final Color? borderColor;
   final bool smallWidth;
+  final bool leftIcon;
 
   const CustomButton({
     super.key,
@@ -31,6 +32,7 @@ class CustomButton extends StatelessWidget {
     this.borderColor,
     this.isLoading = false,
     this.smallWidth = false,
+    this.leftIcon = false,
   });
 
   // Creates a button with only text
@@ -55,8 +57,10 @@ class CustomButton extends StatelessWidget {
           ), // Border color and width
         ),
       ),
-      child: isLoading ? const DotCircleSpinner(size: 40, dotSize: 3,) : Text(
-          text, style: textFont ?? AppFonts.textButtonStyle),
+      child: isLoading ? const DotCircleSpinner(size: 40, dotSize: 3,) : FittedBox(
+        child: Text(
+            text, style: textFont ?? AppFonts.textButtonStyle),
+      ),
     );
   }
 
@@ -81,12 +85,14 @@ class CustomButton extends StatelessWidget {
           ), // Border color and width
         ),
       ),
-      child: isLoading ? const CircularProgressIndicator(color: Colors.white,) : Row(
+      child: isLoading ? const DotCircleSpinner(size: 40, dotSize: 3,) : Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if(leftIcon) Icon(iconData ?? LucideIcons.arrowRight, size: 20, color: AppColors.whiteColor,),
+          if(leftIcon) 5.horizontalSpace,
           Text(text, style: textFont ?? AppFonts.textButtonStyle),
-          3.horizontalSpace,
-          Icon(iconData ?? LucideIcons.arrowRight, size: 25, color: AppColors.whiteColor,),
+          if(!leftIcon) 3.horizontalSpace,
+          if(!leftIcon) Icon(iconData ?? LucideIcons.arrowRight, size: 25, color: AppColors.whiteColor,),
         ],
       ),
     );

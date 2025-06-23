@@ -29,6 +29,7 @@ import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/error_handler.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/toast_helper.dart';
 import 'package:mofa/utils/common/widgets/common_popup.dart';
@@ -406,11 +407,30 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       ForgetPasswordResponse deleteAccountResponse =
       forgetPasswordResponseFromJson(jsonEncode(response?.data));
 
-      if(deleteAccountResponse.statusCode == HttpStatus.ok){
-        await SecureStorageHelper.clearExceptRememberMe();
+      if (deleteAccountResponse.statusCode == HttpStatus.ok) {
+        try {
+          await SecureStorageHelper.clearExceptRememberMe();
+        } catch (e, stack) {
+          await ErrorHandler.recordError(e, stack, context: {
+            'widget': 'Delete Account',
+            'action': 'clearExceptRememberMe',
+            'message': e.toString(),
+          });
+          print("SecureStorage deletion error: $e");
+          // Optional: show a message to user if needed
+        }
+
         Provider.of<CommonNotifier>(context, listen: false).clearUser();
-        ToastHelper.showSuccess(context.readLang.translate(AppLanguageText.accountDeleted) ?? "");
-        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (Route<dynamic> route) => false);
+
+        ToastHelper.showSuccess(
+          context.readLang.translate(AppLanguageText.accountDeleted) ?? "",
+        );
+
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          AppRoutes.login,
+              (Route<dynamic> route) => false,
+        );
       }
 
       return deleteAccountResponse.result;

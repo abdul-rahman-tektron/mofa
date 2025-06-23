@@ -95,6 +95,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   bool _isPhotoLoading = false;
   bool _isDocumentLoading = false;
   bool _isTransportDocumentLoading = false;
+  bool _searchExpanded = false;
 
   //File
   File? _uploadedImageFile;
@@ -142,6 +143,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   GetByIdResult? _getByIdResult;
   String? _applyPassCategory;
+
+  final ValueNotifier<bool> searchExpandedNotifier = ValueNotifier(false);
 
   // key
   final formKey = GlobalKey<FormState>();
@@ -787,6 +790,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         }
 
         clearSearchField();
+        searchExpandedNotifier.value = false;
         setSearchVisitorData(context, result);
       } else {
         debugPrint("Unexpected result type in Search apiGetById");
@@ -2219,6 +2223,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   set isTransportDocumentLoading(bool value) {
     if (_isTransportDocumentLoading == value) return;
     _isTransportDocumentLoading = value;
+    notifyListeners();
+  }
+
+  bool get searchExpanded => _searchExpanded;
+
+  set searchExpanded(bool value) {
+    if (_searchExpanded == value) return;
+    _searchExpanded = value;
     notifyListeners();
   }
 

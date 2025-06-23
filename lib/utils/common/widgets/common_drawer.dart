@@ -9,6 +9,7 @@ import 'package:mofa/res/app_images.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/utils/app_routes.dart';
+import 'package:mofa/utils/error_handler.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:provider/provider.dart';
@@ -103,7 +104,16 @@ class CommonDrawer extends StatelessWidget {
   }
 
   void logoutFunctionality(BuildContext context) async {
-    await SecureStorageHelper.clearExceptRememberMe();
+    try {
+      await SecureStorageHelper.clearExceptRememberMe();
+    } catch (e, stack) {
+      await ErrorHandler.recordError(e, stack, context: {
+        'widget': 'Logout',
+        'action': 'logoutFunctionality',
+      });
+      print("Logout: error during clearing secure storage: $e");
+    }
+
     Provider.of<CommonNotifier>(context, listen: false).clearUser();
     Navigator.pushNamedAndRemoveUntil(
       context,

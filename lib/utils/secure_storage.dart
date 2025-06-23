@@ -20,12 +20,18 @@ class SecureStorageHelper {
     } catch (e, stack) {
       await ErrorHandler.recordError(e, stack, context: {
         'widget': 'Secure Storage',
-        'action': 'Fetching data from Local',
+        'action': 'Reading key: $key',
       });
 
-      if (e is PlatformException && e.code == 'BadPaddingException') {
-        await _secureStorage?.deleteAll(); // Optional: clear on corruption
+      if (e is PlatformException &&
+          (e.code == 'BadPaddingException' ||
+              e.message?.contains('decryption failed') == true)) {
+        // Optionally wipe corrupted storage
+        try {
+          await _secureStorage?.deleteAll();
+        } catch (_) {}
       }
+
       return null;
     }
   }
@@ -91,14 +97,45 @@ class SecureStorageHelper {
   }
 
   static Future<void> clear() async {
-    await _secureStorage?.deleteAll();
+    try {
+      await _secureStorage?.deleteAll();
+    } on PlatformException catch (e, stack) {
+      await ErrorHandler.recordError(e, stack, context: {
+        'widget': 'Secure Storage',
+        'action': 'SecureStorageHelper.clear',
+      });
+      if (e.message?.contains('Could not decrypt key') == true) {
+        // Log and continue (data is already invalid)
+        print('SecureStorage decryption failed during clear.');
+      } else {
+        rethrow;
+      }
+    }
   }
 
   static Future<void> clearExceptRememberMe() async {
     final rememberMeValue = await getRememberMe();
-    await _secureStorage?.deleteAll();
+
+    try {
+      await _secureStorage?.deleteAll();
+    } on PlatformException catch (e, stack) {
+      await ErrorHandler.recordError(e, stack, context: {
+        'widget': 'Secure Storage',
+        'action': 'clearExceptRememberMe',
+        'message': e.message ?? '',
+      });
+
+      if (e.message?.contains('Could not decrypt key') == true) {
+        // Optional: clear fallback logic, or just ignore as secure storage is unusable
+        print('Decryption failed, secure storage possibly corrupted.');
+      } else {
+        rethrow; // rethrow other platform errors
+      }
+    }
+
     if (rememberMeValue != null) {
       await setRememberMe(rememberMeValue);
     }
   }
+
 }

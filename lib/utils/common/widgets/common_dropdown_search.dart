@@ -298,7 +298,9 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> with 
 
     final dropdownHeight = filteredItems.isEmpty
         ? itemHeight
-        : (filteredItems.length * itemHeight).clamp(0, dropdownMaxHeight).toDouble();
+        : filteredItems.length > 4
+        ? dropdownMaxHeight
+        : (filteredItems.length * itemHeight).toDouble();
 
     const dropdownSpacing = 5.0;
 
@@ -306,19 +308,19 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> with 
         ? screenHeight - _keyboardHeight
         : screenHeight;
 
-    final showAbove = offset.dy + size.height + dropdownSpacing + dropdownMaxHeight > availableHeight;
+    final showAbove = offset.dy + size.height + dropdownSpacing + dropdownHeight > availableHeight;
 
     final dropdownOffset = showAbove
-        ? Offset(0, -dropdownMaxHeight - dropdownSpacing)
+        ? Offset(0, -dropdownHeight - dropdownSpacing)
         : Offset(0, size.height + dropdownSpacing);
 
     final dropdownRect = Rect.fromLTWH(
       offset.dx,
       showAbove
-          ? offset.dy - dropdownMaxHeight - dropdownSpacing
+          ? offset.dy - dropdownHeight - dropdownSpacing
           : offset.dy + size.height + dropdownSpacing,
       size.width,
-      dropdownMaxHeight,
+      dropdownHeight,
     );
 
     final fieldRect = Rect.fromLTWH(offset.dx, offset.dy, size.width, size.height);
@@ -340,56 +342,107 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> with 
               link: _layerLink,
               showWhenUnlinked: false,
               offset: dropdownOffset,
-              child: SizedBox(
-                width: size.width,
-                child: Material(
-                  elevation: 4,
-                  color: AppColors.whiteColor,
-                  borderRadius: BorderRadius.circular(15),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: size.width,
+                  decoration: BoxDecoration(
+                    color: AppColors.whiteColor,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08), // subtle and premium
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                        offset: const Offset(0, 6), // even drop shadow feel
+                      ),
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.05), // soft ambient glow
+                        blurRadius: 6,
+                        spreadRadius: 1,
+                        offset: const Offset(0, 0), // balanced neutral light
+                      ),
+                    ],
+                  ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(15),
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      controller: _scrollController,
-                      child: SizedBox(
-                        height: dropdownMaxHeight,
-                        child: filteredItems.isEmpty
-                        ? SizedBox(
-                        height: dropdownHeight,
-                        child: Center(
-                          child: Text(
-                            context.readLang.translate(AppLanguageText.noOptionFound),
-                            style: AppFonts.textRegular17.copyWith(color: Colors.grey),
-                          ),
-                        ),
-                      )
-                          : ListView(
-                      controller: _scrollController,
-                      padding: EdgeInsets.zero,
-                      shrinkWrap: true,
-                      children: filteredItems.map((item) {
-                        final isSelected = item == _selectedItem;
-
-                        return ListTile(
-                          dense: true,
-                          title: Text(widget.itemLabel(item, widget.currentLang), style: AppFonts.textRegular17),
-                          trailing: isSelected
-                              ? const Icon(Icons.check,
-                              color: AppColors.primaryColor, size: 20)
-                              : null,
-                          onTap: () {
-                            _selectedItem = item;
-                            widget.controller.text =
-                                widget.itemLabel(item, widget.currentLang);
-                            widget.onSelected?.call(item);
-                            _removeOverlay();
-                            FocusScope.of(context).unfocus();
-                            WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
-                          },
-                        );
-                      }).toList(),
-                    ),
-                      ),
+                    child: Builder(
+                      builder: (context) {
+                        if (filteredItems.isEmpty) {
+                          return SizedBox(
+                            height: itemHeight,
+                            child: Center(
+                              child: Text(
+                                context.readLang.translate(AppLanguageText.noOptionFound),
+                                style: AppFonts.textRegular17.copyWith(color: Colors.grey),
+                              ),
+                            ),
+                          );
+                        } else if (filteredItems.length <= 4) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: filteredItems.map((item) {
+                              final isSelected = item == _selectedItem;
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  widget.itemLabel(item, widget.currentLang),
+                                  style: AppFonts.textRegular17,
+                                ),
+                                trailing: isSelected
+                                    ? const Icon(Icons.check,
+                                    color: AppColors.primaryColor, size: 20)
+                                    : null,
+                                onTap: () {
+                                  _selectedItem = item;
+                                  widget.controller.text =
+                                      widget.itemLabel(item, widget.currentLang);
+                                  widget.onSelected?.call(item);
+                                  _removeOverlay();
+                                  FocusScope.of(context).unfocus();
+                                  WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
+                                },
+                              );
+                            }).toList(),
+                          );
+                        } else {
+                          return Scrollbar(
+                            thumbVisibility: true,
+                            controller: _scrollController,
+                            child: SizedBox(
+                              height: dropdownHeight,
+                              child: ListView(
+                                controller: _scrollController,
+                                padding: EdgeInsets.zero,
+                                shrinkWrap: true,
+                                children: filteredItems.map((item) {
+                                  final isSelected = item == _selectedItem;
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      widget.itemLabel(item, widget.currentLang),
+                                      style: AppFonts.textRegular17,
+                                    ),
+                                    trailing: isSelected
+                                        ? const Icon(Icons.check,
+                                        color: AppColors.primaryColor, size: 20)
+                                        : null,
+                                    onTap: () {
+                                      _selectedItem = item;
+                                      widget.controller.text =
+                                          widget.itemLabel(item, widget.currentLang);
+                                      widget.onSelected?.call(item);
+                                      _removeOverlay();
+                                      FocusScope.of(context).unfocus();
+                                      WidgetsBinding.instance.focusManager.primaryFocus?.unfocus();
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          );
+                        }
+                      },
                     ),
                   ),
                 ),
@@ -405,9 +458,6 @@ class _CustomSearchDropdownState<T> extends State<CustomSearchDropdown<T>> with 
   Widget build(BuildContext context) {
     final isSmall = widget.isSmallFieldFont;
     final isDisabled = !widget.isEnable;
-    final textColor = !widget.isEnable
-        ? (widget.isSmallFieldFont ? AppFonts.textRegularGrey14 : AppFonts.textRegularGrey17)
-        : (widget.isSmallFieldFont ? AppFonts.textRegular14 : AppFonts.textRegular17);
 
     return CompositedTransformTarget(
       link: _layerLink,

@@ -96,7 +96,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         buildExpansionTile(
           context,
           applyPassCategoryNotifier,
-          initiallyExpanded: false,
+          initiallyExpanded: applyPassCategoryNotifier.searchExpanded,
           title: buildStepTitle(AppLanguageText.searchExistingVisitorInformation, numbered: false),
           children: searchUserSection(context, applyPassCategoryNotifier),
         ),
@@ -289,12 +289,11 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   }
 
   Widget phoneNumberSearchField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
-    return CustomTextField(
-      controller: applyPassCategoryNotifier.phoneNumberSearchController,
+    return MobileNumberField(
+      mobileController: applyPassCategoryNotifier.phoneNumberSearchController,
       fieldName: context.watchLang.translate(AppLanguageText.phoneNumber),
       isSmallFieldFont: true,
       skipValidation: true,
-      keyboardType: TextInputType.phone,
       isEnable: applyPassCategoryNotifier.isEnable,
     );
   }
@@ -1974,6 +1973,9 @@ class ApplyPassCategoryScreen extends StatelessWidget {
 
   bool _hasVehicleRegistration(ApplyPassCategoryNotifier notifier) {
     final user = notifier.getByIdResult?.user;
-    return (user?.haveVehicleRegistration == 1 || notifier.haveVehicleRegistration == 1) || notifier.uploadedVehicleImageBytes != null;
+    return (((user?.haveVehicleRegistration == 1 ||
+        notifier.haveVehicleRegistration == 1) ||
+        notifier.uploadedVehicleImageBytes != null) &&
+        notifier.uploadedVehicleRegistrationFile == null);
   }
 }

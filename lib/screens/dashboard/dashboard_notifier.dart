@@ -82,7 +82,7 @@ class DashboardNotifier extends BaseChangeNotifier {
           dToDate: isUpcoming ? null : todayPast.toIso8601String(),
           nApprovalStatus: isUpcoming ? 49 : null,
           nPageNumber: page ?? 1,
-          nPageSize: 100,
+          nPageSize: 40,
           sSearch: "",
         ),
         context,

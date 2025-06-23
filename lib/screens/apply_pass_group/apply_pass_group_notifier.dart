@@ -3,7 +3,9 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
@@ -14,7 +16,10 @@ import 'package:mofa/core/model/duplicate_appointment/duplicate_appointment_requ
 import 'package:mofa/core/model/forget_password/forget_password_request.dart';
 import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
 import 'package:mofa/core/model/get_file/get_file_request.dart';
+import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_request.dart';
+import 'package:mofa/core/model/search_visitor/search_visitor_response.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_request.dart';
 import 'package:mofa/core/model/validate_photo/validate_photo_response.dart';
 import 'package:mofa/core/model/validate_photo_config/validate_photo_config_response.dart';
@@ -30,6 +35,7 @@ import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
+import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/encrypt.dart';
 import 'package:mofa/utils/enum_values.dart';
@@ -55,6 +61,10 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   bool _documentUploadValidation = false;
   bool _isValidatePhotoFromFR = false;
   bool _isCheckedVehicle = true;
+  bool _isCheckedSearch = false;
+  bool _isPhotoLoading = false;
+  bool _isDocumentLoading = false;
+  bool _isTransportDocumentLoading = false;
 
   TimeOfDay? _apiVisitStartTime;
   TimeOfDay? _apiVisitEndTime;
@@ -78,6 +88,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   int? _selectedPlateLetter2;
   int? _selectedPlateLetter3;
   int? _selectedPlateType;
+  int _appointmentId = 0;
+  int _lastAppointmentId = 0;
 
   //String
   String? _selectedVisitRequest;
@@ -89,6 +101,13 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   String? _applyPassCategory;
 
   // Data Controller
+  //Search Field
+  TextEditingController iqamaSearchController = TextEditingController();
+  TextEditingController nationalityIdSearchController = TextEditingController();
+  TextEditingController passportSearchController = TextEditingController();
+  TextEditingController emailSearchController = TextEditingController();
+  TextEditingController phoneNumberSearchController = TextEditingController();
+
   //Visitor Detail
   TextEditingController _visitorNameController = TextEditingController();
   TextEditingController _companyNameController = TextEditingController();
@@ -166,7 +185,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     visitEndDateController.text = _formatDate(now.add(Duration(hours: 1)));
 
     await fetchAllDropdownData(context);
-
+    initializePreviousGroupData(context);
     // for (int i = 0; i < totalVisitors; i++) {
     //   await initializePreviousGroupData(context, i);
     // }
@@ -431,126 +450,195 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     return null;
   }
 
-  // Future<void> initializePreviousGroupData(BuildContext context, int index) async {
-  //
-  //   if (jsonStringList != null && jsonStringList.isNotEmpty) {
-  //     final List<dynamic> decodedList = jsonDecode(jsonStringList);
-  //     final List<AddAppointmentRequest> requestList = decodedList
-  //         .map((e) => AddAppointmentRequest.fromJson(e))
-  //         .toList();
-  //
-  //     if (index < requestList.length) {
-  //       final visitor = requestList[index];
-  //       _populateVisitorFields(visitor);
-  //     }
-  //   }
-  //
-  //   if (jsonImageListString != null && jsonImageListString.isNotEmpty) {
-  //     final List<dynamic> imageList = jsonDecode(jsonImageListString);
-  //
-  //     if (index < imageList.length) {
-  //       final imageMap = imageList[index];
-  //
-  //       final Uint8List? imageBytes = _decodeUint8List(imageMap['imageUploaded']);
-  //       final Uint8List? documentBytes = _decodeUint8List(imageMap['documentUploaded']);
-  //       final Uint8List? vehicleBytes = _decodeUint8List(imageMap['vehicleRegistrationUploaded']);
-  //
-  //       uploadedImageBytes = imageBytes;
-  //       uploadedDocumentBytes = documentBytes;
-  //       uploadedVehicleImageBytes = vehicleBytes;
-  //
-  //       selectedIdType = imageMap['selectedIdType'] ?? '';
-  //     }
-  //   }
-  //
-  //   notifyListeners();
-  // }
-  //
-  // Uint8List? _decodeUint8List(dynamic rawData) {
-  //   if (rawData is List) {
-  //     try {
-  //       return Uint8List.fromList(rawData.cast<int>());
-  //     } catch (_) {
-  //       return null;
-  //     }
-  //   }
-  //   return null;
-  // }
-  //
-  // void _populateVisitorFields(AddAppointmentRequest userData) {
-  //   visitorNameController.text = userData.fullName ?? "";
-  //   companyNameController.text = userData.sponsor ?? "";
-  //   nationalityController.text = nationalityMenu
-  //       .firstWhere((item) => item.iso3 == userData.nationality, orElse: () => CountryData())
-  //       .name ?? "";
-  //   selectedNationality = userData.nationality ?? "";
-  //   phoneNumberController.text = userData.mobileNo ?? "";
-  //   emailController.text = userData.email ?? "";
-  //   idTypeController.text = idTypeMenu
-  //       .firstWhere((item) => item.value == userData.idType, orElse: () => DocumentIdModel(labelEn: '', labelAr: '', value: 0))
-  //       .labelEn;
-  //   selectedIdValue = userData.idType?.toString() ?? "";
-  //   selectedIdType = idTypeController.text;
-  //   iqamaController.text = userData.sIqama ?? "";
-  //   passportNumberController.text = userData.passportNumber ?? "";
-  //   nationalityIdController.text = userData.eidNumber ?? "";
-  //   documentNameController.text = userData.sOthersDoc ?? "";
-  //   documentNumberController.text = userData.sOthersValue ?? "";
-  //
-  //   expiryDateController.text = switch (IdTypeExtension.fromInt(userData.idType)) {
-  //     IdType.nationalId => userData.dtEidExpiryDate?.toDisplayDate() ?? "",
-  //     IdType.passport => userData.dtPassportExpiryDate?.toDisplayDate() ?? "",
-  //     IdType.iqama => userData.dtIqamaExpiry?.toDisplayDate() ?? "",
-  //     IdType.other => userData.dtOthersExpiry?.toDisplayDate() ?? "",
-  //     _ => ""
-  //   };
-  //
-  //   vehicleNumberController.text = userData.sVehicleNo ?? "";
-  //
-  //   // Set plate values (as done before)
-  //   // Set visit purpose, start/end, etc.
-  //   // Call addMultipleDevicesFromResult if userData.devices is not empty
-  //   final deviceResults = convertDeviceModelsToResults(userData.devices ?? []);
-  //   addMultipleDevicesFromResult(deviceResults);
-  // }
-  //
-  // List<DeviceResult> convertDeviceModelsToResults(List<DeviceModel> models) {
-  //   return models.map((model) {
-  //     return DeviceResult(
-  //       appointmentDeviceId: model.appointmentDeviceId,
-  //       deviceType: model.deviceType,
-  //       deviceTypeOthersValue: model.deviceTypeOthersValue,
-  //       deviceModel: model.deviceModel,
-  //       serialNumber: model.serialNumber,
-  //       devicePurpose: model.devicePurpose,
-  //       devicePurposeOthersValue: model.devicePurposeOthersValue,
-  //       approvalStatus: model.approvalStatus,
-  //     );
-  //   }).toList();
-  // }
-  //
-  // void addMultipleDevicesFromResult(List<DeviceResult>? results) {
-  //   if (results == null) return;
-  //
-  //   final deviceModels = results.map((r) {
-  //     return DeviceModel(
-  //       appointmentDeviceId: r.appointmentDeviceId ?? 0,
-  //       deviceType: r.deviceType,
-  //       deviceTypeString: r.deviceType.toString(),
-  //       deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
-  //       deviceModel: r.deviceModel ?? "",
-  //       serialNumber: r.serialNumber ?? "",
-  //       devicePurpose: r.devicePurpose,
-  //       devicePurposeString: r.devicePurpose.toString(),
-  //       devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
-  //       approvalStatus: r.approvalStatus ?? 50,
-  //     );
-  //   }).toList();
-  //
-  //   addedDevices.addAll(deviceModels);
-  //   showDeviceFields = false;
-  //   notifyListeners();
-  // }
+  Future<void> initializePreviousGroupData(BuildContext context) async {
+    final jsonStringList = await SecureStorageHelper.getAppointmentData();
+    final jsonImageStringList = await SecureStorageHelper.getUploadedImage();
+
+    if (jsonImageStringList != null && jsonImageStringList.isNotEmpty) {
+      final List<dynamic> imageListData = jsonDecode(jsonImageStringList);
+
+
+      for (int i = 0; i < imageListData.length; i++) {
+        final imageMap = imageListData[i];
+
+        final Uint8List? imageBytes = decodeImageData(imageMap['imageUploaded']);
+        final Uint8List? documentBytes = decodeImageData(imageMap['documentUploaded']);
+        final Uint8List? vehicleBytes = decodeImageData(imageMap['vehicleRegistrationUploaded']);
+        final String? selectedIdType = (imageMap['selectedIdType']);
+
+        imageList.add({
+          "imageUploaded": imageBytes,
+          "documentUploaded": documentBytes,
+          "vehicleRegistrationUploaded": vehicleBytes,
+          "selectedIdType": selectedIdType,
+        });
+      }
+    }
+
+    if (jsonStringList != null && jsonStringList.isNotEmpty) {
+      final List<dynamic> decodedList = jsonDecode(jsonStringList);
+      final List<AddAppointmentRequest> requestList = decodedList
+          .map((e) => AddAppointmentRequest.fromJson(e))
+          .toList();
+
+      //Visit Details
+      selectedLocationId = requestList[0].nLocationId;
+      locationController.text = (() {
+        final item = locationDropdownData.firstWhere(
+              (item) => item.nLocationId == requestList[0].nLocationId,
+          orElse: () => LocationDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sLocationNameAr ?? "")
+            : (item.sLocationNameEn ?? "");
+      })();
+
+      visitRequestTypeController.text = (() {
+        final item = visitRequestTypesDropdownData.firstWhere(
+              (item) => item.nDetailedCode == requestList[0].nVisitType,
+          orElse: () => VisitRequestDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sDescA ?? "")
+            : (item.sDescE ?? "");
+      })();
+
+      selectedVisitRequest = requestList[0].nVisitType?.toString() ?? "";
+
+      visitPurposeController.text = (() {
+        final item = visitPurposeDropdownData.firstWhere(
+              (item) => item.nPurposeId == requestList[0].purpose,
+          orElse: () => VisitPurposeDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sPurposeAr ?? "")
+            : (item.sPurposeEn ?? "");
+      })();
+
+      selectedVisitPurpose = requestList[0].purpose.toString() ?? "";
+      if(requestList[0].purpose == 60) visitPurposeOtherController.text = requestList[0].purposeOtherValue ?? "";
+
+      mofaHostEmailController.text = requestList[0].sVisitingPersonEmail ?? "";
+      visitStartDateController.text = requestList[0].dtAppointmentStartTime.toString().toDisplayDateTimeString() ?? "";
+      visitEndDateController.text = requestList[0].dtAppointmentEndTime.toString().toDisplayDateTimeString() ?? "";
+
+      final devices = requestList[0].devices;
+      if (devices != null && devices.isNotEmpty) {
+        addedDevices.addAll(devices);
+        showDeviceFields = false;
+      } else {
+        isCheckedDevice = false;
+        showDeviceFields = false;
+      }
+
+      if(requestList[0].nPlateLetter1 != null) {
+        selectedPlateType = requestList[0].nPlateSource ?? 0;
+        plateTypeController.text = (() {
+          final item = plateTypeDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateType,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
+        selectedPlateLetter1 = requestList[0].nPlateLetter1 ?? 0;
+        plateLetter1Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter1,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
+        selectedPlateLetter2 = requestList[0].nPlateLetter2 ?? 0;
+        plateLetter2Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter2,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
+        selectedPlateLetter3 = requestList[0].nPlateLetter3 ?? 0;
+        plateLetter3Controller.text = (() {
+          final item = plateLetterDropdownData.firstWhere(
+                (item) => item.nDetailedCode == selectedPlateLetter3,
+            orElse: () => DeviceDropdownResult(sDescE: "", sDescA: ""),
+          );
+          return context.lang == LanguageCode.ar.name ? item.sDescA ?? "" : item.sDescE ?? "";
+        })();
+
+        plateNumberController.text = requestList[0].sPlateNumber ?? "";
+      }else{
+        isCheckedVehicle = false;
+      }
+
+      for (int i = 0; i < requestList.length; i++) {
+        final visitor = requestList[i];
+        savePreviousDataVisitors(context,visitor, imageList[i]);
+      }
+    }
+
+    notifyListeners();
+  }
+
+  Uint8List? decodeImageData(dynamic rawData) {
+    try {
+      if (rawData is String) {
+        return base64Decode(rawData);
+      } else if (rawData is List) {
+        return Uint8List.fromList(rawData.cast<int>());
+      }
+    } catch (e) {
+      print("Decode failed: $e");
+    }
+    return null;
+  }
+
+  Future<void> savePreviousDataVisitors(BuildContext context, AddAppointmentRequest? userData, Map imageData) async {
+
+    final newVisitor = await _buildPreviousDataVisitorModel(context, userData, imageData);
+    _updateVisitorList(newVisitor);
+
+    showVisitorsFields = false;
+    cancelVisitorsEditing(); // reset form
+    notifyListeners();
+  }
+
+  List<DeviceResult> convertDeviceModelsToResults(List<DeviceModel> models) {
+    return models.map((model) {
+      return DeviceResult(
+        appointmentDeviceId: model.appointmentDeviceId,
+        deviceType: model.deviceType,
+        deviceTypeOthersValue: model.deviceTypeOthersValue,
+        deviceModel: model.deviceModel,
+        serialNumber: model.serialNumber,
+        devicePurpose: model.devicePurpose,
+        devicePurposeOthersValue: model.devicePurposeOthersValue,
+        approvalStatus: model.approvalStatus,
+      );
+    }).toList();
+  }
+
+  void addMultipleDevicesFromResult(List<DeviceResult>? results) {
+    if (results == null) return;
+
+    final deviceModels = results.map((r) {
+      return DeviceModel(
+        appointmentDeviceId: r.appointmentDeviceId ?? 0,
+        deviceType: r.deviceType,
+        deviceTypeString: r.deviceType.toString(),
+        deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
+        deviceModel: r.deviceModel ?? "",
+        serialNumber: r.serialNumber ?? "",
+        devicePurpose: r.devicePurpose,
+        devicePurposeString: r.devicePurpose.toString(),
+        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+        approvalStatus: r.approvalStatus ?? 50,
+      );
+    }).toList();
+
+    addedDevices.addAll(deviceModels);
+    showDeviceFields = false;
+    notifyListeners();
+  }
 
 
   // Update User Verify checkbox state
@@ -729,18 +817,18 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
-  void startEditingVisitors(int index) {
+  void startEditingVisitors(BuildContext context, int index) {
     editVisitorsIndex = index;
     isEditingVisitors = true;
     showVisitorsFields = true;
 
     final visitors = addedVisitors[index];
+
     visitorNameController.text = visitors.visitorName;
     companyNameController.text = visitors.companyName;
     phoneNumberController.text = visitors.mobileNumber;
     emailController.text = visitors.email;
     nationalityController.text = visitors.nationality;
-    emailController.text = visitors.email;
     nationalityIdController.text = visitors.documentId;
     iqamaController.text = visitors.documentId;
     passportNumberController.text = visitors.documentId;
@@ -748,10 +836,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     documentNumberController.text = visitors.documentId;
     expiryDateController.text = visitors.expiryDate;
 
+    selectedIdType = visitors.idType;
+    idTypeController.text = visitors.idType;
+
     uploadedImageBytes = visitors.uploadedPhoto.decodeBase64OrNull();
     uploadedDocumentBytes = visitors.uploadedDocumentId.decodeBase64OrNull();
     uploadedVehicleImageBytes = visitors.uploadedVehicleRegistration.decodeBase64OrNull();
   }
+
 
   void cancelVisitorsEditing() {
     editVisitorsIndex = null;
@@ -774,6 +866,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     final newVisitor = await _buildVisitorModel(context);
     _updateVisitorList(newVisitor);
 
+    lastAppointmentId = 0;
     showVisitorsFields = false;
     cancelVisitorsEditing(); // reset form
     notifyListeners();
@@ -799,24 +892,198 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       return true;
     } catch (e) {
       debugPrint("Date parsing error: $e");
-      debugPrint("Date parsing error: $e");
       return false;
     }
   }
 
+  void showSearchFields() {
+    isCheckedSearch = !isCheckedSearch;
+  }
+
+  Future<void> apiSearchVisitor(BuildContext context) async {
+    try {
+      // Check if all fields are empty
+      final isAllFieldsEmpty = emailSearchController.text.trim().isEmpty &&
+          nationalityIdSearchController.text.trim().isEmpty &&
+          iqamaSearchController.text.trim().isEmpty &&
+          phoneNumberSearchController.text.trim().isEmpty &&
+          passportSearchController.text.trim().isEmpty;
+
+      if (isAllFieldsEmpty) {
+        // Show a message or just return silently
+        debugPrint("Search fields are all empty. Aborting API call.");
+        return;
+      }
+
+      final result = await ApplyPassRepository().apiSearchUser(
+        SearchVisitorRequest(
+            nEmployeeId: int.parse(userResponse?.userId ?? "0"),
+            nHostId: 0,
+            nUserId: int.parse(userResponse?.userId ?? "0"),
+            sEmail: emailSearchController.text,
+            sId: nationalityIdSearchController.text,
+            sIqama: iqamaSearchController.text,
+            sNumber: phoneNumberSearchController.text,
+            sPassportNumber: passportSearchController.text
+        ),
+        context,
+      );
+
+      if (result is SearchVisitorResult) {
+        if (result.appointment == null) {
+          ToastHelper.showError(context.readLang.translate(AppLanguageText.visitorNotFound));
+          return;
+        }
+
+        clearSearchField();
+        isCheckedSearch = false;
+        showVisitorsFields = true;
+        setSearchVisitorData(context, result);
+      } else {
+        debugPrint("Unexpected result type in Search apiGetById");
+      }
+    } catch (e) {
+      debugPrint("Error in Search apiGetById: $e");
+
+    }
+  }
+
+  void clearSearchField() {
+    iqamaSearchController.clear();
+    nationalityIdSearchController.clear();
+    passportSearchController.clear();
+    emailSearchController.clear();
+    phoneNumberSearchController.clear();
+  }
+
+
+  void setSearchVisitorData(BuildContext context, SearchVisitorResult searchResult) {
+    visitorNameController.text = searchResult.appointment?.sVisitorNameEn ?? "";
+    companyNameController.text = searchResult.appointment?.sSponsor ?? "" ;
+
+    final nationalityData = nationalityMenu
+        .firstWhere((item) => item.iso3 == searchResult.appointment?.nationality, orElse: () => CountryData());
+    nationalityController.text =
+        getLocalizedText(currentLang: context.lang, arabic: nationalityData.nameAr, english: nationalityData.name);
+
+    selectedNationality = searchResult.appointment?.nationality ?? "";
+    selectedNationalityCodes = nationalityData.phonecode.toString();
+    phoneNumberController.text = searchResult.appointment?.sMobileNo ?? "";
+    emailController.text = searchResult.appointment?.sEmail ?? "";
+    idTypeController.text = (() {
+      final item = idTypeMenu.firstWhere(
+            (item) => item.value == searchResult.appointment?.nDocumentType,
+        orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+      );
+      return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+    })();
+
+    selectedIdValue = searchResult.appointment?.nDocumentType.toString() ?? "";
+    selectedIdType = idTypeController.text ?? "";
+
+    iqamaController.text = searchResult.appointment?.sIqama ?? "";
+    passportNumberController.text = searchResult.appointment?.passportNumber ?? "";
+
+    nationalityIdController.text = searchResult.appointment?.eidNumber ?? "";
+
+    documentNameController.text = searchResult.appointment?.sOthersDoc ?? "";
+
+    documentNumberController.text = searchResult.appointment?.sOthersValue ?? "";
+
+    expiryDateController.text = (
+        searchResult.appointment?.dtIqamaExpiry?.trim().isNotEmpty == true
+            ? searchResult.appointment!.dtIqamaExpiry
+            : searchResult.appointment?.dtPassportExpiryDate?.trim().isNotEmpty == true
+            ? searchResult.appointment!.dtPassportExpiryDate
+            : searchResult.appointment?.dtEidExpiryDate?.trim().isNotEmpty == true
+            ? searchResult.appointment!.dtEidExpiryDate
+            : searchResult.appointment?.dtOthersExpiry?.trim()
+    )?.toString().toDisplayDateOnly() ?? '';
+    appointmentId = searchResult.appointment?.nAppointmentId ?? 0;
+    lastAppointmentId = searchResult.appointment?.nAppointmentId ?? 0;
+
+    // havePhoto = searchResult.appointment?.havePhoto ?? 0;
+    if (searchResult.appointment?.havePhoto == 1) {
+      apiGetFile(context, type: 1);
+    }
+
+    if ((searchResult.appointment?.havePassport == 1 ||
+        searchResult.appointment?.haveIqama == 1 ||
+        searchResult.appointment?.haveEid == 1 ||
+        searchResult.appointment?.haveOthers == 1) ? true : false) {
+      apiGetFile(context, type: _getFileType(int.parse(selectedIdValue ?? "0")));
+    }
+    if (searchResult.appointment?.haveVehicleRegistration == 1) {
+      apiGetFile(context, type: 4);
+    }
+    notifyListeners();
+  }
+
+  int _getFileType(int idType) {
+    switch (idType) {
+      case 24:
+        return 2;
+      case 26:
+        return 3;
+      case 2244:
+        return 5;
+      case 2245:
+        return 6;
+      default:
+        return 4;
+    }
+  }
+
+  Future<void> apiGetFile(BuildContext context, {required int type}) async {
+    try {
+      final response = await ApplyPassRepository().apiGetFile(
+        GetFileRequest(id: appointmentId, type: type),
+        context,
+      );
+
+      if (response is! GetFileResult) return;
+
+      final decodedBytes = base64Decode(response.photoFile ?? "");
+
+      if (type == 1) {
+        uploadedImageBytes = decodedBytes;
+        return;
+      }
+
+      if (type == 4) {
+        uploadedVehicleImageBytes = decodedBytes;
+      } else {
+        uploadedDocumentBytes = decodedBytes;
+      }
+    } catch (e) {
+      debugPrint("Error in apiGetFile: $e");
+    }
+  }
+
+  String getLocalizedText({
+    required String currentLang,
+    required String? arabic,
+    required String? english,
+    String fallback = 'Unknown',
+  }) {
+    if (currentLang.toLowerCase() == LanguageCode.ar.name.toLowerCase()) {
+      return arabic ?? fallback;
+    } else {
+      return english ?? fallback;
+    }
+  }
+
   Future<VisitorDetailModel> _buildVisitorModel(BuildContext context) async {
-    final image = isEditingVisitors
-        ? await uploadedImageFile?.toBase64()
-        ?? (uploadedImageBytes != null ? base64Encode(uploadedImageBytes!) : null)
-        : await uploadedImageFile!.toBase64();
+    final image =  await uploadedImageFile?.toBase64()
+        ?? (uploadedImageBytes != null ? base64Encode(uploadedImageBytes!) : null);
 
-    final document = isEditingVisitors ? await uploadedDocumentFile?.toBase64()
-        ?? (uploadedDocumentBytes != null ? base64Encode(uploadedDocumentBytes!) : null)
-    :await uploadedDocumentFile?.toBase64();
 
-    final vehicleReg = isEditingVisitors ? await uploadedVehicleRegistrationFile?.toBase64()
-        ?? (uploadedVehicleImageBytes != null ? base64Encode(uploadedVehicleImageBytes!) : null)
-    : await uploadedVehicleRegistrationFile?.toBase64();
+    final document = await uploadedDocumentFile?.toBase64()
+        ?? (uploadedDocumentBytes != null ? base64Encode(uploadedDocumentBytes!) : null);
+
+
+    final vehicleReg = await uploadedVehicleRegistrationFile?.toBase64()
+        ?? (uploadedVehicleImageBytes != null ? base64Encode(uploadedVehicleImageBytes!) : null);
 
     // 🔁 Determine document ID value based on selectedIdType
     final String documentId = _getDocumentIdByType();
@@ -839,6 +1106,63 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       documentTypeValue: selectedIdValue ?? "",
       nationalityId: selectedNationality ?? "",
       expiryDate: expiryDateController.text,
+      lastAppointmentId: lastAppointmentId,
+      uploadedPhoto: image,
+      uploadedDocumentId: document,
+      uploadedVehicleRegistration: vehicleReg,
+    );
+  }
+
+  Future<VisitorDetailModel> _buildPreviousDataVisitorModel(BuildContext context, AddAppointmentRequest? userData, Map imageData) async {
+    final image = userData?.havePhoto == 1 ? base64Encode(imageData["imageUploaded"]!) : null;
+
+    final document = (userData?.haveIqama == 1 ||
+        userData?.haveEid == 1 ||
+        userData?.havePassport == 1 ||
+        userData?.haveOthers == 1)
+        ? (imageData['documentUploaded'] != null
+        ? base64Encode(imageData['documentUploaded']!)
+        : null)
+        : null;
+
+    final vehicleReg = userData?.haveVehicleRegistration == 1 ? base64Encode(imageData['vehicleRegistrationUploaded']!) : null;
+
+
+    // 🔁 Determine document ID value based on selectedIdType
+
+    final expiryDate = switch (IdTypeExtension.fromInt(userData?.idType)) {
+      IdType.nationalId => userData?.dtEidExpiryDate,
+      IdType.passport => userData?.dtPassportExpiryDate,
+      IdType.iqama => userData?.dtIqamaExpiry,
+      IdType.other => userData?.dtOthersExpiry,
+      _ => null,
+    };
+
+    final nationality = nationalityMenu
+        .firstWhere((item) => item.iso3 == userData?.nationality, orElse: () => CountryData())
+        .name ?? "";
+
+    final selectedId = (() {
+      final item = idTypeMenu.firstWhere(
+            (item) => item.value == userData?.idType,
+        orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+      );
+      return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+    })();
+
+    final String documentId = _getDocumentIdPreviousByType(userData,selectedId);
+
+    return VisitorDetailModel(
+      visitorName: userData?.fullName ?? "",
+      companyName: userData?.sponsor ?? "",
+      mobileNumber: userData?.mobileNo ?? "",
+      email: userData?.email ?? "",
+      nationality: nationality ?? "",
+      idType: selectedId ?? "",
+      documentId: documentId,
+      documentTypeValue: selectedIdValue ?? "",
+      nationalityId: userData?.nationality ?? "",
+      expiryDate: expiryDate!.toDisplayDate(),
       uploadedPhoto: image,
       uploadedDocumentId: document,
       uploadedVehicleRegistration: vehicleReg,
@@ -855,6 +1179,21 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         return iqamaController.text;
       case "Other":
         return documentNumberController.text;
+      default:
+        return ""; // fallback if none selected
+    }
+  }
+
+  String _getDocumentIdPreviousByType(AddAppointmentRequest? userData, String id) {
+    switch (id) {
+      case "National ID":
+        return userData?.eidNumber ?? "";
+      case "Passport":
+        return userData?.passportNumber ?? "";
+      case "Iqama":
+        return userData?.sIqama ?? "";
+      case "Other":
+        return userData?.sOthersDoc ?? "";
       default:
         return ""; // fallback if none selected
     }
@@ -983,13 +1322,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   Future<void> addData() async {
     List<AddAppointmentRequest> appointmentDataList = [];
 
-    for (var visitor in addedVisitors) {
+    for (int i = 0; i < addedVisitors.length; i++) {
+      final visitor = addedVisitors[i];
       final expiryDate = visitor.expiryDate.toDateTime().toString();
       final idTypeInt = int.tryParse(visitor.documentTypeValue) ?? 0;
       final encryptedDocId = encryptAES(visitor.documentId);
 
       // Prepare expiry dates and document IDs based on ID type
-      final appointmentData = _buildAppointmentData(visitor, idTypeInt, expiryDate, encryptedDocId);
+      final appointmentData = _buildAppointmentData(visitor, idTypeInt, expiryDate, encryptedDocId, imageList[i]);
 
       appointmentDataList.add(appointmentData);
     }
@@ -1003,6 +1343,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     int idTypeInt,
     String expiryDate,
     String encryptedDocId,
+      Map imageList,
   ) {
     String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry;
     String? eidNumber, sIqama, passportNumber, sOthersDoc, sOthersValue;
@@ -1056,13 +1397,34 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       userId: int.parse(userResponse?.userId ?? "0"),
       nExternalRegistrationId: int.parse(userResponse?.userId ?? "0"),
       nCreatedByExternal: int.parse(userResponse?.userId ?? "0"),
-      haveEid: 0,
-      havePassport: 0,
-      haveIqama: 0,
-      havePhoto: 0,
-      haveVehicleRegistration: 0,
-      haveOthers: 0,
-      lastAppointmentId: 1,
+      haveEid: (idTypeInt == 24 &&
+          imageList['documentUploaded'] != null &&
+          imageList['documentUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      haveIqama: (idTypeInt == 2244 &&
+          imageList['documentUploaded'] != null &&
+          imageList['documentUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      havePassport: (idTypeInt == 26 &&
+          imageList['documentUploaded'] != null &&
+          imageList['documentUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      haveOthers: (idTypeInt == 2245 &&
+          imageList['documentUploaded'] != null &&
+          imageList['documentUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      havePhoto: (imageList['imageUploaded'] != null &&
+          imageList['imageUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      haveVehicleRegistration: (imageList['vehicleRegistrationUploaded'] != null &&
+          imageList['vehicleRegistrationUploaded']!.isNotEmpty)
+          ? 1 : 0,
+      lastAppointmentId: visitor.lastAppointmentId,
       nSelfPass: 3,
       nVisitCreatedFrom: 2,
       nVisitUpdatedFrom: 2,
@@ -1110,6 +1472,42 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     final doc = await FileUploadHelper.pickDocument(allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png']);
     if (doc != null) {
       onFilePicked(doc);
+      notifyListeners();
+    }
+  }
+
+  Future<void> runWithViewAttachmentPhotoLoader(Future<void> Function() task) async {
+    isPhotoLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isPhotoLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> runWithViewAttachmentDocumentLoader(Future<void> Function() task) async {
+    isDocumentLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isDocumentLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> runWithViewAttachmentTransportLoader(Future<void> Function() task) async {
+    isTransportDocumentLoading = true;
+    notifyListeners();
+
+    try {
+      await task();
+    } finally {
+      isTransportDocumentLoading = false;
       notifyListeners();
     }
   }
@@ -1297,6 +1695,38 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
+  bool get isCheckedSearch => _isCheckedSearch;
+
+  set isCheckedSearch(bool value) {
+    if (_isCheckedSearch == value) return;
+    _isCheckedSearch = value;
+    notifyListeners();
+  }
+
+  bool get isPhotoLoading => _isPhotoLoading;
+
+  set isPhotoLoading(bool value) {
+    if (_isPhotoLoading == value) return;
+    _isPhotoLoading = value;
+    notifyListeners();
+  }
+
+  bool get isDocumentLoading => _isDocumentLoading;
+
+  set isDocumentLoading(bool value) {
+    if (_isDocumentLoading == value) return;
+    _isDocumentLoading = value;
+    notifyListeners();
+  }
+
+  bool get isTransportDocumentLoading => _isTransportDocumentLoading;
+
+  set isTransportDocumentLoading(bool value) {
+    if (_isTransportDocumentLoading == value) return;
+    _isTransportDocumentLoading = value;
+    notifyListeners();
+  }
+
   String? get selectedVisitRequest => _selectedVisitRequest;
 
   set selectedVisitRequest(String? value) {
@@ -1334,6 +1764,22 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   set selectedNationality(String? value) {
     if (_selectedNationality == value) return;
     _selectedNationality = value;
+    notifyListeners();
+  }
+
+  int get appointmentId => _appointmentId;
+
+  set appointmentId(int value) {
+    if (_appointmentId == value) return;
+    _appointmentId = value;
+    notifyListeners();
+  }
+
+  int get lastAppointmentId => _lastAppointmentId;
+
+  set lastAppointmentId(int value) {
+    if (_lastAppointmentId == value) return;
+    _lastAppointmentId = value;
     notifyListeners();
   }
 

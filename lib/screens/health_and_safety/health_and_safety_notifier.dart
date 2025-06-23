@@ -11,6 +11,7 @@ import 'package:mofa/core/remote/service/search_pass_repository.dart';
 import 'package:mofa/utils/extensions.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/common/widgets/info_section_widget.dart';
+import 'package:path_provider/path_provider.dart';
 
 class HealthAndSafetyNotifier extends BaseChangeNotifier {
   bool _isChecked = false;
@@ -170,33 +171,67 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
   Future<void> _processUploadEntry(
       BuildContext context,
       Map<String, dynamic> jsonMap,
-      AddAppointmentResult? appointmentResult, // You can type this if you know the class
+      AddAppointmentResult? appointmentResult,
       ) async {
-    final base64Image = jsonMap["imageUploaded"] as String?;
-    final base64Doc = jsonMap["documentUploaded"] as String?;
-    final base64Vehicle = jsonMap["vehicleRegistrationUploaded"] as String?;
+    print("📦 Upload entry received: $jsonMap");
+
+    final imageData = jsonMap["imageUploaded"];
+    final docData = jsonMap["documentUploaded"];
+    final vehicleData = jsonMap["vehicleRegistrationUploaded"];
     final selectedIdType = jsonMap["selectedIdType"] as String?;
 
-    final imageFile = await _decodeBase64File(base64Image, "uploadedImageFile");
-    final docFile = await _decodeBase64File(base64Doc, "uploadedDocumentFile");
-    final vehicleFile = await _decodeBase64File(base64Vehicle, "uploadedVehicleFile");
+    print("📷 imageUploaded: ${imageData != null ? 'available' : 'null'}");
+    print("📄 documentUploaded: ${docData != null ? 'available' : 'null'}");
+    print("🚗 vehicleRegistrationUploaded: ${vehicleData != null ? 'available' : 'null'}");
+
+    final imageFile = await _decodeBase64File(imageData, "uploadedImageFile");
+    final docFile = await _decodeBase64File(docData, "uploadedDocumentFile");
+    final vehicleFile = await _decodeBase64File(vehicleData, "uploadedVehicleFile");
+
+    final appointmentId = appointmentResult?.id?.toString() ?? "";
+    print("📋 Appointment ID: $appointmentId");
 
     final uploadFutures = <Future<bool>>[];
 
-    final appointmentId = appointmentResult?.id?.toString() ?? "";
-
     if (await _fileExists(imageFile)) {
-      uploadFutures.add(uploadAttachment(context, imageFile!, "S_PhotoUpload", "S_PhotoContentType", appointmentId));
+      print("📤 Uploading image file...");
+      uploadFutures.add(uploadAttachment(
+        context,
+        imageFile!,
+        "S_PhotoUpload",
+        "S_PhotoContentType",
+        appointmentId,
+      ));
+    } else {
+      print("⚠️ Image file not ready or doesn't exist");
     }
 
     if (await _fileExists(docFile)) {
       final fileKey = _getDocumentUploadKey(selectedIdType);
       final contentType = _getDocumentContentTypeKey(selectedIdType);
-      uploadFutures.add(uploadAttachment(context, docFile!, fileKey, contentType, appointmentId));
+      print("📤 Uploading document file with key: $fileKey");
+      uploadFutures.add(uploadAttachment(
+        context,
+        docFile!,
+        fileKey,
+        contentType,
+        appointmentId,
+      ));
+    } else {
+      print("⚠️ Document file not ready or doesn't exist");
     }
 
     if (await _fileExists(vehicleFile)) {
-      uploadFutures.add(uploadAttachment(context, vehicleFile!, "S_VehicleRegistrationFile", "S_VehicleRegistrationContentType", appointmentId));
+      print("📤 Uploading vehicle file...");
+      uploadFutures.add(uploadAttachment(
+        context,
+        vehicleFile!,
+        "S_VehicleRegistrationFile",
+        "S_VehicleRegistrationContentType",
+        appointmentId,
+      ));
+    } else {
+      print("⚠️ Vehicle file not ready or doesn't exist");
     }
 
     final results = await Future.wait(uploadFutures);
@@ -205,13 +240,52 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
         : "⚠️ Partial failure for appointment $appointmentId");
   }
 
-  Future<File?> _decodeBase64File(String? base64Str, String baseFileNameWithoutExtension) async {
-    if (base64Str == null || base64Str.isEmpty) return null;
 
-    final extension = _detectFileExtension(base64Str);
-    final finalFileName = "$baseFileNameWithoutExtension.$extension";
 
-    return await base64Str.toFile(fileName: finalFileName);
+  Future<File?> _decodeBase64File(dynamic data, String baseFileNameWithoutExtension) async {
+    if (data == null) {
+      print("⚠️ Null file data for $baseFileNameWithoutExtension");
+      return null;
+    }
+
+    try {
+      List<int> bytes;
+      String extension = 'bin';
+
+      if (data is String) {
+        // Handle base64 string
+        extension = _detectFileExtension(data);
+        bytes = base64Decode(data.split(',').last); // Handles "data:image/jpeg;base64,..." and plain base64
+      } else if (data is List<dynamic>) {
+        // Handle List<int> from json decode
+        bytes = data.cast<int>();
+        extension = _detectBinaryFileExtension(bytes);
+      } else {
+        print("❌ Unsupported file data type for $baseFileNameWithoutExtension: ${data.runtimeType}");
+        return null;
+      }
+
+      final fileName = "$baseFileNameWithoutExtension.$extension";
+      final file = File('${(await getTemporaryDirectory()).path}/$fileName');
+      await file.writeAsBytes(bytes);
+      print("✅ File written: ${file.path}");
+      return file;
+    } catch (e) {
+      print("❌ Error decoding file for $baseFileNameWithoutExtension: $e");
+      return null;
+    }
+  }
+
+  String _detectBinaryFileExtension(List<int> bytes) {
+    if (bytes.length < 4) return 'bin';
+
+    final header = bytes.take(4).toList();
+
+    if (header[0] == 0xFF && header[1] == 0xD8) return 'jpg'; // JPEG
+    if (header[0] == 0x89 && header[1] == 0x50) return 'png'; // PNG
+    if (header[0] == 0x25 && header[1] == 0x50) return 'pdf'; // PDF
+
+    return 'bin';
   }
 
   String _detectFileExtension(String base64Data) {
@@ -266,6 +340,7 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
       String appointmentId,
       ) async {
     try {
+      print("🚀 Uploading $fieldName with contentType: $fieldType for ID: $appointmentId");
       final result = await ApplyPassRepository().apiAddAttachment(
         fieldName: fieldName,
         file: imageFile,
@@ -273,12 +348,14 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
         context,
         id: appointmentId,
       );
+      print("✅ Upload result for $fieldName: $result");
       return result == true;
     } catch (e) {
-      print("❌ Upload failed: $e");
+      print("❌ Upload failed for $fieldName: $e");
       return false;
     }
   }
+
 
   Future<void> _processSingleAppointment(
       BuildContext context,
@@ -287,13 +364,17 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
       int index,
       ) async {
     try {
-      print("isUpdate is updating");
-      print(isUpdate);
+      print("🔄 Starting appointment process for index $index");
+      print("📝 isUpdate: $isUpdate");
+
       final result = isUpdate
           ? await SearchPassRepository().apiUpdateAppointment(appointment, context)
           : await ApplyPassRepository().apiAddAppointment(appointment, context);
 
+      print("✅ Received result: $result");
+
       if (result is AddAppointmentResult) {
+        print("🔧 Processing upload entry...");
         await _processUploadEntry(context, imageData, result);
       } else {
         print("❌ Failed to receive valid result for appointment index $index");

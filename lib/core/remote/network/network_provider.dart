@@ -187,7 +187,17 @@ class NetworkProvider {
           AppUrl.pathCaptchaLogin,
         ].any(url.contains)) {
           // await SharedPreferencesMobileWeb.instance.removeParticularKey(apiToken);
-          await SecureStorageHelper.clearExceptRememberMe();
+          try {
+            await SecureStorageHelper.clearExceptRememberMe();
+          } catch (e, stack) {
+            await ErrorHandler.recordError(e, stack, context: {
+              'widget': 'Unauthorized Interceptor',
+              'action': 'clearExceptRememberMe',
+              'message': e.toString(),
+            });
+            print("SecureStorage deletion error (unauthorized): $e");
+            // Optional: notify the user or silently continue
+          }
           Provider.of<CommonNotifier>(MyApp.navigatorKey.currentContext!, listen: false).clearUser();
           MyApp.navigatorKey.currentState?.pushNamedAndRemoveUntil(AppRoutes.login, (_) => false);
         }

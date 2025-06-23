@@ -440,5 +440,6 @@
   "changeLanguage": "تغيير اللغة إلى",
   "customizeColumns": "تخصيص العمودات",
   "failedToLoadPDF": "فشل تحميل مستند PDF.",
-  "loading" : "تحميل"
+  "loading" : "تحميل",
+  "refreshCaptcha" : "تحديث الكابتشا"
 }
