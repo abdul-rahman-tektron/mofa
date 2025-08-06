@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:mofa/res/app_colors.dart';
+import 'package:mofa/utils/extensions.dart';
 
 class AppFonts {
   static const String lexBold = 'Lexend';
@@ -402,4 +403,14 @@ class AppFonts {
     color: AppColors.buttonBgColor,
     letterSpacing: 0.5,
   );
+}
+
+
+class FontResolver {
+  static TextStyle resolve(String text, TextStyle baseStyle) {
+    final isArabic = text.isArabic();
+    return baseStyle.copyWith(
+      fontFamily: isArabic ? 'DroidKufi' : 'Lexend',
+    );
+  }
 }

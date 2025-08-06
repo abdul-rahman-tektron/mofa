@@ -176,6 +176,7 @@ class LoginNotifier extends BaseChangeNotifier with CommonFunctions {
       "${context.readLang.translate(AppLanguageText.yourAccountWillUnlockAt)} ${CommonUtils.formatIsoToReadable(result.accountLockoutEndTime) ?? ""}";
     } else {
       passwordController.clear();
+      captchaController.clear();
       ToastHelper.showError(context.readLang.translate(AppLanguageText.incorrectEmailOrPassword));
       loginError =
       "${context.readLang.translate(AppLanguageText.youHave)} ${result.remainingFailedLoginAttempts ?? 0} ${context.readLang.translate(AppLanguageText.attempts)} ${context.readLang.translate(AppLanguageText.remaining)}";

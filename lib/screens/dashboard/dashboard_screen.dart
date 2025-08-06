@@ -32,21 +32,31 @@ class DashboardScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         backgroundColor: AppColors.backgroundColor,
-        body: SingleChildScrollView(
-          primary: true,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                headerText(context),
-                10.verticalSpace,
-                approvedPassCard(context, dashboardNotifier),
-                15.verticalSpace,
-                tabBar(context, dashboardNotifier),
-                10.verticalSpace,
-                tabBarView(context, dashboardNotifier),
-              ],
+        body: RefreshIndicator(
+          color: AppColors.primaryColor,
+          backgroundColor: AppColors.whiteColor,
+          strokeWidth: 2,
+          edgeOffset: 10,
+          onRefresh: () async {
+            await dashboardNotifier.refreshDashboard(context);
+          },
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            primary: true,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 15.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  headerText(context),
+                  10.verticalSpace,
+                  approvedPassCard(context, dashboardNotifier),
+                  15.verticalSpace,
+                  tabBar(context, dashboardNotifier),
+                  10.verticalSpace,
+                  tabBarView(context, dashboardNotifier),
+                ],
+              ),
             ),
           ),
         ),
@@ -142,10 +152,14 @@ class DashboardScreen extends StatelessWidget {
           },
           dividerColor: Colors.transparent,
           indicatorSize: TabBarIndicatorSize.tab,
-          labelStyle: AppFonts.textBold14,
-          unselectedLabelStyle: AppFonts.textBold14,
-          tabs: [Tab(text: context.watchLang.translate(AppLanguageText.upcomingVisits)), Tab(text: context.watchLang.translate(AppLanguageText.pastVisits))],
-        ),
+          labelStyle: FontResolver.resolve(
+              context.watchLang.translate(AppLanguageText.upcomingVisits), AppFonts.textBold14),
+          unselectedLabelStyle: FontResolver.resolve(
+              context.watchLang.translate(AppLanguageText.upcomingVisits), AppFonts.textBold14),
+          tabs: [
+            Tab(text: context.watchLang.translate(AppLanguageText.upcomingVisits)),
+            Tab(text: context.watchLang.translate(AppLanguageText.pastVisits)),
+          ],),
       ),
     );
   }

@@ -288,14 +288,9 @@ class ApplyPassRepository extends BaseRepository {
       DuplicateAppointmentResponse duplicateAppointmentResponse =
       duplicateAppointmentResponseFromJson(jsonEncode(response?.data));
       if(duplicateAppointmentResponse.status ?? true){
-        if (context.mounted) {
-          ToastHelper.showError(
-            context.readLang.translate(AppLanguageText.appointmentExists),
-          );
-        }
-        return false;
-      }else {
         return true;
+      }else {
+        return false;
       }
 
     } else {

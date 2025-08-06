@@ -453,6 +453,7 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
         break;
       case 'vehiclePermit':
         cellContent = buildVehicleChip(
+          context,
           appointment.nIsVehicleAllowed ?? -1,
           appointment.sVehicleNo ?? "",
         );
@@ -529,7 +530,7 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
     );
   }
 
-  Widget buildVehicleChip(int vehicleAllowed, String? vehicleNumber) {
+  Widget buildVehicleChip(BuildContext context, int vehicleAllowed, String? vehicleNumber) {
     if (vehicleNumber == null || vehicleNumber.trim().isEmpty) {
       return Center(child: const Text("-"));
     }
@@ -539,15 +540,15 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
 
     switch (vehicleAllowed) {
       case -1:
-        label = "Pending";
-        backgroundColor = Colors.yellow.shade700;
+        label = context.watchLang.translate(AppLanguageText.pending);
+        backgroundColor = Colors.yellow;
         break;
       case 0:
-        label = "Not Allowed";
-        backgroundColor = Colors.red.shade600;
+        label = context.watchLang.translate(AppLanguageText.notAllowed);
+        backgroundColor = Colors.red;
         break;
       case 1:
-        label = "Allowed";
+        label = context.watchLang.translate(AppLanguageText.allowed);
         backgroundColor = Colors.green;
         break;
       default:

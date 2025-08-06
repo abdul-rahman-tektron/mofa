@@ -71,7 +71,9 @@ class CommonDrawer extends StatelessWidget {
     return ListTile(
       leading: Icon(icon, size: 25,),
       title: Text(title, style: AppFonts.textMedium16,),
-      onTap: () {
+      onTap: () async {
+        await SecureStorageHelper.removeParticularKey(AppStrings.appointmentData);
+        await SecureStorageHelper.removeParticularKey(AppStrings.uploadedImageCode);
         Navigator.pop(context); // Close the drawer
         switch (value) {
           case 0:

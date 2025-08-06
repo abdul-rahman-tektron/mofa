@@ -379,8 +379,24 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
   Future<bool> apiValidatePhoto(BuildContext context) async {
     try {
+      // Decide which image to send: file or bytes
+      String? base64Image;
+      if (uploadedImageFile != null) {
+        base64Image = await uploadedImageFile!.toBase64();
+      } else if (uploadedImageBytes != null) {
+        base64Image = base64Encode(uploadedImageBytes!);
+      }
+
+      if (base64Image == null) {
+        _showUnexpectedError();
+        return false;
+      }
+
       final result = await ApplyPassRepository().apiValidatePhoto(
-        ValidatePhotoRequest(fullName: visitorNameController.text, photo: await uploadedImageFile?.toBase64()),
+        ValidatePhotoRequest(
+          fullName: visitorNameController.text,
+          photo: base64Image,
+        ),
         context,
       );
 
@@ -399,9 +415,9 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       } else {
         _showUnexpectedError();
       }
+
       return false;
     } catch (e) {
-      debugPrint("Error in apiValidatePhoto: $e");
       _showUnexpectedError();
       return false;
     }
@@ -1150,6 +1166,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
     })();
 
+    selectedIdValue = userData?.idType.toString();
+
     final String documentId = _getDocumentIdPreviousByType(userData,selectedId);
 
     return VisitorDetailModel(
@@ -1277,7 +1295,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     if (!isEmailValid) return false;
 
     // ✅ Duplicate check
-    final isDuplicateFree = await apiDuplicateAppointment(context);
+    final isDuplicateFree = await checkDuplicateAppointments(context);
     if (!isDuplicateFree) return false;
 
     return true;
@@ -1297,27 +1315,68 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     }
   }
 
-  Future<bool> apiDuplicateAppointment(BuildContext context) async {
-    try {
-      final result = await ApplyPassRepository().apiDuplicateAppointment(
-        DuplicateAppointmentRequest(
-          dFromDate: visitStartDateController.text.toDateTime().toString(),
-          dToDate: visitEndDateController.text.toDateTime().toString(),
-          nExternalRegistrationId: 0,
-          nLocationId: selectedLocationId.toString(),
-          sEidNumber: encryptAES(nationalityIdController.text),
-          sIqama: encryptAES(iqamaController.text),
-          sOthersValue: encryptAES(documentNumberController.text),
-          sPassportNumber: encryptAES(passportNumberController.text),
-        ),
-        context,
+  Future<bool> checkDuplicateAppointments(BuildContext context) async {
+    final lang = context.readLang;
+
+    for (int i = 0; i < addedVisitors.length; i++) {
+      final visitor = addedVisitors[i];
+      final documentId = visitor.documentId;
+      final encryptedDocId = encryptAES(documentId);
+      // final externalAppointmentId = visitor.lastAppointmentId;
+      final idTypeInt = int.tryParse(visitor.documentTypeValue) ?? 0;
+
+      // Assign encrypted doc to the correct field
+      String sEidNumber = '';
+      String sIqama = '';
+      String sOthersValue = '';
+      String sPassportNumber = '';
+
+      switch (idTypeInt) {
+        case 24:
+          sEidNumber = encryptedDocId;
+          break;
+        case 2244:
+          sIqama = encryptedDocId;
+          break;
+        case 26:
+          sPassportNumber = encryptedDocId;
+          break;
+        case 2245:
+          sOthersValue = encryptedDocId;
+          break;
+      }
+
+      final fromDate = visitStartDateController.text.toDateTime().toString();
+      final toDate = visitEndDateController.text.toDateTime().toString();
+
+      final request = DuplicateAppointmentRequest(
+        dFromDate: fromDate,
+        dToDate: toDate,
+        nExternalRegistrationId: 0,
+        nLocationId: selectedLocationId.toString(),
+        sEidNumber: sEidNumber,
+        sIqama: sIqama,
+        sOthersValue: sOthersValue,
+        sPassportNumber: sPassportNumber,
       );
-      return result == true;
-    } catch (e) {
-      print("object crash ${e}");
-      return false;
+
+      try {
+        final isDuplicate = await ApplyPassRepository().apiDuplicateAppointment(request, context);
+        if (isDuplicate == true) {
+          ToastHelper.showError(
+            "${context.readLang.translate(AppLanguageText.appointmentExistsForId)} $documentId",
+          );
+          return false;
+        }
+      } catch (e) {
+        ToastHelper.showError("Error checking duplicate for ID number: $documentId");
+        return false;
+      }
     }
+
+    return true;
   }
+
 
   Future<void> addData() async {
     List<AddAppointmentRequest> appointmentDataList = [];

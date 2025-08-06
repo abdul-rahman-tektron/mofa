@@ -30,6 +30,12 @@ class DashboardNotifier extends BaseChangeNotifier {
     await apiGetAllExternalAppointment(context, true);
   }
 
+  Future<void> refreshDashboard(BuildContext context) async {
+    // Example: re-fetch your cards and appointments
+    await apiDashboardKpi(context);
+    await apiGetAllExternalAppointment(context, isUpcoming);
+  }
+
   Future<void> apiDashboardKpi(BuildContext context) async {
     try {
       final value = await DashboardRepository().apiDashboardKpi({}, context);

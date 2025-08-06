@@ -1194,6 +1194,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   }
 
   List<Widget> deviceDetailsChildren(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    print("deviceDetailsChildren");
+    print(applyPassCategoryNotifier.selectedDevicePurpose);
     return [
       deviceDetailsChipList(context, applyPassCategoryNotifier),
       15.verticalSpace,

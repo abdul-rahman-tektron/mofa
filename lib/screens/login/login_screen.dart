@@ -379,7 +379,7 @@ class LoginScreen extends StatelessWidget {
                 ),
                 TextSpan(
                   text: context.watchLang.translate(AppLanguageText.switchLng),
-                  style: AppFonts.textRegular16Red,
+                  style: FontResolver.resolve(context.watchLang.translate(AppLanguageText.switchLng), AppFonts.textRegular16Red),
                     recognizer: TapGestureRecognizer()
                       ..onTap = () {
                         final provider = context.read<LanguageNotifier>();

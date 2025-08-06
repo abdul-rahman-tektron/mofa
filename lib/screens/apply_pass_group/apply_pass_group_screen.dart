@@ -863,13 +863,6 @@ class ApplyPassGroupScreen extends StatelessWidget {
     );
   }
 
-  Widget addVisitorsButton(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return CustomButton(
-      text: context.watchLang.translate(AppLanguageText.addVisitor),
-      onPressed: () => applyPassGroupNotifier.showVisitorsFieldsAgain(),
-    );
-  }
-
   Widget saveAndCancel(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     final isEditing = applyPassGroupNotifier.isEditingDevice;
     final showFields = applyPassGroupNotifier.showDeviceFields;
@@ -916,14 +909,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget saveAndCancelVisitors(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    final showFields = applyPassGroupNotifier.showVisitorsFields;
+    final isEditing = applyPassGroupNotifier.isEditingVisitors;
     return Row(
       children: [
         Expanded(
           child: CustomButton(
-            text: context.watchLang.translate(AppLanguageText.addVisitor),
+            text: context.watchLang.translate(isEditing ? AppLanguageText.updateVisitor : AppLanguageText.addVisitor,),
             height: 45,
             onPressed: () {
-              if (!applyPassGroupNotifier.showVisitorsFields) {
+              if (!showFields) {
                 applyPassGroupNotifier.showVisitorsFieldsAgain();
               } else {
                 applyPassGroupNotifier.saveVisitors(context);
@@ -932,7 +927,7 @@ class ApplyPassGroupScreen extends StatelessWidget {
           ),
         ),
         SizedBox(width: 10),
-        Expanded(
+        if (showFields) Expanded(
           child: CustomButton(
             text: context.watchLang.translate(AppLanguageText.cancel),
             height: 45,
@@ -1111,59 +1106,62 @@ class ApplyPassGroupScreen extends StatelessWidget {
   Widget visitorTable(BuildContext context, ApplyPassGroupNotifier notifier) {
     final visitors = notifier.addedVisitors;
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.shade300),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child:
-          visitors.isEmpty
-              ? _buildEmptyTableHeader(context, title: context.watchLang.translate(AppLanguageText.visitorDetails))
-              : SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowColor: MaterialStateColor.resolveWith((states) => AppColors.buttonBgColor.withOpacity(0.5)),
-                  headingTextStyle: AppFonts.textBoldWhite14,
-                  border: TableBorder(borderRadius: BorderRadius.circular(8)),
-                  clipBehavior: Clip.antiAliasWithSaveLayer,
-                  columnSpacing: 40,
-                  columns: [
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.visitorName))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.companyName))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.email))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.mobileNumber))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idType))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idNumber))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idExpiryDate))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.nationality))),
-                    DataColumn(label: Text(context.watchLang.translate(AppLanguageText.action))),
-                  ],
-                  rows:
-                      visitors.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final visitor = entry.value;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child:
+            visitors.isEmpty
+                ? _buildEmptyTableHeader(context, title: context.watchLang.translate(AppLanguageText.visitorDetails))
+                : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    headingRowColor: MaterialStateColor.resolveWith((states) => AppColors.buttonBgColor.withOpacity(0.5)),
+                    headingTextStyle: AppFonts.textBoldWhite14,
+                    border: TableBorder(borderRadius: BorderRadius.circular(8)),
+                    clipBehavior: Clip.antiAliasWithSaveLayer,
+                    columnSpacing: 40,
+                    columns: [
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.visitorName))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.companyName))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.email))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.mobileNumber))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idType))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idNumber))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.idExpiryDate))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.nationality))),
+                      DataColumn(label: Text(context.watchLang.translate(AppLanguageText.action))),
+                    ],
+                    rows:
+                        visitors.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final visitor = entry.value;
 
-                        return DataRow(
-                          cells: [
-                            DataCell(Text(visitor.visitorName)),
-                            DataCell(Text(visitor.companyName)),
-                            DataCell(Text(visitor.email)),
-                            DataCell(Text(visitor.mobileNumber)),
-                            DataCell(Text(visitor.idType)),
-                            DataCell(Text(visitor.documentId)),
-                            DataCell(Text(visitor.expiryDate)),
-                            DataCell(Text(visitor.nationality)),
-                            DataCell(
-                              _buildActionButtons(
-                                onEdit: () => notifier.startEditingVisitors(context, index),
-                                onDelete: () => notifier.removeVisitors(index),
+                          return DataRow(
+                            cells: [
+                              DataCell(Text(visitor.visitorName)),
+                              DataCell(Text(visitor.companyName)),
+                              DataCell(Text(visitor.email)),
+                              DataCell(Text(visitor.mobileNumber)),
+                              DataCell(Text(visitor.idType)),
+                              DataCell(Text(visitor.documentId)),
+                              DataCell(Text(visitor.expiryDate)),
+                              DataCell(Text(visitor.nationality)),
+                              DataCell(
+                                _buildActionButtons(
+                                  onEdit: () => notifier.startEditingVisitors(context, index),
+                                  onDelete: () => notifier.removeVisitors(index),
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
+                            ],
+                          );
+                        }).toList(),
+                  ),
                 ),
-              ),
+      ),
     );
   }
 
@@ -1180,7 +1178,9 @@ class ApplyPassGroupScreen extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Text(title, style: AppFonts.textBoldWhite14),
         ),
-        Padding(padding: EdgeInsets.all(16), child: Text(context.watchLang.translate(AppLanguageText.noResultFound))),
+        Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: Text(context.watchLang.translate(AppLanguageText.noResults),),),),
       ],
     );
   }

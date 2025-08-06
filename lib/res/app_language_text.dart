@@ -141,8 +141,10 @@ class AppLanguageText {
   static const declareDevicesBroughtOnsite = 'declareDevicesBroughtOnsite';
   static const visitingPersonEmailNotFound = 'visitingPersonEmailNotFound';
   static const appointmentExists = 'appointmentExists';
+  static const appointmentExistsForId = 'appointmentExistsForId';
   static const dashboard = 'dashboard';
   static const addVisitor = 'addVisitor';
+  static const updateVisitor = 'updateVisitor';
   static const noResults = 'noResults';
   static const columnChooser = 'columnChooser';
   static const totalRecords = 'totalRecords';
@@ -420,6 +422,9 @@ class AppLanguageText {
   static const String failedToLoadPDF = 'failedToLoadPDF';
   static const String loading = 'loading';
   static const String refreshCaptcha = 'refreshCaptcha';
+  static const String checkYourInbox = 'checkYourInbox';
+  static const String checkInboxActivation = 'checkInboxActivation';
+  static const String emailAlreadyExists = 'emailAlreadyExists';
 
 // Add the rest of the keys here...
 }

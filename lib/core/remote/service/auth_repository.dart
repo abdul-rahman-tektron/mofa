@@ -206,16 +206,17 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       RegisterResponse registerResponse =
       registerResponseFromJson(jsonEncode(response?.data));
 
-      registerSuccessPopup(context, "Registered Successfully",
-          "An account activation link has been sent to your email address.\nPlease check your inbox and follow the instructions to activate your account.");
+      registerSuccessPopup(context, context.readLang.translate(AppLanguageText.registeredSuccessfully),
+          "${context.readLang.translate(AppLanguageText.accountActivationLinkSent)}\n${context.readLang.translate(AppLanguageText.checkInboxActivation)}");
     } if (response?.statusCode == HttpStatus.badRequest) {
 
       RegisterResponse registerResponse =
       registerResponseFromJson(jsonEncode(response?.data));
 
-      ToastHelper.showError(registerResponse.message ?? "");
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.emailAlreadyExists) ?? "");
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      ToastHelper.showError(context.readLang.translate(AppLanguageText.somethingWentWrong) ?? "");
       return errorString.title;
     }
     return null;
@@ -307,7 +308,7 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       if(forgetPasswordResponse.statusCode == HttpStatus.ok){
         Navigator.pop(context);
         commonPopup(context, LucideIcons.checkCircle2, context.readLang.translate(AppLanguageText.passwordResetRequested),
-            "A password reset link has been sent to your email address.\nPlease check your inbox and follow the instructions to reset your password.");
+            "${context.readLang.translate(AppLanguageText.passwordResetLinkSent)}\n${context.readLang.translate(AppLanguageText.checkYourInbox)}");
       } else {
         ToastHelper.showError(forgetPasswordResponse.message ?? "");
       }

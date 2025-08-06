@@ -152,6 +152,11 @@ extension Base64ToFileExtension on String {
     final file = File(filePath);
     return await file.writeAsBytes(bytes);
   }
+
+  bool isArabic() {
+    final arabicRegExp = RegExp(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]');
+    return arabicRegExp.hasMatch(this);
+  }
 }
 
 extension IdTypeExtension on IdType {

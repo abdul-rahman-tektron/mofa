@@ -9,6 +9,7 @@ import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/localization/localization_service.dart';
 import 'package:mofa/core/notifier/common_notifier.dart';
 import 'package:mofa/core/notifier/language_notifier.dart';
+import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_theme.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/enum_values.dart';
@@ -32,6 +33,12 @@ Future<void> main() async {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: AppColors.whiteColor, //or set color with: Color
+      statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
+      statusBarBrightness: Brightness.light, // For iOS (dark icons)
+    ));
 
     // Initialize secure storage
     await SecureStorageHelper.init();
@@ -79,10 +86,6 @@ class MyApp extends StatelessWidget {
       ],
       child: Builder(
         builder: (context) {
-          print("MediaQuery.of(context).devicePixelRatio");
-          print(MediaQuery.of(context).devicePixelRatio);
-          print(MediaQuery.of(context).textScaleFactor);
-          print(MediaQuery.of(context).size);
           return ScreenUtilInit(
             designSize: const Size(375, 812),
             minTextAdapt: true,               // adapt text for smaller screens
@@ -114,10 +117,6 @@ class MyApp extends StatelessWidget {
 
                     // Apply custom logic based on density threshold
                     final textScale = pixelRatio > 3.0 ? 0.8 : 1.0;
-
-                    print("textScale");
-                    print(pixelRatio);
-                    print(textScale);
 
                     return MediaQuery(
                       data: mediaQueryData.copyWith(textScaleFactor: textScale),

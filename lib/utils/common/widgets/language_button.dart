@@ -52,7 +52,7 @@ class LanguageChange extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: Icon(LucideIcons.languages, size: 25,),
-      title: Text(context.watchLang.translate(AppLanguageText.switchLng), style: AppFonts.textMedium16,),
+      title: Text(context.watchLang.translate(AppLanguageText.switchLng), style: FontResolver.resolve(context.watchLang.translate(AppLanguageText.switchLng), AppFonts.textMedium16),),
       onTap: () {
         final provider = context.read<LanguageNotifier>();
         final nextLang = provider.currentLang == 'en' ? 'ar' : 'en';

@@ -357,7 +357,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       }
 
       // fetchRequiredFiles(context);
-
+      apiGetFile(context, type: 1);
       //Update Part
       if (isUpdate) {
         apiGetSearchComment(context, id);
@@ -400,6 +400,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         mofaHostEmailController.text = getByIdResult?.user?.sVisitingPersonEmail ?? "";
         visitStartDateController.text = getByIdResult?.user?.dtAppointmentStartTime?.toDisplayDateTime() ?? "";
         visitEndDateController.text = getByIdResult?.user?.dtAppointmentEndTime?.toDisplayDateTime() ?? "";
+        noteController.text = getByIdResult?.user?.sRemarks ?? "";
         addMultipleDevicesFromResult(getByIdResult?.devices);
       }
     }
@@ -531,6 +532,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       mofaHostEmailController.text = userData.sVisitingPersonEmail ?? "";
         visitStartDateController.text = userData.dtAppointmentStartTime.toString().toDisplayDateTimeString() ?? "";
         visitEndDateController.text = userData.dtAppointmentEndTime.toString().toDisplayDateTimeString() ?? "";
+      noteController.text = userData.remarks ?? "";
       final deviceResults = convertDeviceModelsToResults(userData.devices ?? []);
       addMultipleDevicesFromResult(deviceResults);
     }
@@ -635,6 +637,21 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       isEnable = isMoreInfoRequired; // true if 1, false if 0
     } else {
       isEnable = true; // always editable for currentOrder <= 1
+    }
+  }
+
+  int _getFileType(String idType) {
+    switch (idType) {
+      case "National ID":
+        return 2;
+      case "Passport":
+        return 3;
+      case "Iqama":
+        return 5;
+      case "Other":
+        return 6;
+      default:
+        return 4;
     }
   }
 
@@ -880,12 +897,18 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
       appointmentId = searchResult.appointment?.nAppointmentId ?? 0;
       lastAppointmentId = searchResult.appointment?.nAppointmentId ?? 0;
+
       havePhoto = searchResult.appointment?.havePhoto ?? 0;
       haveDocument = (searchResult.appointment?.havePassport == 1 ||
           searchResult.appointment?.haveIqama == 1 ||
           searchResult.appointment?.haveEid == 1 ||
           searchResult.appointment?.haveOthers == 1) ? 1 : 0;
       haveVehicleRegistration = searchResult.appointment?.haveVehicleRegistration ?? 0;
+
+      if (searchResult.appointment?.havePhoto == 1) {
+        apiGetFile(context, type: 1);
+      }
+
        notifyListeners();
 
   }
@@ -1046,8 +1069,24 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   Future<bool> apiValidatePhoto(BuildContext context) async {
     try {
+      // Decide which image to send: file or bytes
+      String? base64Image;
+      if (uploadedImageFile != null) {
+        base64Image = await uploadedImageFile!.toBase64();
+      } else if (uploadedImageBytes != null) {
+        base64Image = base64Encode(uploadedImageBytes!);
+      }
+
+      if (base64Image == null) {
+        _showUnexpectedError();
+        return false;
+      }
+
       final result = await ApplyPassRepository().apiValidatePhoto(
-        ValidatePhotoRequest(fullName: visitorNameController.text, photo: await uploadedImageFile?.toBase64()),
+        ValidatePhotoRequest(
+          fullName: visitorNameController.text,
+          photo: base64Image,
+        ),
         context,
       );
 
@@ -1066,9 +1105,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       } else {
         _showUnexpectedError();
       }
+
       return false;
     } catch (e) {
-      debugPrint("Error in apiValidatePhoto: $e");
       _showUnexpectedError();
       return false;
     }
@@ -1145,6 +1184,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         ),
         context,
       );
+      if(result == true) {
+        ToastHelper.showError(
+          context.readLang.translate(AppLanguageText.appointmentExists),
+        );
+      }
       return result == true;
     } catch (e) {
       print("object crash ${e}");
@@ -1186,7 +1230,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
         dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
         sVehicleNo: vehicleNumberController.text,
-        devices: addedDevices,
+        devices: isCheckedDevice ? addedDevices : null,
         nLocationId: selectedLocationId,
         nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
         purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
@@ -1208,11 +1252,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         nVisitCreatedFrom: 2,
         nVisitUpdatedFrom: 2,
         resubmissionComments: resubmissionCommentController.text,
-        nPlateSource: selectedPlateType,
-        nPlateLetter1: selectedPlateLetter1,
-        nPlateLetter2: selectedPlateLetter2,
-        nPlateLetter3: selectedPlateLetter3,
-        sPlateNumber: plateNumberController.text,
+        nPlateSource:  isCheckedVehicle ? selectedPlateType : null,
+        nPlateLetter1: isCheckedVehicle ? selectedPlateLetter1 : null,
+        nPlateLetter2: isCheckedVehicle ? selectedPlateLetter2 : null,
+        nPlateLetter3: isCheckedVehicle ? selectedPlateLetter3 : null,
+        sPlateNumber: isCheckedVehicle ? plateNumberController.text : null,
       );
 
       // Build image upload data
@@ -1374,6 +1418,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     isEditingDevice = false;
     showDeviceFields = false;
 
+    selectedDeviceType = null;
+    selectedDevicePurpose = null;
+
     deviceTypeController.clear();
     deviceModelController.clear();
     serialNumberController.clear();
@@ -1435,20 +1482,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     }
 
     final deviceModels =
-        results.map((r) {
-          return DeviceModel(
-            appointmentDeviceId: r.appointmentDeviceId ?? 0,
-            deviceType: r.deviceType,
-            deviceTypeString: _getDeviceTypeString(r.deviceType),
-            deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
-            deviceModel: r.deviceModel ?? "",
-            serialNumber: r.serialNumber ?? "",
-            devicePurpose: r.devicePurpose,
-            devicePurposeString: _getDevicePurposeString(r.devicePurpose),
-            devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
-            approvalStatus: r.approvalStatus ?? 50,
-          );
-        }).toList();
+    results.map((r) {
+      // selectedDevicePurpose = r.devicePurpose;
+      // selectedDeviceType = r.deviceType;
+
+      return DeviceModel(
+        appointmentDeviceId: r.appointmentDeviceId ?? 0,
+        deviceType: r.deviceType,
+        deviceTypeString: _getDeviceTypeString(r.deviceType),
+        deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
+        deviceModel: r.deviceModel ?? "",
+        serialNumber: r.serialNumber ?? "",
+        devicePurpose: r.devicePurpose,
+        devicePurposeString: _getDevicePurposeString(r.devicePurpose),
+        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+        approvalStatus: r.approvalStatus ?? 50,
+      );
+    }).toList();
 
     addedDevices.addAll(deviceModels);
     showDeviceFields = false;
@@ -1528,11 +1578,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     final isPurposeOtherEmpty = isPurposeOther && devicePurposeOtherController.text.trim().isEmpty;
 
     final allEmpty = isDeviceTypeEmpty &&
-        !isDeviceTypeOther &&
+        (!isDeviceTypeOther || isDeviceTypeOtherEmpty) &&
         isModelEmpty &&
         isSerialEmpty &&
         isPurposeEmpty &&
-        !isPurposeOther;
+        (!isPurposeOther || isPurposeOtherEmpty);
 
     final allFilled = !isDeviceTypeEmpty &&
         (!isDeviceTypeOther || !isDeviceTypeOtherEmpty) &&
@@ -1543,6 +1593,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
     return !allEmpty && !allFilled; // return true if partially filled
   }
+
 
 
   bool get isFormActionAllowed {
@@ -1573,19 +1624,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       return false;
     }
 
+    print("isValidatePhotoFromFR not Yet done: $isValidatePhotoFromFR");
+
     if (isValidatePhotoFromFR) {
       return await apiValidatePhoto(context);
     }
+    print("isValidatePhotoFromFR: $isValidatePhotoFromFR");
 
     if (!await _isEmailValid(context)) {
       return false;
     }
+    print("isValidateEmail: came");
 
     if (!_isExpiryAfterVisitEnd(context)) {
       return false;
     }
 
-    if (!isUpdate && !await _hasNoDuplicates(context)) {
+    if (!isUpdate && await _hasNoDuplicates(context)) {
       return false;
     }
 
