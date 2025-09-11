@@ -7,6 +7,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_response.dart';
+import 'package:mofa/core/model/building_dropdown/building_dropdown_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/duplicate_appointment/duplicate_appointment_request.dart';
@@ -68,6 +69,29 @@ class ApplyPassRepository extends BaseRepository {
       locationDropdownResponseFromJson(jsonEncode(response?.data));
 
       return locationDropdownResponse.result;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Location Dropdown
+  Future<Object?> apiBuildingDropDown(DeviceDropdownRequest requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathBuildingDropdown,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      BuildingDropdownResponse buildingDropdownResponse =
+      buildingDropdownResponseFromJson(jsonEncode(response?.data));
+
+      return buildingDropdownResponse.result;
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

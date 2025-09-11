@@ -52,6 +52,7 @@ class AppLanguageText {
   static const plateNumber = 'plateNumber';
   static const location = 'location';
   static const visitRequestType = 'visitRequestType';
+  static const building = 'building';
   static const visitPurpose = 'visitPurpose';
   static const hostEmailAddress = 'hostEmailAddress';
   static const visitStartDate = 'visitStartDate';
@@ -373,6 +374,7 @@ class AppLanguageText {
   static const passportInvalid = 'validation.passport.invalid';
 
   static const locationRequired = 'validation.location.required';
+  static const visitBuildingRequired = 'validation.building.required';
   static const visitRequestTypeRequired = 'validation.visit_request_type.required';
   static const visitPurposeRequired = 'validation.visit_purpose.required';
 

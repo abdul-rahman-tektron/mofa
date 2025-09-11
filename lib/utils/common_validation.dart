@@ -131,6 +131,9 @@ class CommonValidation {
   String? validateVisitRequestType(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.visitRequestTypeRequired);
 
+  String? validateBuilding(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.visitBuildingRequired);
+
   String? validateVisitPurpose(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.visitPurposeRequired);
 

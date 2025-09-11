@@ -52,7 +52,7 @@ Future<void> main() async {
     await ErrorHandler.initialize();
 
     // Load localization and get token
-    String languageCode = await SecureStorageHelper.getLanguageCode() ?? "en";
+    String languageCode = await SecureStorageHelper.getLanguageCode() ?? "ar";
     final token = await SecureStorageHelper.getToken();
     final localizationService = LocalizationService();
     await localizationService.load(languageCode);

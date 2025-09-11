@@ -15,7 +15,8 @@ class BaseRepository with ChangeNotifier {
   };
   final headerContentTypeAndAccept = {
     HttpHeaders.contentTypeHeader: "application/json",
-    HttpHeaders.acceptHeader: "application/json"
+    HttpHeaders.acceptHeader: "application/json",
+    "x-api-key" : "14585c92fd001f0d673744b8fcc5aaa3",
   };
   final headerContentTypeAndAcceptAUS = {
     HttpHeaders.contentTypeHeader: "application/json",
@@ -34,6 +35,7 @@ class BaseRepository with ChangeNotifier {
   final headerFormDataWithAccept = {
     HttpHeaders.contentTypeHeader: "multipart/form-data",
     HttpHeaders.acceptHeader: "application/json",
+    "x-api-key" : "12345798",
   };
 
   Map<String, String> buildDefaultHeaderWithToken(String token) {

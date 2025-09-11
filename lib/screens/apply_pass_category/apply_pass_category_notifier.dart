@@ -10,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
+import 'package:mofa/core/model/building_dropdown/building_dropdown_response.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
@@ -60,6 +61,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
   String? _selectedVisitRequest;
+  String? _selectedBuilding;
   String? _selectedVisitPurpose;
 
   //int
@@ -85,7 +87,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   bool _isChecked = false;
   bool _isUpdate = false;
   bool _isCheckedDevice = true;
-  bool _isCheckedVehicle = true;
+  bool _isCheckedVehicle = false;
   bool _showDeviceFields = true;
   bool _isEditingDevice = false;
   bool _photoUploadValidation = false;
@@ -114,6 +116,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   // List
   List<CountryData> _nationalityMenu = [];
   List<LocationDropdownResult> _locationDropdownData = [];
+  List<BuildingDropdownResult> _buildingDropdownData = [];
   List<VisitRequestDropdownResult> _visitRequestTypesDropdownData = [];
   List<DeviceDropdownResult> _deviceTypeDropdownData = [];
   List<DeviceDropdownResult> _devicePurposeDropdownData = [];
@@ -166,6 +169,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   //Visit Detail
   TextEditingController _locationController = TextEditingController();
+  TextEditingController _buildingController = TextEditingController();
   TextEditingController _visitRequestTypeController = TextEditingController();
   TextEditingController _visitPurposeController = TextEditingController();
   TextEditingController visitPurposeOtherController = TextEditingController();
@@ -229,6 +233,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       await Future.wait([
         if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, userResponse!, id),
         apiLocationDropdown(context),
+        apiBuildingDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
         apiVisitPurposeDropdown(context),
@@ -925,6 +930,20 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       }
     } catch (e) {
       debugPrint("Error in apiLocationDropdown: $e");
+    }
+  }
+
+  // Location dropdown
+  Future<void> apiBuildingDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiBuildingDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1")), context);
+      if (result is List<BuildingDropdownResult>) {
+        buildingDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
     }
   }
 
@@ -1909,6 +1928,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     notifyListeners();
   }
 
+  String? get selectedBuilding => _selectedBuilding;
+
+  set selectedBuilding(String? value) {
+    if (_selectedBuilding == value) return;
+    _selectedBuilding = value;
+    notifyListeners();
+  }
+
   String? get selectedVisitRequest => _selectedVisitRequest;
 
   set selectedVisitRequest(String? value) {
@@ -1989,6 +2016,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     notifyListeners();
   }
 
+  List<BuildingDropdownResult> get buildingDropdownData => _buildingDropdownData;
+
+  set buildingDropdownData(List<BuildingDropdownResult> value) {
+    if (_buildingDropdownData == value) return;
+    _buildingDropdownData = value;
+    notifyListeners();
+  }
+
   List<VisitRequestDropdownResult> get visitRequestTypesDropdownData => _visitRequestTypesDropdownData;
 
   set visitRequestTypesDropdownData(List<VisitRequestDropdownResult> value) {
@@ -2050,6 +2085,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   set visitRequestTypeController(TextEditingController value) {
     if (_visitRequestTypeController == value) return;
     _visitRequestTypeController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get buildingController => _buildingController;
+
+  set buildingController(TextEditingController value) {
+    if (_buildingController == value) return;
+    _buildingController = value;
     notifyListeners();
   }
 

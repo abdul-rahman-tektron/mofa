@@ -60,7 +60,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   bool _photoUploadValidation = false;
   bool _documentUploadValidation = false;
   bool _isValidatePhotoFromFR = false;
-  bool _isCheckedVehicle = true;
+  bool _isCheckedVehicle = false;
   bool _isCheckedSearch = false;
   bool _isPhotoLoading = false;
   bool _isDocumentLoading = false;
@@ -1487,11 +1487,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       nSelfPass: 3,
       nVisitCreatedFrom: 2,
       nVisitUpdatedFrom: 2,
-      nPlateSource: selectedPlateType,
-      nPlateLetter1: selectedPlateLetter1,
-      nPlateLetter2: selectedPlateLetter2,
-      nPlateLetter3: selectedPlateLetter3,
-      sPlateNumber: plateNumberController.text,
+      nPlateSource: isCheckedVehicle ? selectedPlateType : null,
+      nPlateLetter1: isCheckedVehicle ? selectedPlateLetter1 : null,
+      nPlateLetter2: isCheckedVehicle ? selectedPlateLetter2: null,
+      nPlateLetter3: isCheckedVehicle ? selectedPlateLetter3: null,
+      sPlateNumber: isCheckedVehicle ? plateNumberController.text : null,
     );
   }
 

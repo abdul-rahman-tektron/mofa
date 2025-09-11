@@ -68,12 +68,12 @@ class ApplyPassScreen extends StatelessWidget {
               ],
             ),
           ),
-          5.verticalSpace,
-          Text(
-            context.watchLang.translate(AppLanguageText.completeQuestions),
-            textAlign: TextAlign.center,
-            style: AppFonts.textMedium16,
-          ),
+          // 5.verticalSpace,
+          // Text(
+          //   context.watchLang.translate(AppLanguageText.completeQuestions),
+          //   textAlign: TextAlign.center,
+          //   style: AppFonts.textMedium16,
+          // ),
         ],
       ),
     );
