@@ -45,6 +45,7 @@
   "idType": "نوع الهوية",
   "nationalID": "الهوية الوطنية",
   "nationalIDExpiryDate": "تاريخ انتهاء الهوية الوطنية",
+  "visaExpiryDate": "تاريخ انتهاء صلاحية التأشيرة",
   "plateType": "نوع اللوحة",
   "plateCode": "رمز اللوحة",
   "plateNumber": "رقم اللوحة",
@@ -56,6 +57,7 @@
   "visitStartDate": "تاريخ بدء الزيارة",
   "visitEndDate": "تاريخ انتهاء الزيارة",
   "uploadPhoto": "تحميل الصورة",
+  "uploadVisa": "تحميل التأشيرة",
   "uploadNationalID": "تحميل الهوية الوطنية",
   "passportNumber": "رقم جواز السفر",
   "passportExpiryDate": "تاريخ انتهاء جواز السفر",
@@ -227,6 +229,7 @@
   "noClose": "لا، إغلاق",
   "delete": "حذف",
   "iqama": "الإقامة",
+  "visa": "فيزا",
   "other": "أخرى",
   "laptop": "كمبيوتر محمول",
   "phone": "هاتف",
@@ -361,6 +364,7 @@
   "validation.email.invalid": "يرجى إدخال بريد إلكتروني صالح",
 
   "validation.password.required": "كلمة المرور مطلوبة",
+  "validation.visa.required": "مطلوب تأشيرة",
   "validation.confirm_password.required": "تأكيد كلمة المرور مطلوب",
   "validation.confirm_password.mismatch": "يجب أن تتطابق كلمتا المرور",
 
@@ -391,10 +395,12 @@
   "validation.national_id_expiry.required": "تاريخ انتهاء الهوية الوطنية مطلوب",
   "validation.iqama_expiry.required": "تاريخ انتهاء الإقامة مطلوب",
   "validation.passport_expiry.required": "تاريخ انتهاء جواز السفر مطلوب",
+  "validation.visa_expiry.required": "يجب تحديد تاريخ انتهاء صلاحية التأشيرة.",
   "validation.document_expiry.required": "تاريخ انتهاء المستند مطلوب",
 
   "validation.passport.required": "رقم جواز السفر مطلوب",
   "validation.passport.invalid": "يرجى إدخال رقم جواز سفر صالح",
+  "validation.visa.invalid": "أدخل رقم تأشيرة صالح",
 
   "validation.location.required": "الموقع مطلوب",
   "validation.building.required": "مطلوب بناء",
@@ -418,6 +424,7 @@
   "validation.plate_letter3.required": "الحرف الثالث من اللوحة مطلوب",
   "validation.plate_number.required": "رقم اللوحة مطلوب",
   "validation.plate_number.valid": "أدخل رقم لوحة صالحًا.",
+  "validation.date_of_birth.required": "تاريخ الميلاد مطلوب",
   "mofaEmailRequired": "البريد الإلكتروني مطلوب.",
   "invalidMofaEmail": "عنوان البريد الإلكتروني غير صالح.",
   "pleaseEnterData": "يرجى إدخال البيانات المطلوبة.",
@@ -448,5 +455,8 @@
   "failedToLoadPDF": "فشل تحميل مستند PDF.",
   "loading" : "تحميل",
   "refreshCaptcha" : "تحديث الكابتشا",
-  "emailAlreadyExists" : "البريد الإلكتروني موجود بالفعل"
+  "emailAlreadyExists" : "البريد الإلكتروني موجود بالفعل",
+  "applyFor" : "قدم من أجل",
+  "dateOfBirth": "تاريخ الميلاد",
+  "hostEmail": "البريد الإلكتروني للمضيف"
 }

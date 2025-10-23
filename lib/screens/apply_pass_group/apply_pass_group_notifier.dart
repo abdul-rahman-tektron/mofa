@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -9,6 +10,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/add_appointment/add_appointment_request.dart';
+import 'package:mofa/core/model/building_dropdown/building_dropdown_response.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_request.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
@@ -99,6 +101,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   String? _selectedIdType = "National ID";
   String? _selectedIdValue;
   String? _applyPassCategory;
+  String? _selectedBuilding;
+
 
   // Data Controller
   //Search Field
@@ -121,14 +125,17 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   TextEditingController _documentNameController = TextEditingController();
   TextEditingController _documentNumberController = TextEditingController();
   TextEditingController _iqamaController = TextEditingController();
+  TextEditingController _visaController = TextEditingController();
   TextEditingController _passportNumberController = TextEditingController();
 
   //Visit Detail
   TextEditingController _locationController = TextEditingController();
+  TextEditingController _buildingController = TextEditingController();
   TextEditingController _visitRequestTypeController = TextEditingController();
   TextEditingController _visitPurposeController = TextEditingController();
   TextEditingController visitPurposeOtherController = TextEditingController();
   TextEditingController _mofaHostEmailController = TextEditingController();
+  TextEditingController _dateOfBirthController = TextEditingController();
   TextEditingController _visitStartDateController = TextEditingController();
   TextEditingController _visitEndDateController = TextEditingController();
   TextEditingController _noteController = TextEditingController();
@@ -150,6 +157,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
   //List
   List<LocationDropdownResult> _locationDropdownData = [];
+  List<BuildingDropdownResult> _buildingDropdownData = [];
   List<VisitRequestDropdownResult> _visitRequestTypesDropdownData = [];
   List<VisitPurposeDropdownResult> _visitPurposeDropdownData = [];
   List<CountryData> _nationalityMenu = [];
@@ -163,14 +171,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
   LoginTokenUserResponse? _userResponse;
 
-  final List<DocumentIdModel> idTypeMenu = [
-    DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
-    DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
-    DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
-    DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
-  ];
-
-
+  List<DocumentIdModel>? idTypeMenu;
 
   String _formatDate(DateTime date) {
     final formatter = DateFormat("dd/MM/yyyy, hh:mm a");
@@ -209,6 +210,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     try {
       await Future.wait([
         apiLocationDropdown(context),
+        apiDocumentIdDropdown(context),
+        apiBuildingDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
         apiVisitPurposeDropdown(context),
@@ -235,6 +238,20 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       }
     } catch (e) {
       debugPrint("Error in apiLocationDropdown: $e");
+    }
+  }
+
+  Future<void> apiDocumentIdDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDocumentIdDropDown(
+          {}, context);
+      if (result is List<DocumentIdModel>) {
+        idTypeMenu = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
     }
   }
 
@@ -268,6 +285,22 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       debugPrint("Error in apiVisitPurposeDropdown: $e");
     }
   }
+
+  // Building dropdown
+  Future<void> apiBuildingDropdown(BuildContext context, {int? locationId = 1}) async {
+    try {
+      final result = await ApplyPassRepository().apiBuildingDropDown(
+          DeviceDropdownRequest(encryptedId: encryptAES(locationId.toString())), context);
+      if (result is List<BuildingDropdownResult>) {
+        buildingDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
+    }
+  }
+
 
   // Visit Request dropdown
   Future<void> apiVisitRequestDropdown(BuildContext context) async {
@@ -480,13 +513,13 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         final Uint8List? imageBytes = decodeImageData(imageMap['imageUploaded']);
         final Uint8List? documentBytes = decodeImageData(imageMap['documentUploaded']);
         final Uint8List? vehicleBytes = decodeImageData(imageMap['vehicleRegistrationUploaded']);
-        final String? selectedIdType = (imageMap['selectedIdType']);
+        final String? selectedIdValue = (imageMap['selectedIdValue']);
 
         imageList.add({
           "imageUploaded": imageBytes,
           "documentUploaded": documentBytes,
           "vehicleRegistrationUploaded": vehicleBytes,
-          "selectedIdType": selectedIdType,
+          "selectedIdValue": selectedIdValue,
         });
       }
     }
@@ -507,6 +540,17 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         return context.lang == LanguageCode.ar.name
             ? (item.sLocationNameAr ?? "")
             : (item.sLocationNameEn ?? "");
+      })();
+
+      selectedBuilding = requestList[0].nBuildingId?.toString() ?? "0";
+      buildingController.text = (() {
+        final item = buildingDropdownData.firstWhere(
+              (item) => item.nBuildingId == requestList[0].nBuildingId,
+          orElse: () => BuildingDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sBuildingNameAr ?? "")
+            : (item.sBuildingNameEn ?? "");
       })();
 
       visitRequestTypeController.text = (() {
@@ -626,8 +670,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         deviceTypeOthersValue: model.deviceTypeOthersValue,
         deviceModel: model.deviceModel,
         serialNumber: model.serialNumber,
-        devicePurpose: model.devicePurpose,
-        devicePurposeOthersValue: model.devicePurposeOthersValue,
+        devicePurpose: model.devicePurposeString,
         approvalStatus: model.approvalStatus,
       );
     }).toList();
@@ -644,9 +687,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
         deviceModel: r.deviceModel ?? "",
         serialNumber: r.serialNumber ?? "",
-        devicePurpose: r.devicePurpose,
         devicePurposeString: r.devicePurpose.toString(),
-        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
         approvalStatus: r.approvalStatus ?? 50,
       );
     }).toList();
@@ -782,7 +823,6 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       deviceTypeString: deviceTypeController.text,
       deviceModel: deviceModelController.text,
       serialNumber: serialNumberController.text,
-      devicePurpose: selectedDevicePurpose,
       devicePurposeString: devicePurposeController.text,
       deviceTypeOthersValue: isDeviceTypeOther ? deviceTypeOtherController.text : null,
       devicePurposeOthersValue: isDevicePurposeOther ? devicePurposeOtherController.text : null,
@@ -817,6 +857,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     documentNameController.clear();
     documentNumberController.clear();
     expiryDateController.clear();
+    dateOfBirthController.clear();
     vehicleNumberController.clear();
 
     uploadedImageFile = null;
@@ -850,7 +891,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     passportNumberController.text = visitors.documentId;
     documentNameController.text = visitors.documentId;
     documentNumberController.text = visitors.documentId;
-    expiryDateController.text = visitors.expiryDate;
+    expiryDateController.text = visitors.dateOfBirth;
+    dateOfBirthController.text = visitors.expiryDate;
 
     selectedIdType = visitors.idType;
     idTypeController.text = visitors.idType;
@@ -987,11 +1029,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     phoneNumberController.text = searchResult.appointment?.sMobileNo ?? "";
     emailController.text = searchResult.appointment?.sEmail ?? "";
     idTypeController.text = (() {
-      final item = idTypeMenu.firstWhere(
-            (item) => item.value == searchResult.appointment?.nDocumentType,
-        orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+      final item = idTypeMenu?.firstWhere(
+            (item) => item.nDetailedCode == searchResult.appointment?.nDocumentType,
+        orElse: () => DocumentIdModel(sDescE: "", sDescA: "", nDetailedCode: 0),
       );
-      return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+      return context.lang == LanguageCode.ar.name ? item?.sDescA ?? "" : item?.sDescE ?? "";
     })();
 
     selectedIdValue = searchResult.appointment?.nDocumentType.toString() ?? "";
@@ -1015,6 +1057,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
             ? searchResult.appointment!.dtEidExpiryDate
             : searchResult.appointment?.dtOthersExpiry?.trim()
     )?.toString().toDisplayDateOnly() ?? '';
+
+    dateOfBirthController.text = searchResult.appointment?.dtDateOfBirth?.toDisplayDate() ?? "";
     appointmentId = searchResult.appointment?.nAppointmentId ?? 0;
     lastAppointmentId = searchResult.appointment?.nAppointmentId ?? 0;
 
@@ -1090,13 +1134,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   }
 
   Future<VisitorDetailModel> _buildVisitorModel(BuildContext context) async {
-    final image =  await uploadedImageFile?.toBase64()
+    final image = await uploadedImageFile?.toBase64()
         ?? (uploadedImageBytes != null ? base64Encode(uploadedImageBytes!) : null);
-
 
     final document = await uploadedDocumentFile?.toBase64()
         ?? (uploadedDocumentBytes != null ? base64Encode(uploadedDocumentBytes!) : null);
-
 
     final vehicleReg = await uploadedVehicleRegistrationFile?.toBase64()
         ?? (uploadedVehicleImageBytes != null ? base64Encode(uploadedVehicleImageBytes!) : null);
@@ -1104,12 +1146,32 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     // 🔁 Determine document ID value based on selectedIdType
     final String documentId = _getDocumentIdByType();
 
+    // Save current upload state
     imageList.add({
       "imageUploaded": image,
       "documentUploaded": document,
       "vehicleRegistrationUploaded": vehicleReg,
       "selectedIdType": selectedIdType,
     });
+
+    // ⚠️ Debug prints
+    debugPrint("=== Visitor Detail Debug Start ===");
+    debugPrint("Visitor Name: ${visitorNameController.text}");
+    debugPrint("Company Name: ${companyNameController.text}");
+    debugPrint("Mobile Number: ${phoneNumberController.text}");
+    debugPrint("Email: ${emailController.text}");
+    debugPrint("Nationality: ${nationalityController.text}");
+    debugPrint("ID Type: $selectedIdType");
+    debugPrint("Document Type Value: $selectedIdValue");
+    debugPrint("Document ID: $documentId");
+    debugPrint("Nationality ID: $selectedNationality");
+    debugPrint("Expiry Date Controller: ${expiryDateController.text}");
+    debugPrint("Date of Birth Controller: ${dateOfBirthController.text}");
+    debugPrint("Last Appointment ID: $lastAppointmentId");
+    debugPrint("Uploaded Photo: ${image != null ? "Present" : "Null"}");
+    debugPrint("Uploaded Document: ${document != null ? "Present" : "Null"}");
+    debugPrint("Uploaded Vehicle Registration: ${vehicleReg != null ? "Present" : "Null"}");
+    debugPrint("=== Visitor Detail Debug End ===");
 
     return VisitorDetailModel(
       visitorName: visitorNameController.text,
@@ -1121,7 +1183,8 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       documentId: documentId,
       documentTypeValue: selectedIdValue ?? "",
       nationalityId: selectedNationality ?? "",
-      expiryDate: expiryDateController.text,
+      expiryDate: expiryDateController.text.apiDateFormat() ?? "",
+      dateOfBirth: dateOfBirthController.text.apiDateFormat() ?? "",
       lastAppointmentId: lastAppointmentId,
       uploadedPhoto: image,
       uploadedDocumentId: document,
@@ -1129,46 +1192,83 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     );
   }
 
-  Future<VisitorDetailModel> _buildPreviousDataVisitorModel(BuildContext context, AddAppointmentRequest? userData, Map imageData) async {
-    final image = userData?.havePhoto == 1 ? base64Encode(imageData["imageUploaded"]!) : null;
+  Future<VisitorDetailModel> _buildPreviousDataVisitorModel(
+      BuildContext context,
+      AddAppointmentRequest? userData,
+      Map imageData,
+      ) async {
+    final image = userData?.havePhoto == 1
+        ? base64Encode(imageData["imageUploaded"]!)
+        : null;
 
     final document = (userData?.haveIqama == 1 ||
         userData?.haveEid == 1 ||
         userData?.havePassport == 1 ||
+        userData?.haveVisa == 1 ||
         userData?.haveOthers == 1)
         ? (imageData['documentUploaded'] != null
         ? base64Encode(imageData['documentUploaded']!)
         : null)
         : null;
 
-    final vehicleReg = userData?.haveVehicleRegistration == 1 ? base64Encode(imageData['vehicleRegistrationUploaded']!) : null;
+    final vehicleReg = userData?.haveVehicleRegistration == 1
+        ? base64Encode(imageData['vehicleRegistrationUploaded']!)
+        : null;
 
+    final idTypeEnum = IdTypeExtension.fromId(userData?.idType);
+    debugPrint("Resolved Enum Type: $idTypeEnum from ID: ${userData?.idType}");
 
-    // 🔁 Determine document ID value based on selectedIdType
-
-    final expiryDate = switch (IdTypeExtension.fromInt(userData?.idType)) {
+    // 🔁 Determine document expiry date
+    final expiryDate = switch (IdTypeExtension.fromId(userData?.idType)) {
       IdType.nationalId => userData?.dtEidExpiryDate,
       IdType.passport => userData?.dtPassportExpiryDate,
       IdType.iqama => userData?.dtIqamaExpiry,
+      IdType.visa => userData?.dtVisaExpiry,
       IdType.other => userData?.dtOthersExpiry,
       _ => null,
     };
 
     final nationality = nationalityMenu
-        .firstWhere((item) => item.iso3 == userData?.nationality, orElse: () => CountryData())
-        .name ?? "";
+        .firstWhere(
+          (item) => item.iso3 == userData?.nationality,
+      orElse: () => CountryData(),
+    )
+        .name ??
+        "";
 
     final selectedId = (() {
-      final item = idTypeMenu.firstWhere(
-            (item) => item.value == userData?.idType,
-        orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+      final item = idTypeMenu?.firstWhere(
+            (item) => item.nDetailedCode == userData?.idType,
+        orElse: () =>
+            DocumentIdModel(sDescE: "", sDescA: "", nDetailedCode: 0),
       );
-      return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+      return context.lang == LanguageCode.ar.name
+          ? item?.sDescA ?? ""
+          : item?.sDescE ?? "";
     })();
 
-    selectedIdValue = userData?.idType.toString();
 
-    final String documentId = _getDocumentIdPreviousByType(userData,selectedId);
+    final String documentId = _getDocumentIdPreviousByType(userData, userData?.idType);
+
+    // ⚠️ Debug logs
+    debugPrint("=== Previous Visitor Data Debug Start ===");
+    debugPrint("Visitor Name: ${userData?.fullName}");
+    debugPrint("Company Name: ${userData?.sponsor}");
+    debugPrint("Mobile Number: ${userData?.mobileNo}");
+    debugPrint("Email: ${userData?.email}");
+    debugPrint("Nationality: $nationality (${userData?.nationality})");
+    debugPrint("ID Type (Code): ${userData?.idType}");
+    debugPrint("ID Type (Selected): $selectedId");
+    debugPrint("Document ID: $documentId");
+    debugPrint("Document Type Value: $selectedIdValue");
+    debugPrint("Expiry Raw Value: $expiryDate");
+    debugPrint("Expiry Formatted: ${expiryDate?.toDisplayDate()}");
+    debugPrint("Date of Birth Raw: ${userData?.dtDateOfBirth}");
+    debugPrint("Date of Birth Formatted: ${userData?.dtDateOfBirth?.toDisplayDate()}");
+    debugPrint("Uploaded Photo: ${image != null ? "Present" : "Null"}");
+    debugPrint("Uploaded Document: ${document != null ? "Present" : "Null"}");
+    debugPrint("Uploaded Vehicle Registration: ${vehicleReg != null ? "Present" : "Null"}");
+    debugPrint("=== Previous Visitor Data Debug End ===");
 
     return VisitorDetailModel(
       visitorName: userData?.fullName ?? "",
@@ -1180,38 +1280,44 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       documentId: documentId,
       documentTypeValue: selectedIdValue ?? "",
       nationalityId: userData?.nationality ?? "",
-      expiryDate: expiryDate!.toDisplayDate(),
+      expiryDate: expiryDate ?? "",
       uploadedPhoto: image,
       uploadedDocumentId: document,
       uploadedVehicleRegistration: vehicleReg,
+      dateOfBirth: userData?.dtDateOfBirth?.toDisplayDate() ?? "",
     );
   }
 
   String _getDocumentIdByType() {
-    switch (selectedIdType) {
-      case "National ID":
+    final id = int.tryParse(selectedIdValue ?? "0");
+    switch (id) {
+      case 24: // NATIONAL_ID
         return nationalityIdController.text;
-      case "Passport":
+      case 26: // PASSPORT
         return passportNumberController.text;
-      case "Iqama":
+      case 2244: // IQAMA
         return iqamaController.text;
-      case "Other":
+      case 2245: // OTHER
         return documentNumberController.text;
+      case 2294: // VISA
+        return visaController.text;
       default:
         return ""; // fallback if none selected
     }
   }
 
-  String _getDocumentIdPreviousByType(AddAppointmentRequest? userData, String id) {
-    switch (id) {
-      case "National ID":
+  String _getDocumentIdPreviousByType(AddAppointmentRequest? userData, int? idValue) {
+    switch (idValue) {
+      case 24: // NATIONAL_ID
         return userData?.eidNumber ?? "";
-      case "Passport":
+      case 26: // PASSPORT
         return userData?.passportNumber ?? "";
-      case "Iqama":
+      case 2244: // IQAMA
         return userData?.sIqama ?? "";
-      case "Other":
+      case 2245: // OTHER
         return userData?.sOthersDoc ?? "";
+      case 2294: // VISA
+        return userData?.sVisaNo ?? ""; // if you store Visa number/file
       default:
         return ""; // fallback if none selected
     }
@@ -1383,17 +1489,38 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
     for (int i = 0; i < addedVisitors.length; i++) {
       final visitor = addedVisitors[i];
-      final expiryDate = visitor.expiryDate.toDateTime().toString();
+
       final idTypeInt = int.tryParse(visitor.documentTypeValue) ?? 0;
       final encryptedDocId = encryptAES(visitor.documentId);
 
-      // Prepare expiry dates and document IDs based on ID type
-      final appointmentData = _buildAppointmentData(visitor, idTypeInt, expiryDate, encryptedDocId, imageList[i]);
+      // 🔎 Debug logs
+      debugPrint("=== Building Appointment Data for Visitor $i ===");
+      debugPrint("Visitor Name: ${visitor.visitorName}");
+      debugPrint("Company: ${visitor.companyName}");
+      debugPrint("Mobile: ${visitor.mobileNumber}");
+      debugPrint("Email: ${visitor.email}");
+      debugPrint("NationalityId: ${visitor.nationalityId}");
+      debugPrint("ID Type Int: $idTypeInt (from ${visitor.documentTypeValue})");
+      debugPrint("Raw DocumentId: ${visitor.documentId}");
+      debugPrint("Encrypted DocumentId: $encryptedDocId");
+      debugPrint("Raw ExpiryDate: ${visitor.expiryDate}");
+      debugPrint("Raw Date Of Birth: ${visitor.dateOfBirth}");
+      debugPrint("Parsed ExpiryDate.toDateTime(): ${visitor.expiryDate.toDisplayDateOnly()}");
+      debugPrint("Image List: ${imageList[i]}");
+      debugPrint("=== End Debug for Visitor $i ===");
+
+      // Prepare appointment data
+      final appointmentData = _buildAppointmentData(
+        visitor,
+        idTypeInt,
+        visitor.expiryDate.toDisplayDateOnly(),
+        encryptedDocId,
+        imageList[i],
+      );
 
       appointmentDataList.add(appointmentData);
     }
 
-    // Save the appointment data and image list
     await _saveData(appointmentDataList);
   }
 
@@ -1404,10 +1531,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     String encryptedDocId,
       Map imageList,
   ) {
-    String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry;
-    String? eidNumber, sIqama, passportNumber, sOthersDoc, sOthersValue;
+    String? eidExpiry, iqamaExpiry, passportExpiry, othersExpiry, visaExpiry;
+    String? eidNumber, sIqama, passportNumber, sOthersDoc, sOthersValue, visaNumber;
 
-    // Set the appropriate expiry and encrypted document ID based on ID type
+// Set the appropriate expiry and encrypted document ID based on ID type
+
     switch (idTypeInt) {
       case 24: // National ID
         eidExpiry = expiryDate;
@@ -1426,7 +1554,12 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
         sOthersDoc = encryptedDocId;
         sOthersValue = encryptedDocId;
         break;
+      case 2294: // Visa
+        visaExpiry = expiryDate;
+        visaNumber = encryptedDocId;
+        break;
     }
+
 
     return AddAppointmentRequest(
       fullName: visitor.visitorName,
@@ -1437,13 +1570,17 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
       idType: idTypeInt,
       sIqama: sIqama,
       passportNumber: passportNumber,
+      sVisaNo: visaNumber,
       sOthersDoc: sOthersDoc,
       eidNumber: eidNumber,
       sOthersValue: sOthersValue,
       dtEidExpiryDate: eidExpiry,
       dtIqamaExpiry: iqamaExpiry,
       dtPassportExpiryDate: passportExpiry,
+      dtVisaExpiry: visaExpiry,
       dtOthersExpiry: othersExpiry,
+      dtDateOfBirth: visitor.dateOfBirth,
+      nBuildingId: int.tryParse(selectedBuilding ?? "") ?? 0,
       dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
       dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
       devices: addedDevices,
@@ -1467,6 +1604,11 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
           ? 1 : 0,
 
       havePassport: (idTypeInt == 26 &&
+          imageList['documentUploaded'] != null &&
+          imageList['documentUploaded']!.isNotEmpty)
+          ? 1 : 0,
+
+      haveVisa: (idTypeInt == 2294 &&
           imageList['documentUploaded'] != null &&
           imageList['documentUploaded']!.isNotEmpty)
           ? 1 : 0,
@@ -1497,6 +1639,12 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
 
   Future<void> _saveData(List<AddAppointmentRequest> appointmentDataList) async {
     // Save appointment data as JSON string
+
+    log("=== Appointment Data Built ===");
+    for (var req in appointmentDataList) {
+      log(jsonEncode(req.toJson()));
+    }
+
     final jsonString = jsonEncode(appointmentDataList.map((e) => e.toJson()).toList());
     await SecureStorageHelper.setAppointmentData(jsonString);
 
@@ -1616,6 +1764,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
+  TextEditingController get dateOfBirthController => _dateOfBirthController;
+
+  set dateOfBirthController(TextEditingController value) {
+    if (_dateOfBirthController == value) return;
+    _dateOfBirthController = value;
+    notifyListeners();
+  }
+
   TextEditingController get visitStartDateController => _visitStartDateController;
 
   set visitStartDateController(TextEditingController value) {
@@ -1655,6 +1811,15 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     _locationDropdownData = value;
     notifyListeners();
   }
+
+  List<BuildingDropdownResult> get buildingDropdownData => _buildingDropdownData;
+
+  set buildingDropdownData(List<BuildingDropdownResult> value) {
+    if (_buildingDropdownData == value) return;
+    _buildingDropdownData = value;
+    notifyListeners();
+  }
+
 
   List<VisitRequestDropdownResult> get visitRequestTypesDropdownData => _visitRequestTypesDropdownData;
 
@@ -1728,7 +1893,7 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     notifyListeners();
   }
 
-  IdType get selectedIdTypeEnum => IdTypeExtension.fromString(selectedIdType) ?? IdType.nationalId;
+  IdType get selectedIdTypeEnum => IdTypeExtension.fromId(int.parse(selectedIdType ?? "0")) ?? IdType.nationalId;
 
   int? get selectedPlateType => _selectedPlateType;
 
@@ -1793,6 +1958,15 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
     _selectedVisitRequest = value;
     notifyListeners();
   }
+
+  String? get selectedBuilding => _selectedBuilding;
+
+  set selectedBuilding(String? value) {
+    if (_selectedBuilding == value) return;
+    _selectedBuilding = value;
+    notifyListeners();
+  }
+
 
   String? get selectedVisitPurpose => _selectedVisitPurpose;
 
@@ -1896,6 +2070,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   set deviceModelController(TextEditingController value) {
     if (_deviceModelController == value) return;
     _deviceModelController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get buildingController => _buildingController;
+
+  set buildingController(TextEditingController value) {
+    if (_buildingController == value) return;
+    _buildingController = value;
     notifyListeners();
   }
 
@@ -2162,6 +2344,14 @@ class ApplyPassGroupNotifier extends BaseChangeNotifier with CommonFunctions {
   set iqamaController(TextEditingController value) {
     if (_iqamaController == value) return;
     _iqamaController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visaController => _visaController;
+
+  set visaController(TextEditingController value) {
+    if (_visaController == value) return;
+    _visaController = value;
     notifyListeners();
   }
 

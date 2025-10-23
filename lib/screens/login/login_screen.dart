@@ -135,7 +135,7 @@ class LoginScreen extends StatelessWidget {
               children: [
                 TextSpan(
                   text: context.watchLang.translate(AppLanguageText.mofaShort),
-                  style: AppFonts.textMedium26with600Red,
+                  style: AppFonts.textMedium26with600Red.copyWith(color: AppColors.mofaColor),
                 ),
               ],
             ),

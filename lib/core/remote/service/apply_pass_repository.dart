@@ -31,6 +31,7 @@ import 'package:mofa/core/model/visiting_hours_config/visiting_hours_config_resp
 import 'package:mofa/core/remote/network/app_url.dart';
 import 'package:mofa/core/remote/network/base_repository.dart';
 import 'package:mofa/core/remote/network/method.dart';
+import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/toast_helper.dart';
@@ -92,6 +93,29 @@ class ApplyPassRepository extends BaseRepository {
       buildingDropdownResponseFromJson(jsonEncode(response?.data));
 
       return buildingDropdownResponse.result;
+    } else {
+      ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
+      return errorString.title;
+    }
+  }
+
+  //api: Location Dropdown
+  Future<Object?> apiDocumentIdDropDown(Map requestParams, BuildContext context) async {
+
+    final token = await SecureStorageHelper.getToken();
+
+    Response? response = await networkProvider.call(
+      method: Method.POST,
+      pathUrl: AppUrl.pathDocumentIdDropdown,
+      body: jsonEncode(requestParams),
+      headers: buildDefaultHeaderWithToken(token ?? ""),
+    );
+
+    if (response?.statusCode == HttpStatus.ok) {
+      DocumentIdDropdownResponse documentIdDropdownResponse =
+      documentIdDropdownResponseFromJson(jsonEncode(response?.data));
+
+      return documentIdDropdownResponse.result;
     } else {
       ErrorResponse errorString = ErrorResponse.fromJson(response?.data ?? "");
       return errorString.title;

@@ -39,14 +39,17 @@ class SearchPassNotifier extends BaseChangeNotifier {
   Timer? _debounceTimer;
 
   List<TableColumnConfig> columnConfigs = [
+    TableColumnConfig(labelKey: AppLanguageText.applyFor, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.refNo, isMandatory: true),
     TableColumnConfig(labelKey: AppLanguageText.name, isMandatory: true),
     TableColumnConfig(labelKey: AppLanguageText.status, isMandatory: true),
     TableColumnConfig(labelKey: AppLanguageText.companyName, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.startAndEndDate, isMandatory: true),
     TableColumnConfig(labelKey: AppLanguageText.email, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.nationality, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.hostName, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.location, isVisible: false),
+    TableColumnConfig(labelKey: AppLanguageText.building, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.vehiclePermit, isVisible: false),
     TableColumnConfig(labelKey: AppLanguageText.action, isMandatory: true),
   ];

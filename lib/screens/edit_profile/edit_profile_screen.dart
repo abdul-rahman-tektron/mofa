@@ -16,6 +16,7 @@ import 'package:mofa/utils/common/widgets/common_buttons.dart';
 import 'package:mofa/utils/common/widgets/common_drawer.dart';
 import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
+import 'package:mofa/utils/extensions.dart';
 import 'package:provider/provider.dart';
 
 class EditProfileScreen extends StatelessWidget with CommonUtils {
@@ -65,6 +66,8 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
                 mobileNumberTextField(context, editProfileNotifier),
                 15.verticalSpace,
                 emailAddressTextField(context, editProfileNotifier),
+                15.verticalSpace,
+                dateOfBirthTextField(context, editProfileNotifier),
                 15.verticalSpace,
                 idTypeField(context, editProfileNotifier),
                 15.verticalSpace,
@@ -148,6 +151,22 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
     );
   }
 
+  Widget dateOfBirthTextField(BuildContext context, EditProfileNotifier editProfileNotifier) {
+
+    return CustomTextField(
+      controller: editProfileNotifier.dateOfBirthController,
+      fieldName: context.watchLang.translate(AppLanguageText.dateOfBirth),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.datetime,
+      startDate: DateTime(1900),
+      endDate: DateTime.now(),
+      initialDate:
+      editProfileNotifier.dateOfBirthController.text.isNotEmpty
+          ? editProfileNotifier.dateOfBirthController.text.toDateTime()
+          : DateTime.now(),
+      validator: (value) => CommonValidation().dateOfBirthValidator(context, value),
+    );
+  }
   // idTypeField
   Widget idTypeField(BuildContext
   context,EditProfileNotifier editProfileNotifier) {
@@ -155,20 +174,20 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
       fieldName: context.watchLang.translate(AppLanguageText.idType),
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: editProfileNotifier.idTypeController,
-      items: editProfileNotifier.idTypeMenu,
+      items: editProfileNotifier.idTypeMenu ?? [],
       currentLang: context.lang,
       itemLabel: (item, lang) => CommonUtils.getLocalizedString(
           currentLang: lang,
-          getArabic: () => item.labelAr,
-          getEnglish: () => item.labelEn,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
         ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
-        editProfileNotifier.selectedIdValue = menu?.value.toString() ?? "";
+        editProfileNotifier.selectedIdValue = menu?.nDetailedCode.toString() ?? "";
         editProfileNotifier.selectedIdType = getLocalizedText(
           currentLang: context.lang,
-          english: menu?.labelEn ?? "",
-          arabic: menu?.labelAr ?? "",
+          english: menu?.sDescE ?? "",
+          arabic: menu?.sDescA ?? "",
         );
       },
       validator: (value) => CommonValidation().iDTypeValidator(context, value),
@@ -226,6 +245,15 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
     );
   }
 
+  Widget visaField(BuildContext context, EditProfileNotifier editProfileNotifier) {
+    return CustomTextField(
+      controller: editProfileNotifier.visaController,
+      fieldName: context.watchLang.translate(AppLanguageText.visa),
+      isSmallFieldFont: true,
+      validator: (value) => CommonValidation().validateVisa(context, value),
+    );
+  }
+
   List<Widget> _buildIdTypeFields(BuildContext context, EditProfileNotifier notifier) {
     switch (notifier.selectedIdValue) {
       case "24": // National ID
@@ -234,6 +262,8 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
         return [passportField(context, notifier)];
       case "2244": // Iqama
         return [iqamaField(context, notifier)];
+        case "2294": // Iqama
+        return [visaField(context, notifier)];
       case "2245": // Other
         return [
           documentNameField(context, notifier),
@@ -241,7 +271,7 @@ class EditProfileScreen extends StatelessWidget with CommonUtils {
           documentNumberField(context, notifier),
         ];
       default:
-        return [];
+        return [passportField(context, notifier)];
     }
   }
 

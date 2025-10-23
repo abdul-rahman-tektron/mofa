@@ -46,6 +46,7 @@ class AppLanguageText {
   static const email = 'email';
   static const idType = 'idType';
   static const nationalID = 'nationalID';
+  static const dateOfBirth = 'dateOfBirth';
   static const nationalIDExpiryDate = 'nationalIDExpiryDate';
   static const plateType = 'plateType';
   static const plateCode = 'plateCode';
@@ -128,10 +129,12 @@ class AppLanguageText {
   static const devicePurpose = 'devicePurpose';
   static const devicePurposeOther = 'devicePurposeOther';
   static const iqama = 'iqama';
+  static const visa = 'visa';
   static const documentNameOther = 'documentNameOther';
   static const documentNumberOther = 'documentNumberOther';
   static const vehicleNo = 'vehicleNo';
   static const iqamaExpiryDate = 'iqamaExpiryDate';
+  static const visaExpiryDate = 'visaExpiryDate';
   static const documentExpiryDateOther = 'documentExpiryDateOther';
   static const one = '1';
   static const two = '2';
@@ -192,6 +195,7 @@ class AppLanguageText {
   static const search = 'search';
   static const visitorsGroup = 'visitorsGroup';
   static const uploadIqama = 'uploadIqama';
+  static const uploadVisa = 'uploadVisa';
   static const uploadDocumentOther = 'uploadDocumentOther';
   static const searchVisitor = 'searchVisitor';
   static const searchByNationalID = 'searchByNationalID';
@@ -239,6 +243,7 @@ class AppLanguageText {
   static const approvalStatus = 'approvalStatus';
   static const kindlyAddADevice = 'kindlyAddADevice';
   static const refNo = 'refNo';
+  static const applyFor = 'applyFor';
   static const verifyNotARobot = 'verifyNotARobot';
   static const incorrectCaptcha = 'incorrectCaptcha';
   static const isVehicleAllowed = 'isVehicleAllowed';
@@ -354,6 +359,8 @@ class AppLanguageText {
   static const visitorNameRequired = 'validation.visitor_name.required';
   static const visitorNameNumber = 'validation.visitor_name.number';
   static const vehicleNumberRequired = 'validation.vehicle_number.required';
+  static const dateOfBirthRequired = 'validation.date_of_birth.required';
+  static const buildingRequired  = 'validation.building.required';
   static const nationalityRequired = 'validation.nationality.required';
   static const idTypeRequired = 'validation.id_type.required';
   static const documentNumberRequired = 'validation.document_number.required';
@@ -368,10 +375,13 @@ class AppLanguageText {
   static const nationalIdExpiryRequired = 'validation.national_id_expiry.required';
   static const iqamaExpiryRequired = 'validation.iqama_expiry.required';
   static const passportExpiryRequired = 'validation.passport_expiry.required';
+  static const visaExpiryRequired = 'validation.visa_expiry.required';
   static const documentExpiryRequired = 'validation.document_expiry.required';
 
   static const passportRequired = 'validation.passport.required';
+  static const visaRequired = 'validation.visa.required';
   static const passportInvalid = 'validation.passport.invalid';
+  static const visaInvalid = 'validation.visa.invalid';
 
   static const locationRequired = 'validation.location.required';
   static const visitBuildingRequired = 'validation.building.required';
@@ -427,6 +437,7 @@ class AppLanguageText {
   static const String checkYourInbox = 'checkYourInbox';
   static const String checkInboxActivation = 'checkInboxActivation';
   static const String emailAlreadyExists = 'emailAlreadyExists';
+  static const String hostEmail = 'hostEmail';
 
 // Add the rest of the keys here...
 }

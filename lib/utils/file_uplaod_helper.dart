@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:mofa/utils/toast_helper.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
@@ -12,6 +13,7 @@ enum UploadFileType { image, document }
 
 class FileUploadHelper {
   static final ImagePicker _imagePicker = ImagePicker();
+  static const int MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
 
   /// Pick an image using camera or gallery (with optional cropping).
   static Future<File?> pickImage({
@@ -25,6 +27,13 @@ class FileUploadHelper {
     );
 
     if (pickedFile == null) return null;
+
+    final int fileSize = await pickedFile.length();
+
+    if (fileSize > MAX_FILE_SIZE_BYTES) {
+      ToastHelper.showError('Image file size exceeds 5MB limit.');
+      return null;
+    }
 
     File imageFile = File(pickedFile.path);
 
@@ -51,6 +60,14 @@ class FileUploadHelper {
       allowedExtensions: allowedExtensions,
     );
     if (result != null && result.files.single.path != null) {
+      PlatformFile files = result.files.first;
+      int fileSizeInBytes = files.size; // Get file size in bytes
+
+      if (fileSizeInBytes > MAX_FILE_SIZE_BYTES) {
+        ToastHelper.showError('Document file size exceeds 5MB limit.');
+        return null;
+      }
+
       final file = File(result.files.single.path!);
       return await _saveToPermanentDirectory(file);
     }

@@ -24,6 +24,7 @@ class VisitorDetailModel {
   final String documentId;
   final String documentTypeValue;
   final String expiryDate;
+  final String dateOfBirth;
   final int? lastAppointmentId;
   final String? uploadedPhoto;
   final String? uploadedDocumentId;
@@ -41,6 +42,7 @@ class VisitorDetailModel {
     required this.documentId,
     this.lastAppointmentId = 0,
     required this.expiryDate,
+    required this.dateOfBirth,
     required this.uploadedPhoto,
     required this.uploadedDocumentId,
     required this.uploadedVehicleRegistration,

@@ -55,7 +55,7 @@ registerSuccessPopup(BuildContext context, String heading, String subHeading) {
                 children: [
                   Icon(Icons.check_box, color: Colors.green, size: 30),
                   SizedBox(width: 10),
-                  Text(heading, style: AppFonts.textBold24),
+                  Expanded(child: Text(heading, style: AppFonts.textBold24)),
                 ],
               ),
               const SizedBox(height: 15),

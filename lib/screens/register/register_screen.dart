@@ -21,6 +21,7 @@ import 'package:mofa/utils/common/widgets/common_dropdown_search.dart';
 import 'package:mofa/utils/common/widgets/common_textfield.dart';
 import 'package:mofa/utils/common/widgets/language_button.dart';
 import 'package:mofa/utils/enum_values.dart';
+import 'package:mofa/utils/extensions.dart';
 import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -93,6 +94,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       15.verticalSpace,
                       emailAddressField(registerNotifier),
                       15.verticalSpace,
+                      dateOfBirthTextField(registerNotifier),
+                      15.verticalSpace,
                       idTypeField(registerNotifier),
                       15.verticalSpace,
                       if (registerNotifier.selectedIdType == "National ID")
@@ -101,6 +104,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         passportField(registerNotifier),
                       if (registerNotifier.selectedIdType == "Iqama")
                         iqamaField(registerNotifier),
+                      if (registerNotifier.selectedIdType == "Visa")
+                        visaField(context, registerNotifier),
                       if (registerNotifier.selectedIdType == "Other")
                         documentNameField(registerNotifier),
                       if (registerNotifier.selectedIdType == "Other")
@@ -183,6 +188,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  Widget dateOfBirthTextField(RegisterNotifier registerNotifier) {
+
+    return CustomTextField(
+      controller: registerNotifier.dateOfBirthController,
+      fieldName: context.watchLang.translate(AppLanguageText.dateOfBirth),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.datetime,
+      startDate: DateTime(1900),
+      endDate: DateTime.now(),
+      initialDate:
+      registerNotifier.dateOfBirthController.text.isNotEmpty
+          ? registerNotifier.dateOfBirthController.text.toDateTime()
+          : DateTime.now(),
+      validator: (value) => CommonValidation().dateOfBirthValidator(context, value),
+    );
+  }
+
   // nationalIdField
   Widget nationalIdField(RegisterNotifier registerNotifier) {
     return CustomTextField(
@@ -203,6 +225,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
       isSmallFieldFont: true,
       keyboardType: TextInputType.phone,
       validator: (value) => CommonValidation().validateIqama(context, value),
+    );
+  }
+
+  Widget visaField(BuildContext context, RegisterNotifier registerNotifier) {
+    return CustomTextField(
+      controller: registerNotifier.visaController,
+      fieldName: context.watchLang.translate(AppLanguageText.visa),
+      isSmallFieldFont: true,
+      validator: (value) => CommonValidation().validateVisa(context, value),
     );
   }
 
@@ -266,17 +297,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       fieldName: context.watchLang.translate(AppLanguageText.idType),
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: registerNotifier.idTypeController,
-      items: registerNotifier.idTypeMenu,
+      items: registerNotifier.idTypeMenu ?? [],
       currentLang: context.lang,
       isSmallFieldFont: true,
       itemLabel: (item, lang) => CommonUtils.getLocalizedString(
           currentLang: lang,
-          getArabic: () => item.labelAr,
-          getEnglish: () => item.labelEn,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
         ),
       onSelected: (DocumentIdModel? menu) {
-        registerNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        registerNotifier.selectedIdType = menu?.labelEn ?? "";
+        registerNotifier.selectedIdValue = menu?.nDetailedCode.toString() ?? "";
+        registerNotifier.selectedIdType = menu?.sDescE ?? "";
       },
       validator: (value) => CommonValidation().nationalityValidator(context, value),
     );

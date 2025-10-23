@@ -54,15 +54,24 @@ extension BackendDateFormat on String {
 
   String formatDateTime() {
     try {
-      // Step 1: Parse using the correct format
-      final inputFormat = DateFormat('M/d/yyyy h:mm:ss a');
+      // Step 1: Parse using en-US input format
+      final inputFormat = DateFormat('M/d/yyyy h:mm:ss a', 'en');
       final dateTime = inputFormat.parse(this);
 
-      // Step 2: Format to desired output
-      final outputFormat = DateFormat('dd MMM yyyy, hh:mm a');
-      return outputFormat.format(dateTime);
+      debugPrint("🟢 Raw Input: $this");
+      debugPrint("🟢 Parsed DateTime: $dateTime");
+
+      // Step 2: Output with current locale (Arabic/English)
+      final currentLocale = Intl.getCurrentLocale();
+      final outputFormat = DateFormat('dd MMM yyyy, hh:mm a', currentLocale);
+      final formatted = outputFormat.format(dateTime);
+
+      debugPrint("🌍 Current Locale: $currentLocale");
+      debugPrint("📌 Formatted: $formatted");
+
+      return formatted;
     } catch (e) {
-      print('Date parsing error: $e');
+      debugPrint('❌ Date parsing error: $e');
       return "";
     }
   }
@@ -93,13 +102,25 @@ extension FormatApiDateTime on String {
   }
 
   String toDisplayDateOnly() {
+    if (this == null || this!.trim().isEmpty) return '';
+    final dateString = this!.trim();
     try {
-      final inputFormat = DateFormat('M/d/yyyy h:mm:ss a');
-      final dateTime = inputFormat.parse(this);
+      DateTime dateTime;
+
+      // Try ISO 8601 first
+      try {
+        dateTime = DateTime.parse(dateString);
+      } catch (_) {
+        // Fallback to old format
+        final inputFormat = DateFormat('M/d/yyyy h:mm:ss a');
+        dateTime = inputFormat.parse(dateString);
+      }
+
       final outputFormat = DateFormat('dd/MM/yyyy');
       return outputFormat.format(dateTime);
     } catch (e) {
-      return ''; // Return empty if parsing fails
+      debugPrint('Failed to parse date: $dateString, error: $e');
+      return '';
     }
   }
 
@@ -160,70 +181,77 @@ extension Base64ToFileExtension on String {
 }
 
 extension IdTypeExtension on IdType {
-  static IdType? fromString(String? value) {
-    if (value == null) return IdType.nationalId;
-
-    switch (value.toLowerCase()) {
-      case "iqama":
-      case "الإقامة":
-        return IdType.iqama;
-      case "national id":
-      case "الهوية_الوطنية":
-        return IdType.nationalId;
-      case "passport":
-      case "جواز_السفر":
-        return IdType.passport;
-      case "other":
-      case "أخرى":
-        return IdType.other;
-      default:
-        return IdType.nationalId;
-    }
-  }
-
-  static IdType? fromInt(int? value) {
-    switch (value ?? 0) {
-      case 2244:
-        return IdType.iqama;
+  // static IdType? fromString(String? value) {
+  //   if (value == null) return IdType.nationalId;
+  //
+  //   switch (value.toLowerCase()) {
+  //     case "iqama":
+  //     case "الإقامة":
+  //       return IdType.iqama;
+  //     case "national id":
+  //     case "الهوية_الوطنية":
+  //       return IdType.nationalId;
+  //     case "passport":
+  //     case "جواز_السفر":
+  //       return IdType.passport;
+  //       case "passport":
+  //     case "جواز_السفر":
+  //       return IdType.passport;
+  //     case "other":
+  //     case "أخرى":
+  //       return IdType.other;
+  //     default:
+  //       return IdType.nationalId;
+  //   }
+  // }
+  //
+  static IdType fromId(int? id) {
+    switch (id) {
       case 24:
         return IdType.nationalId;
       case 26:
         return IdType.passport;
-      case 2245:
-        return IdType.other;
+      case 2244:
+        return IdType.iqama;
+      case 2294:
+        return IdType.visa;
       default:
         return IdType.nationalId;
     }
   }
 
-  String translatedLabel(BuildContext context) {
+  static String translatedLabel(BuildContext context, int? id) {
     final lang = context.watchLang;
-    switch (this) {
-      case IdType.nationalId:
+
+    switch (id) {
+      case 24:   // National ID
         return lang.translate(AppLanguageText.nationalIDExpiryDate);
-      case IdType.iqama:
-        return lang.translate(AppLanguageText.iqamaExpiryDate);
-      case IdType.passport:
+      case 26:   // Passport
         return lang.translate(AppLanguageText.passportExpiryDate);
-      case IdType.other:
-        return lang.translate(AppLanguageText.documentExpiryDateOther);
-      default:
+      case 2244: // Iqama
+        return lang.translate(AppLanguageText.iqamaExpiryDate);
+      case 2294: // Visa
+        return lang.translate(AppLanguageText.visaExpiryDate);
+      default:   // Other
         return lang.translate(AppLanguageText.nationalIDExpiryDate);
     }
   }
 
-  String? Function(BuildContext, String?) get validator {
+  static String? Function(BuildContext, String?) validatorById(int? id) {
     final validation = CommonValidation();
-    switch (this) {
-      case IdType.nationalId:
+
+    switch (id) {
+      case 24:   // National ID
         return validation.validateNationalIdExpiryDate;
-      case IdType.iqama:
-        return validation.validateIqamaExpiryDate;
-      case IdType.passport:
+      case 26:   // Passport
         return validation.validatePassportExpiryDate;
-      case IdType.other:
-        return validation.validateDocumentExpiryDate;
-      }
+      case 2244: // Iqama
+        return validation.validateIqamaExpiryDate;
+      case 2294: // Visa
+        return validation.validatePassportExpiryDate; // assuming same as passport
+      default:   // Other
+        return validation.validateNationalIdExpiryDate;
+    }
   }
 }
 

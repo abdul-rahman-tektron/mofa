@@ -45,6 +45,7 @@
   "idType": "ID Type",
   "nationalID": "National ID",
   "nationalIDExpiryDate": "National ID Expiry Date",
+  "visaExpiryDate": "Visa Expiry Date",
   "plateType": "Plate Type",
   "plateCode": "Plate Code",
   "plateNumber": "Plate Number",
@@ -56,6 +57,7 @@
   "visitStartDate": "Visit Start Date",
   "visitEndDate": "Visit End Date",
   "uploadPhoto": "Upload Photo",
+  "uploadVisa": "Upload Visa",
   "uploadNationalID": "Upload National ID",
   "passportNumber": "Passport Number",
   "passportExpiryDate": "Passport Expiry Date",
@@ -227,6 +229,7 @@
   "noClose": "No, Close",
   "delete": "Delete",
   "iqama": "Iqama",
+  "visa": "Visa",
   "other": "Other",
   "laptop": "Laptop",
   "phone": "Phone",
@@ -362,6 +365,7 @@
   "validation.email.invalid": "Please enter a valid email",
 
   "validation.password.required": "Password is required",
+  "validation.visa.required": "Visa is required",
   "validation.confirm_password.required": "Confirm Password is required",
   "validation.confirm_password.mismatch": "Passwords must match",
 
@@ -392,10 +396,12 @@
   "validation.national_id_expiry.required": "National ID Expiry Date is required.",
   "validation.iqama_expiry.required": "Iqama Expiry Date is required.",
   "validation.passport_expiry.required": "Passport Expiry Date is required.",
+  "validation.visa_expiry.required": "Visa Expiry Date is required.",
   "validation.document_expiry.required": "Document Expiry Date is required.",
 
   "validation.passport.required": "Passport Number is required.",
   "validation.passport.invalid": "Enter valid Passport Number",
+  "validation.visa.invalid": "Enter valid Visa Number",
 
   "validation.location.required": "Location is required",
   "validation.building.required": "Building is required",
@@ -421,6 +427,7 @@
   "validation.plate_number.valid": "Enter a valid plate number.",
   "validation.photo_upload.required": "Photo is required",
   "validation.vehicle_upload.required": "Vehicle Registration Id is required",
+  "validation.date_of_birth.required": "Date of Birth is required",
   "validation.required": "is required",
   "mofaEmailRequired": "Email is required.",
   "invalidMofaEmail": "Invalid email address.",
@@ -449,5 +456,8 @@
   "failedToLoadPDF": "Failed to load PDF document.",
   "loading": "Loading",
   "refreshCaptcha" : "Refresh captcha",
-  "emailAlreadyExists" : "Email Already exists"
+  "emailAlreadyExists" : "Email Already exists",
+  "applyFor" : "Apply For",
+  "dateOfBirth": "Date Of Birth",
+  "hostEmail": "Host Email"
 }

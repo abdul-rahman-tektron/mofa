@@ -17,11 +17,13 @@ class UpdateProfileRequest {
   String? sUserName;
   int? nDocumentType;
   String? eidNumber;
+  String? sVisaNo;
   String? passportNumber;
   String? sIqama;
   String? sOthersDoc;
   String? sOthersValue;
   String? iso3;
+  String? dtDateOfBirth;
 
   UpdateProfileRequest({
     this.nExternalRegistrationId,
@@ -32,11 +34,13 @@ class UpdateProfileRequest {
     this.sUserName,
     this.nDocumentType,
     this.eidNumber,
+    this.sVisaNo,
     this.passportNumber,
     this.sIqama,
     this.sOthersDoc,
     this.sOthersValue,
     this.iso3,
+    this.dtDateOfBirth,
   });
 
   factory UpdateProfileRequest.fromJson(Map<String, dynamic> json) => UpdateProfileRequest(
@@ -48,11 +52,13 @@ class UpdateProfileRequest {
     sUserName: json["s_UserName"],
     nDocumentType: json["n_DocumentType"],
     eidNumber: json["eidNumber"],
+    sVisaNo: json["s_VisaNo"],
     passportNumber: json["passportNumber"],
     sIqama: json["S_Iqama"],
     sOthersDoc: json["S_OthersDoc"],
     sOthersValue: json["S_OthersValue"],
     iso3: json["iso3"],
+    dtDateOfBirth: json["dt_DateOfBirth"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -64,10 +70,12 @@ class UpdateProfileRequest {
     "s_UserName": sUserName,
     "n_DocumentType": nDocumentType,
     "eidNumber": eidNumber,
+    "s_VisaNo": sVisaNo,
     "passportNumber": passportNumber,
     "S_Iqama": sIqama,
     "S_OthersDoc": sOthersDoc,
     "S_OthersValue": sOthersValue,
     "iso3": iso3,
+    "dt_DateOfBirth": dtDateOfBirth,
   };
 }

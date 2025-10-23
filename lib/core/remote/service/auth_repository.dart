@@ -202,13 +202,17 @@ class AuthRepository extends BaseRepository with CommonFunctions {
       headers: headerContentTypeAndAccept,
     );
 
+
+    print("response Data");
+    print(response?.statusCode);
+    print(response?.data);
     if (response?.statusCode == HttpStatus.ok) {
       RegisterResponse registerResponse =
       registerResponseFromJson(jsonEncode(response?.data));
 
       registerSuccessPopup(context, context.readLang.translate(AppLanguageText.registeredSuccessfully),
           "${context.readLang.translate(AppLanguageText.accountActivationLinkSent)}\n${context.readLang.translate(AppLanguageText.checkInboxActivation)}");
-    } if (response?.statusCode == HttpStatus.badRequest) {
+    } else if (response?.statusCode == HttpStatus.badRequest) {
 
       RegisterResponse registerResponse =
       registerResponseFromJson(jsonEncode(response?.data));

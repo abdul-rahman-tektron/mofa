@@ -135,8 +135,18 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
 
         if (jsonData is List) {
           addAppointmentRequest = jsonData
-              .map<AddAppointmentRequest>((e) => AddAppointmentRequest.fromJson(e))
-              .toList();
+              .map<AddAppointmentRequest>((e) {
+            final req = AddAppointmentRequest.fromJson(e);
+
+            // Convert all expiry dates to ISO 8601
+            req.dtVisaExpiry = _convertToIso(req.dtVisaExpiry);
+            req.dtEidExpiryDate = _convertToIso(req.dtEidExpiryDate);
+            req.dtPassportExpiryDate = _convertToIso(req.dtPassportExpiryDate);
+            req.dtIqamaExpiry = _convertToIso(req.dtIqamaExpiry);
+            req.dtOthersExpiry = _convertToIso(req.dtOthersExpiry);
+
+            return req;
+          }).toList();
         } else if (jsonData is Map<String, dynamic>) {
           addAppointmentRequest = [AddAppointmentRequest.fromJson(jsonData)];
         } else {
@@ -144,6 +154,30 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
       }
     } catch (e) {
       print("Error retrieving appointment data: $e");
+    }
+  }
+
+  String? _convertToIso(String? date) {
+    if (date == null || date.isEmpty) return null;
+
+    try {
+      // Try parsing "dd/MM/yyyy" or "yyyy-MM-dd" formats
+      DateTime parsedDate;
+
+      if (date.contains("/")) {
+        final parts = date.split("/");
+        parsedDate = DateTime(
+          int.parse(parts[2]),
+          int.parse(parts[1]),
+          int.parse(parts[0]),
+        );
+      } else {
+        parsedDate = DateTime.parse(date);
+      }
+
+      return parsedDate.toIso8601String();
+    } catch (e) {
+      return null; // fallback
     }
   }
 
@@ -178,7 +212,7 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     final imageData = jsonMap["imageUploaded"];
     final docData = jsonMap["documentUploaded"];
     final vehicleData = jsonMap["vehicleRegistrationUploaded"];
-    final selectedIdType = jsonMap["selectedIdType"] as String?;
+    final selectedIdValue = jsonMap["selectedIdValue"] as String?;
 
     print("📷 imageUploaded: ${imageData != null ? 'available' : 'null'}");
     print("📄 documentUploaded: ${docData != null ? 'available' : 'null'}");
@@ -207,8 +241,8 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     }
 
     if (await _fileExists(docFile)) {
-      final fileKey = _getDocumentUploadKey(selectedIdType);
-      final contentType = _getDocumentContentTypeKey(selectedIdType);
+      final fileKey = _getDocumentUploadKey(int.tryParse(selectedIdValue ?? "0") ?? 0);
+      final contentType = _getDocumentContentTypeKey(int.tryParse(selectedIdValue ?? "0") ?? 0);
       print("📤 Uploading document file with key: $fileKey");
       uploadFutures.add(uploadAttachment(
         context,
@@ -306,27 +340,33 @@ class HealthAndSafetyNotifier extends BaseChangeNotifier {
     return file != null && await file.exists();
   }
 
-  String _getDocumentUploadKey(String? selectedIdType) {
-    switch (selectedIdType) {
-      case "Passport":
+  String _getDocumentUploadKey(int? idType) {
+    switch (idType) {
+      case 26: // PASSPORT
         return "S_PassportFile";
-      case "Iqama":
+      case 2244: // IQAMA
         return "S_IqamaUpload";
-      case "Other":
+      case 2294: // VISA
+        return "S_VisaFile";
+      case 2245: // OTHER
         return "S_OthersUpload";
+      case 24: // NATIONAL_ID / EID
       default:
         return "S_EIDFile";
     }
   }
 
-  String _getDocumentContentTypeKey(String? selectedIdType) {
-    switch (selectedIdType) {
-      case "Passport":
+  String _getDocumentContentTypeKey(int? idType) {
+    switch (idType) {
+      case 26: // PASSPORT
         return "S_PassportContentType";
-      case "Iqama":
+      case 2244: // IQAMA
         return "S_IqamaContentType";
-      case "Other":
+      case 2294: // VISA
+        return "S_VisaContentType";
+      case 2245: // OTHER
         return "S_OthersContentType";
+      case 24: // NATIONAL_ID / EID
       default:
         return "S_EIDContentType";
     }

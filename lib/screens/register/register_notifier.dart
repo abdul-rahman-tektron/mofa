@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:mofa/core/base/base_change_notifier.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/register/register_request.dart';
+import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/encrypt.dart';
+import 'package:mofa/utils/extensions.dart';
 
 class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
 
@@ -14,12 +16,14 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   TextEditingController _visitorCompanyNameController = TextEditingController();
   TextEditingController _mobileNumberController = TextEditingController();
   TextEditingController _emailAddressController = TextEditingController();
+  TextEditingController _dateOfBirthController = TextEditingController();
   TextEditingController _nationalIdController = TextEditingController();
   TextEditingController _nationalityController = TextEditingController();
   TextEditingController _idTypeController = TextEditingController();
   TextEditingController _documentNameController = TextEditingController();
   TextEditingController _documentNumberController = TextEditingController();
   TextEditingController _iqamaController = TextEditingController();
+  TextEditingController _visaController = TextEditingController();
   TextEditingController _passportNumberController = TextEditingController();
 
   // Key
@@ -34,19 +38,39 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   // List
   List<CountryData> _nationalityMenu = [];
 
-  final List<DocumentIdModel> idTypeMenu = [
-    DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
-    DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
-    DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
-    DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
-  ];
+  List<DocumentIdModel>? idTypeMenu;
 
   // Constructor
   // Initializes the RegisterNotifier and makes an API call for the country list
   RegisterNotifier(BuildContext context) {
-    idTypeController.text = idTypeMenu[1].labelEn;
-    selectedIdValue = idTypeMenu[1].value.toString();
-    countryApiCall(context, {});
+    initData(context);
+  }
+
+  initData(BuildContext context) async {
+    await countryApiCall(context, {});
+    await apiDocumentIdDropdown(context);
+    // Find National ID in idTypeMenu
+    final nationalId = idTypeMenu?.firstWhere(
+          (item) => item.sDescE?.toLowerCase() == "national id" || item.nDetailedCode == 24,
+      orElse: () => idTypeMenu!.first, // fallback to first item if not found
+    );
+
+    idTypeController.text = nationalId?.sDescE ?? "";
+    selectedIdValue = nationalId?.nDetailedCode.toString() ?? "";
+  }
+  // Building dropdown
+  Future<void> apiDocumentIdDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDocumentIdDropDown(
+          {}, context);
+      if (result is List<DocumentIdModel>) {
+        idTypeMenu = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
+    }
   }
 
   // Navigates to the login screen
@@ -55,7 +79,7 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   }
 
   // Makes an API call to fetch the country list
-  void countryApiCall(BuildContext context, Map countryRequest) async {
+  Future<void> countryApiCall(BuildContext context, Map countryRequest) async {
     await AuthRepository().apiCountryList(
         countryRequest, context).then((value) {
           var countryData = value as List<CountryData>;
@@ -93,8 +117,10 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
         eidNumber: encryptNationalId,
         passportNumber: encryptPassport,
         sIqama: encryptIqama,
+        sVisaNo: encryptIqama,
         sOthersDoc: documentNameController.text,
         sOthersValue: encryptOtherDocumentNumber,
+        dtDateOfBirth: dateOfBirthController.text.apiDateFormat(),
       );
 
       runWithLoadingVoid(() => registerApiCall(context, registerRequest));
@@ -144,6 +170,14 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
     notifyListeners();
   }
 
+  TextEditingController get dateOfBirthController => _dateOfBirthController;
+
+  set dateOfBirthController(TextEditingController value) {
+    if (_dateOfBirthController == value) return;
+    _dateOfBirthController = value;
+    notifyListeners();
+  }
+
   TextEditingController get nationalIdController => _nationalIdController;
 
   set nationalIdController(TextEditingController value) {
@@ -189,6 +223,14 @@ class RegisterNotifier extends BaseChangeNotifier with CommonFunctions{
   set iqamaController(TextEditingController value) {
     if (_iqamaController == value) return;
     _iqamaController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visaController => _visaController;
+
+  set visaController(TextEditingController value) {
+    if (_visaController == value) return;
+    _visaController = value;
     notifyListeners();
   }
 

@@ -25,6 +25,7 @@ class AppColors {
   static const Color progressColor = Color(0xFF15666D);
   static const Color progressEmptyColor = Color(0xFFEDEDED);
   static const Color dividerColor = Color(0xFFBDBDBD);
+  static const Color mofaColor = Color(0xFF413E6C);
 
 }
 

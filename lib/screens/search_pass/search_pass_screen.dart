@@ -406,7 +406,10 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
     Widget cellContent;
 
     switch (config.labelKey) {
-      case 'refNo':
+      case 'applyFor':
+        cellContent = Text(appointment.sApplyForEn ?? "");
+        break;
+        case 'refNo':
         cellContent = Text(appointment.sAppointmentCode ?? "");
         break;
       case 'name':
@@ -445,11 +448,29 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
       case 'email':
         cellContent = Text(appointment.sEmail ?? "");
         break;
+      case 'nationality':
+        cellContent = Text(CommonUtils.getLocalizedString(
+          currentLang: context.lang,
+          getArabic: () => appointment.sNationalityAr,
+          getEnglish: () => appointment.sNationalityEn,
+        ) ?? "");
+        break;
       case 'hostName':
         cellContent = Text(appointment.sHostName ?? "");
         break;
       case 'location':
-        cellContent = Text(appointment.sLocationNameEn ?? "");
+        cellContent = Text(CommonUtils.getLocalizedString(
+          currentLang: context.lang,
+          getArabic: () => appointment.sLocationNameAr,
+          getEnglish: () => appointment.sLocationNameEn,
+        ) ?? "");
+        break;
+      case 'building':
+        cellContent = Text(CommonUtils.getLocalizedString(
+          currentLang: context.lang,
+          getArabic: () => appointment.sBuildingNameAr,
+          getEnglish: () => appointment.sBuildingNameEn,
+        ) ?? "");
         break;
       case 'vehiclePermit':
         cellContent = buildVehicleChip(
@@ -541,7 +562,7 @@ class SearchPassScreen extends StatelessWidget with CommonUtils{
     switch (vehicleAllowed) {
       case -1:
         label = context.watchLang.translate(AppLanguageText.pending);
-        backgroundColor = Colors.yellow;
+        backgroundColor = Color(0xffefb100);
         break;
       case 0:
         label = context.watchLang.translate(AppLanguageText.notAllowed);

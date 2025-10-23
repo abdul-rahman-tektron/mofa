@@ -14,10 +14,12 @@ class RegisterRequest {
   String? sUserName;
   int? nDocumentType;
   String? sIqama;
+  String? sVisaNo;
   String? eidNumber;
   String? passportNumber;
   String? sOthersValue;
   String? sOthersDoc;
+  String? dtDateOfBirth;
   String? iso3;
 
   RegisterRequest({
@@ -28,10 +30,12 @@ class RegisterRequest {
     this.sUserName,
     this.nDocumentType,
     this.sIqama,
+    this.sVisaNo,
     this.eidNumber,
     this.passportNumber,
     this.sOthersValue,
     this.sOthersDoc,
+    this.dtDateOfBirth,
     this.iso3,
   });
 
@@ -43,10 +47,12 @@ class RegisterRequest {
     sUserName: json["S_UserName"],
     nDocumentType: json["N_DocumentType"],
     sIqama: json["S_Iqama"],
+    sVisaNo: json["S_VisaNo"],
     eidNumber: json["EIDNumber"],
     passportNumber: json["PassportNumber"],
     sOthersValue: json["S_OthersValue"],
     sOthersDoc: json["S_OthersDoc"],
+    dtDateOfBirth: json["Dt_DateOfBirth"],
     iso3: json["iso3"],
   );
 
@@ -67,9 +73,11 @@ class RegisterRequest {
     if (nDocumentType != null) data["N_DocumentType"] = nDocumentType;
     addIfNotEmpty("S_Iqama", sIqama);
     addIfNotEmpty("EIDNumber", eidNumber);
+    addIfNotEmpty("S_VisaNo", sVisaNo);
     addIfNotEmpty("PassportNumber", passportNumber);
     addIfNotEmpty("S_OthersValue", sOthersValue);
     addIfNotEmpty("S_OthersDoc", sOthersDoc);
+    addIfNotEmpty("Dt_DateOfBirth", dtDateOfBirth);
     addIfNotEmpty("iso3", iso3);
 
     return data;

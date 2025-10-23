@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
+import 'package:mofa/core/model/building_dropdown/building_dropdown_response.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/device_dropdown/device_dropdown_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
@@ -346,6 +347,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
     return [
       locationTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
+      buildingTextField(context, applyPassGroupNotifier),
+      15.verticalSpace,
       visitRequestTypeTextField(context, applyPassGroupNotifier),
       15.verticalSpace,
       visitPurposeTextField(context, applyPassGroupNotifier),
@@ -450,11 +453,38 @@ class ApplyPassGroupScreen extends StatelessWidget {
       isSmallFieldFont: true,
       onSelected: (LocationDropdownResult? menu) {
         applyPassGroupNotifier.selectedLocationId = menu?.nLocationId ?? 0;
-        // applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassGroupNotifier.apiBuildingDropdown(
+            context, locationId: applyPassGroupNotifier.selectedLocationId);
+        applyPassGroupNotifier.buildingController.clear();
       },
       validator: (value) => CommonValidation().validateLocation(context, value),
     );
   }
+
+  Widget buildingTextField(
+      BuildContext context,
+      ApplyPassGroupNotifier applyPassGroupNotifier,
+      ) {
+    return CustomSearchDropdown<BuildingDropdownResult>(
+      fieldName: context.watchLang.translate(AppLanguageText.building),
+      hintText: context.watchLang.translate(AppLanguageText.select),
+      controller: applyPassGroupNotifier.buildingController,
+      items: applyPassGroupNotifier.buildingDropdownData,
+      currentLang: context.lang,
+      itemLabel:
+          (item, lang) => CommonUtils.getLocalizedString(
+        currentLang: lang,
+        getArabic: () => item.sBuildingNameAr,
+        getEnglish: () => item.sBuildingNameEn,
+      ),
+      isSmallFieldFont: true,
+      onSelected: (BuildingDropdownResult? menu) {
+        applyPassGroupNotifier.selectedBuilding = menu?.nBuildingId.toString() ?? "";
+      },
+      validator: (value) => CommonValidation().validateBuilding(context, value),
+    );
+  }
+
 
   Widget visitRequestTypeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
     return CustomSearchDropdown<VisitRequestDropdownResult>(
@@ -1001,22 +1031,30 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget devicePurposeTextField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
-    return CustomSearchDropdown<DeviceDropdownResult>(
-      fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
-      hintText: context.watchLang.translate(AppLanguageText.select),
+    // return CustomSearchDropdown<DeviceDropdownResult>(
+    //   fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
+    //   hintText: context.watchLang.translate(AppLanguageText.select),
+    //   controller: applyPassGroupNotifier.devicePurposeController,
+    //   items: applyPassGroupNotifier.devicePurposeDropdownData,
+    //   currentLang: context.lang,
+    //   itemLabel: (item, lang) => CommonUtils.getLocalizedString(
+    //       currentLang: lang,
+    //       getArabic: () => item.sDescA,
+    //       getEnglish: () => item.sDescE,
+    //     ),
+    //   isSmallFieldFont: true,
+    //   skipValidation: true,
+    //   onSelected: (DeviceDropdownResult? menu) {
+    //     applyPassGroupNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
+    //   },
+    //   validator: (value) => CommonValidation().validateDevicePurpose(context, value),
+    // );
+
+    return CustomTextField(
       controller: applyPassGroupNotifier.devicePurposeController,
-      items: applyPassGroupNotifier.devicePurposeDropdownData,
-      currentLang: context.lang,
-      itemLabel: (item, lang) => CommonUtils.getLocalizedString(
-          currentLang: lang,
-          getArabic: () => item.sDescA,
-          getEnglish: () => item.sDescE,
-        ),
+      fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
       isSmallFieldFont: true,
       skipValidation: true,
-      onSelected: (DeviceDropdownResult? menu) {
-        applyPassGroupNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
-      },
       validator: (value) => CommonValidation().validateDevicePurpose(context, value),
     );
   }
@@ -1048,6 +1086,8 @@ class ApplyPassGroupScreen extends StatelessWidget {
         ..._buildIdTypeFields(context, notifier),
         expirationDateTextField(context, notifier),
         15.verticalSpace,
+        dateOfBirthTextField(context, notifier),
+        15.verticalSpace,
         buildUploadImageSection(context, notifier),
         15.verticalSpace,
         buildUploadDocumentSection(context, notifier),
@@ -1074,25 +1114,30 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   List<Widget> _buildIdTypeFields(BuildContext context, ApplyPassGroupNotifier notifier) {
-    final type = notifier.selectedIdType;
+    final id = int.tryParse(notifier.selectedIdValue ?? "0"); // selectedIdValue should be numeric
     List<Widget> idWidgets = [];
 
-    switch (type) {
-      case "National ID":
+    switch (id) {
+      case 24: // NATIONAL_ID
         idWidgets.add(nationalIdTextField(context, notifier));
         break;
-      case "Passport":
+      case 26: // PASSPORT
         idWidgets.add(passportField(context, notifier));
         break;
-      case "Iqama":
+      case 2244: // IQAMA
         idWidgets.add(iqamaField(context, notifier));
         break;
-      case "Other":
+      case 2245: // OTHER
         idWidgets.addAll([
           documentNameField(context, notifier),
           15.verticalSpace,
           documentNumberField(context, notifier),
         ]);
+        break;
+      case 2294: // VISA
+        idWidgets.add(visaField(context, notifier)); // Add a Visa field if needed
+        break;
+      default:
         break;
     }
 
@@ -1517,15 +1562,40 @@ class ApplyPassGroupScreen extends StatelessWidget {
   }
 
   Widget expirationDateTextField(BuildContext context, ApplyPassGroupNotifier notifier) {
-    final idType = notifier.selectedIdTypeEnum;
 
     return CustomTextField(
       controller: notifier.expiryDateController,
-      fieldName: idType.translatedLabel(context),
+      fieldName: IdTypeExtension.translatedLabel(context, int.tryParse(notifier.selectedIdValue ?? "0")),
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
       startDate: DateTime.now(),
-      validator: (value) => idType.validator(context, value),
+      validator: (value) {
+        // safely parse the selected ID from notifier
+        final id = int.tryParse(notifier.selectedIdValue ?? "");
+
+        // get the correct validator function based on ID
+        final validatorFn = IdTypeExtension.validatorById(id);
+
+        // call the validator function with context + value
+        return validatorFn(context, value);
+      },
+    );
+  }
+
+  Widget dateOfBirthTextField(BuildContext context, ApplyPassGroupNotifier notifier) {
+
+    return CustomTextField(
+      controller: notifier.dateOfBirthController,
+      fieldName: context.watchLang.translate(AppLanguageText.dateOfBirth),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.datetime,
+      startDate: DateTime(1900),
+      endDate: DateTime.now(),
+      initialDate:
+      notifier.dateOfBirthController.text.isNotEmpty
+          ? notifier.dateOfBirthController.text.toDateTime()
+          : DateTime.now(),
+      validator: (value) => CommonValidation().dateOfBirthValidator(context, value),
     );
   }
 
@@ -1567,17 +1637,17 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.idType),
       hintText: context.readLang.translate(AppLanguageText.select),
       controller: applyPassGroupNotifier.idTypeController,
-      items: applyPassGroupNotifier.idTypeMenu,
+      items: applyPassGroupNotifier.idTypeMenu ?? [],
       currentLang: context.lang,
       itemLabel: (item, lang) => CommonUtils.getLocalizedString(
           currentLang: lang,
-          getArabic: () => item.labelAr,
-          getEnglish: () => item.labelEn,
+          getArabic: () => item.sDescA,
+          getEnglish: () => item.sDescE,
         ),
       isSmallFieldFont: true,
       onSelected: (DocumentIdModel? menu) {
-        applyPassGroupNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        applyPassGroupNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassGroupNotifier.selectedIdValue = menu?.nDetailedCode.toString() ?? "";
+        applyPassGroupNotifier.selectedIdType = menu?.sDescE ?? "";
       },
       validator:(value) =>  CommonValidation().iDTypeValidator(context, value),
     );
@@ -1601,6 +1671,16 @@ class ApplyPassGroupScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.passportNumber),
       isSmallFieldFont: true,
       validator: (value) => CommonValidation().validatePassport(context, value),
+    );
+  }
+
+  // iqamaField
+  Widget visaField(BuildContext context, ApplyPassGroupNotifier applyPassGroupNotifier) {
+    return CustomTextField(
+      controller: applyPassGroupNotifier.visaController,
+      fieldName: context.watchLang.translate(AppLanguageText.visa),
+      isSmallFieldFont: true,
+      validator: (value) => CommonValidation().validateVisa(context, value),
     );
   }
 

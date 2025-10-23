@@ -14,11 +14,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:vector_math/vector_math.dart' as v_math;
 
 class TicketCard extends StatelessWidget {
-  const TicketCard({
-    super.key,
-    this.appointmentData,
-  });
+  const TicketCard({super.key, this.appointmentData});
+
   final GetExternalAppointmentData? appointmentData;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -28,41 +27,52 @@ class TicketCard extends StatelessWidget {
       child: Stack(
         children: [
           ClipPath(
-            clipper: DolDurmaClipper(left: 101.w, holeRadius: 10, isRtl: context.lang == LanguageCode.ar.name),
+            clipper: DolDurmaClipper(
+              left: 101.w,
+              holeRadius: 10,
+              isRtl: context.lang == LanguageCode.ar.name,
+            ),
             child: Container(
               height: 110.h,
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(15),
-                border: Border.all(width: 1, color: CommonUtils.getStatusColor(
-                    appointmentData?.sApprovalStatusEn ?? "")),
+                border: Border.all(
+                  width: 1,
+                  color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+                ),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // QR Code on the left
-                  appointmentData?.sQRCodeValue?.isNotEmpty ?? false ? Container(
-                    width: 100.w,
-                    padding: EdgeInsets.all(10),
-                    child: Center(
-                      child: QrImageView(
-                        version: QrVersions.auto,
-                        data: appointmentData?.sQRCodeValue ?? "",
+                  appointmentData?.sQRCodeValue?.isNotEmpty ?? false
+                      ? Container(
+                        width: 100.w,
+                        padding: EdgeInsets.all(10),
+                        child: Center(
+                          child: QrImageView(
+                            version: QrVersions.auto,
+                            data: appointmentData?.sQRCodeValue ?? "",
+                          ),
+                        ),
+                      )
+                      : Container(
+                        width: 100.w,
+                        padding: EdgeInsets.all(10),
+                        child: Center(
+                          child: Text(
+                            context.watchLang.translate(AppLanguageText.qrCodeNotGenerated),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
                       ),
-                    ),
-                  ) : Container(
-                    width: 100.w,
-                    padding: EdgeInsets.all(10),
-                    child: Center(
-                      child: Text(context.watchLang.translate(AppLanguageText.qrCodeNotGenerated), textAlign: TextAlign.center,),
-                    ),
-                  ),
 
                   // Dotted vertical line
                   CustomPaint(
                     painter: DottedLinePainter(
-                        color: CommonUtils.getStatusColor(
-                            appointmentData?.sApprovalStatusEn ?? "")),
+                      color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+                    ),
                     child: SizedBox(
                       // height: 100,
                       width: 1,
@@ -77,39 +87,70 @@ class TicketCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Text(appointmentData?.sVisitorName ?? "",
-                              overflow: TextOverflow.ellipsis,
-                              style: MediaQuery.of(context).size.width > 360 ? AppFonts.textRegular20 : AppFonts.textRegular16),
-                          Text(formatAppointmentRangeFromString(appointmentData?.dtAppointmentStartTime, appointmentData?.dtAppointmentEndTime),
-                              style: MediaQuery.of(context).size.width > 360 ? AppFonts.textRegular12 : AppFonts.textRegular10),
+                          Text(
+                            appointmentData?.sVisitorName ?? "",
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                MediaQuery.of(context).size.width > 360
+                                    ? AppFonts.textRegular20
+                                    : AppFonts.textRegular16,
+                          ),
+                          Text(
+                            formatAppointmentRangeFromString(
+                              appointmentData?.dtAppointmentStartTime,
+                              appointmentData?.dtAppointmentEndTime,
+                            ),
+                            style:
+                                MediaQuery.of(context).size.width > 360
+                                    ? AppFonts.textRegular12
+                                    : AppFonts.textRegular10,
+                          ),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.location_pin, color: AppColors.buttonBgColor,
-                                    size: 15,),
+                                  Icon(
+                                    Icons.location_pin,
+                                    color: AppColors.buttonBgColor,
+                                    size: 15,
+                                  ),
                                   2.horizontalSpace,
-                                  Text(getFormattedLocation(appointmentData?.sLocationNameEn ?? ""),
-                                      style: AppFonts.textBold14),
+                                  Text(
+                                    getFormattedLocation(
+                                      context.lang == LanguageCode.ar.name
+                                          ? appointmentData?.sLocationNameAr ?? ""
+                                          : appointmentData?.sLocationNameEn ?? "",
+                                    ),
+                                    style: AppFonts.textBold14,
+                                  ),
                                 ],
-                              ), 5.horizontalSpace,
+                              ),
+                              5.horizontalSpace,
                               Container(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 2),
+                                padding: EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+                                  color: CommonUtils.getStatusColor(
+                                    appointmentData?.sApprovalStatusEn ?? "",
+                                  ),
                                   borderRadius: BorderRadius.circular(5),
                                 ),
-                                child: Text(getFormattedLocation(CommonUtils.getTranslatedStatus(context, appointmentData?.sApprovalStatusEn ?? "")),
-                                    style: AppFonts.textBoldWhite14),
-                              )
+                                child: Text(
+                                  getFormattedLocation(
+                                    CommonUtils.getTranslatedStatus(
+                                      context,
+                                      appointmentData?.sApprovalStatusEn ?? "",
+                                    ),
+                                  ),
+                                  style: AppFonts.textBoldWhite14,
+                                ),
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -117,12 +158,13 @@ class TicketCard extends StatelessWidget {
           // Positioned to cover the entire container to paint arcs
           Positioned.fill(
             child: CustomPaint(
-              painter: ArcBorderPainter(left: 101.w,
-                  holeRadius: 10,
-                  strokeWidth: 1,
-                  color: CommonUtils.getStatusColor(
-                      appointmentData?.sApprovalStatusEn ?? ""),
-                  isRtl: context.lang == LanguageCode.ar.name),
+              painter: ArcBorderPainter(
+                left: 101.w,
+                holeRadius: 10,
+                strokeWidth: 1,
+                color: CommonUtils.getStatusColor(appointmentData?.sApprovalStatusEn ?? ""),
+                isRtl: context.lang == LanguageCode.ar.name,
+              ),
             ),
           ),
         ],
@@ -146,8 +188,7 @@ class TicketCard extends StatelessWidget {
     // Fallback: Capitalize first letter of each word (optional)
     return location
         .split(' ')
-        .map((word) =>
-    word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
+        .map((word) => word.isNotEmpty ? '${word[0].toUpperCase()}${word.substring(1)}' : '')
         .join(' ');
   }
 
@@ -178,13 +219,8 @@ class TicketCard extends StatelessWidget {
   }
 }
 
-
 class DolDurmaClipper extends CustomClipper<Path> {
-  DolDurmaClipper({
-    required this.left,
-    required this.holeRadius,
-    this.isRtl = false,
-  });
+  DolDurmaClipper({required this.left, required this.holeRadius, this.isRtl = false});
 
   final double left;
   final double holeRadius;
@@ -244,20 +280,18 @@ class DolDurmaClipper extends CustomClipper<Path> {
   bool shouldReclip(DolDurmaClipper oldClipper) => true;
 }
 
-
-
 class DottedLinePainter extends CustomPainter {
   final Color color;
 
-  DottedLinePainter({
-    this.color = Colors.grey,
-  });
+  DottedLinePainter({this.color = Colors.grey});
+
   @override
   void paint(Canvas canvas, Size size) {
     double dashHeight = 5, dashSpace = 4, startY = 0;
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1;
+    final paint =
+        Paint()
+          ..color = color
+          ..strokeWidth = 1;
 
     while (startY < size.height) {
       canvas.drawLine(Offset(0, startY), Offset(0, startY + dashHeight), paint);
@@ -286,10 +320,11 @@ class ArcBorderPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = strokeWidth;
 
     final arcInset = strokeWidth / 2;
 
@@ -302,8 +337,8 @@ class ArcBorderPainter extends CustomPainter {
     );
     canvas.drawArc(
       topArcRect,
-      v_math.radians(0),         // start from right (clockwise)
-      -v_math.radians(-180),    // draw to the left (clockwise inside)
+      v_math.radians(0), // start from right (clockwise)
+      -v_math.radians(-180), // draw to the left (clockwise inside)
       false,
       paint,
     );
@@ -315,8 +350,8 @@ class ArcBorderPainter extends CustomPainter {
     );
     canvas.drawArc(
       bottomArcRect,
-      v_math.radians(180),      // start from left
-      -v_math.radians(-180),    // draw to the right (clockwise inside)
+      v_math.radians(180), // start from left
+      -v_math.radians(-180), // draw to the right (clockwise inside)
       false,
       paint,
     );

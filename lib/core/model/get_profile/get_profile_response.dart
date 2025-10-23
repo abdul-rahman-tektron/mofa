@@ -46,9 +46,11 @@ class GetProfileResult {
   String? eidNumber;
   String? passportNumber;
   String? sIqama;
+  String? sVisaNo;
   String? sOthersDoc;
   String? sOthersValue;
   String? iso3;
+  String? dtDateOfBirth;
 
   GetProfileResult({
     this.sFullName,
@@ -60,9 +62,11 @@ class GetProfileResult {
     this.eidNumber,
     this.passportNumber,
     this.sIqama,
+    this.sVisaNo,
     this.sOthersDoc,
     this.sOthersValue,
     this.iso3,
+    this.dtDateOfBirth,
   });
 
   factory GetProfileResult.fromJson(Map<String, dynamic> json) => GetProfileResult(
@@ -75,9 +79,11 @@ class GetProfileResult {
     eidNumber: json["eidNumber"],
     passportNumber: json["passportNumber"],
     sIqama: json["s_Iqama"],
+    sVisaNo: json["s_VisaNo"],
     sOthersDoc: json["s_OthersDoc"],
     sOthersValue: json["s_OthersValue"],
     iso3: json["iso3"],
+    dtDateOfBirth: json["dt_DateOfBirth"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -90,8 +96,10 @@ class GetProfileResult {
     "eidNumber": eidNumber,
     "passportNumber": passportNumber,
     "s_Iqama": sIqama,
+    "s_VisaNo": sVisaNo,
     "s_OthersDoc": sOthersDoc,
     "s_OthersValue": sOthersValue,
     "iso3": iso3,
+    "dt_DateOfBirth": dtDateOfBirth,
   };
 }

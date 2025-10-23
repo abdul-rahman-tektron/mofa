@@ -82,6 +82,9 @@ class GetExternalAppointmentData {
   int? nLocationId;
   String? sLocationNameAr;
   String? sLocationNameEn;
+  int? nBuildingId;
+  String? sBuildingNameEn;
+  String? sBuildingNameAr;
   int? nDepartmentId;
   String? sDepartmentNameEn;
   dynamic sDepartmentNameAr;
@@ -94,8 +97,8 @@ class GetExternalAppointmentData {
   int? userId;
   int? nIsDeleted;
   dynamic iso3;
-  dynamic sNationalityAr;
-  dynamic sNationalityEn;
+  String? sNationalityAr;
+  String? sNationalityEn;
   dynamic expr1;
   String? sHostName;
   int? nDetailedCode;
@@ -136,9 +139,11 @@ class GetExternalAppointmentData {
   String? sSponsor;
   dynamic visitorMobile;
   dynamic visitorEmail;
-  dynamic sIqama;
+  String? sIqama;
   dynamic dTIqamaExpiry;
   dynamic sOthersDoc;
+  String? sVisaNo;
+  dynamic dtVisaExpiryDate;
   dynamic sOthersValue;
   dynamic dTOthersExpiry;
   int? havePhoto;
@@ -146,10 +151,18 @@ class GetExternalAppointmentData {
   int? haveVehicleRegistration;
   int? havePassport;
   int? haveIqama;
+  int? haveVisa;
   int? haveOthers;
+  String? sQrCodeValue;
   int? nCurrentApproverOrderNo;
   int? nIsHostRequiredMoreInfo;
   int? pseudoApprovalStatus;
+  String? sApplyForEn;
+  String? sApplyForAr;
+  String? sHostEmail;
+  String? sIsVehicleAllowedEn;
+  String? sIsVehicleAllowedAr;
+  DateTime? dtDateOfBirth;
 
   GetExternalAppointmentData({
     this.nAppointmentId,
@@ -177,6 +190,9 @@ class GetExternalAppointmentData {
     this.nLocationId,
     this.sLocationNameAr,
     this.sLocationNameEn,
+    this.nBuildingId,
+    this.sBuildingNameEn,
+    this.sBuildingNameAr,
     this.nDepartmentId,
     this.sDepartmentNameEn,
     this.sDepartmentNameAr,
@@ -234,6 +250,8 @@ class GetExternalAppointmentData {
     this.sIqama,
     this.dTIqamaExpiry,
     this.sOthersDoc,
+    this.sVisaNo,
+    this.dtVisaExpiryDate,
     this.sOthersValue,
     this.dTOthersExpiry,
     this.havePhoto,
@@ -241,10 +259,18 @@ class GetExternalAppointmentData {
     this.haveVehicleRegistration,
     this.havePassport,
     this.haveIqama,
+    this.haveVisa,
     this.haveOthers,
+    this.sQrCodeValue,
     this.nCurrentApproverOrderNo,
     this.nIsHostRequiredMoreInfo,
     this.pseudoApprovalStatus,
+    this.sApplyForEn,
+    this.sApplyForAr,
+    this.sHostEmail,
+    this.sIsVehicleAllowedEn,
+    this.sIsVehicleAllowedAr,
+    this.dtDateOfBirth,
   });
 
   factory GetExternalAppointmentData.fromJson(Map<String, dynamic> json) => GetExternalAppointmentData(
@@ -273,11 +299,14 @@ class GetExternalAppointmentData {
     nLocationId: json["n_LocationID"],
     sLocationNameAr: json["s_LocationName_Ar"],
     sLocationNameEn: json["s_LocationName_En"],
+    nBuildingId: json["n_BuildingID"],
+    sBuildingNameEn: json["s_BuildingName_En"],
+    sBuildingNameAr: json["s_BuildingName_Ar"],
     nDepartmentId: json["n_DepartmentID"],
     sDepartmentNameEn: json["s_DepartmentName_En"],
     sDepartmentNameAr: json["s_DepartmentName_Ar"],
     dtCovidDate: json["dt_CovidDate"],
-    sVisitingPersonEmail:json["s_VisitingPersonEmail"],
+    sVisitingPersonEmail: json["s_VisitingPersonEmail"],
     dtAppointmentStartTime: json["dt_AppointmentStartTime"],
     dtAppointmentEndTime: json["dt_AppointmentEndTime"],
     nHostId: json["n_HostID"],
@@ -330,6 +359,8 @@ class GetExternalAppointmentData {
     sIqama: json["s_Iqama"],
     dTIqamaExpiry: json["dT_IqamaExpiry"],
     sOthersDoc: json["s_OthersDoc"],
+    sVisaNo: json["s_VisaNo"],
+    dtVisaExpiryDate: json["dt_VisaExpiryDate"],
     sOthersValue: json["s_OthersValue"],
     dTOthersExpiry: json["dT_OthersExpiry"],
     havePhoto: json["havePhoto"],
@@ -337,10 +368,18 @@ class GetExternalAppointmentData {
     haveVehicleRegistration: json["haveVehicleRegistration"],
     havePassport: json["havePassport"],
     haveIqama: json["haveIqama"],
+    haveVisa: json["haveVisa"],
     haveOthers: json["haveOthers"],
+    sQrCodeValue: json["s_QRCodeValue"],
     nCurrentApproverOrderNo: json["n_CurrentApproverOrderNo"],
     nIsHostRequiredMoreInfo: json["n_IsHostRequiredMoreInfo"],
     pseudoApprovalStatus: json["pseudoApprovalStatus"],
+    sApplyForEn: json["s_ApplyFor_En"],
+    sApplyForAr: json["s_ApplyFor_Ar"],
+    sHostEmail: json["s_HostEmail"],
+    sIsVehicleAllowedEn: json["s_IsVehicleAllowed_En"],
+    sIsVehicleAllowedAr: json["s_IsVehicleAllowed_Ar"],
+    dtDateOfBirth: json["dt_DateOfBirth"] == null ? null : DateTime.parse(json["dt_DateOfBirth"]),
   );
 
   Map<String, dynamic> toJson() => {
@@ -369,7 +408,9 @@ class GetExternalAppointmentData {
     "n_LocationID": nLocationId,
     "s_LocationName_Ar": sLocationNameAr,
     "s_LocationName_En": sLocationNameEn,
-    "s_QRCodeValue": sQRCodeValue,
+    "n_BuildingID": nBuildingId,
+    "s_BuildingName_En": sBuildingNameEn,
+    "s_BuildingName_Ar": sBuildingNameAr,
     "n_DepartmentID": nDepartmentId,
     "s_DepartmentName_En": sDepartmentNameEn,
     "s_DepartmentName_Ar": sDepartmentNameAr,
@@ -426,6 +467,8 @@ class GetExternalAppointmentData {
     "s_Iqama": sIqama,
     "dT_IqamaExpiry": dTIqamaExpiry,
     "s_OthersDoc": sOthersDoc,
+    "s_VisaNo": sVisaNo,
+    "dt_VisaExpiryDate": dtVisaExpiryDate,
     "s_OthersValue": sOthersValue,
     "dT_OthersExpiry": dTOthersExpiry,
     "havePhoto": havePhoto,
@@ -433,10 +476,18 @@ class GetExternalAppointmentData {
     "haveVehicleRegistration": haveVehicleRegistration,
     "havePassport": havePassport,
     "haveIqama": haveIqama,
+    "haveVisa": haveVisa,
     "haveOthers": haveOthers,
+    "s_QRCodeValue": sQrCodeValue,
     "n_CurrentApproverOrderNo": nCurrentApproverOrderNo,
     "n_IsHostRequiredMoreInfo": nIsHostRequiredMoreInfo,
     "pseudoApprovalStatus": pseudoApprovalStatus,
+    "s_ApplyFor_En": sApplyForEn,
+    "s_ApplyFor_Ar": sApplyForAr,
+    "s_HostEmail": sHostEmail,
+    "s_IsVehicleAllowed_En": sIsVehicleAllowedEn,
+    "s_IsVehicleAllowed_Ar": sIsVehicleAllowedAr,
+    "dt_DateOfBirth": dtDateOfBirth?.toIso8601String(),
   };
 }
 

@@ -9,6 +9,7 @@ DuplicateAppointmentRequest duplicateAppointmentRequestFromJson(String str) => D
 String duplicateAppointmentRequestToJson(DuplicateAppointmentRequest data) => json.encode(data.toJson());
 
 class DuplicateAppointmentRequest {
+  int? nAppointmentID;
   int? nExternalRegistrationId;
   String? nLocationId;
   String? sIqama;
@@ -19,6 +20,7 @@ class DuplicateAppointmentRequest {
   String? dToDate;
 
   DuplicateAppointmentRequest({
+    this.nAppointmentID,
     this.nExternalRegistrationId,
     this.nLocationId,
     this.sIqama,
@@ -30,6 +32,7 @@ class DuplicateAppointmentRequest {
   });
 
   factory DuplicateAppointmentRequest.fromJson(Map<String, dynamic> json) => DuplicateAppointmentRequest(
+    nAppointmentID: json["N_AppointmentID"],
     nExternalRegistrationId: json["N_ExternalRegistrationID"],
     nLocationId: json["N_LocationID"],
     sIqama: json["S_Iqama"],
@@ -41,6 +44,7 @@ class DuplicateAppointmentRequest {
   );
 
   Map<String, dynamic> toJson() => {
+    "N_AppointmentID": nAppointmentID,
     "N_ExternalRegistrationID": nExternalRegistrationId,
     "N_LocationID": nLocationId,
     "S_Iqama": sIqama,

@@ -5,6 +5,7 @@ import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/res/app_colors.dart';
 import 'package:mofa/res/app_fonts.dart';
 import 'package:mofa/res/app_language_text.dart';
+import 'package:mofa/utils/enum_values.dart';
 
 class BulletList extends StatefulWidget {
   final List<String> strings;
@@ -62,7 +63,7 @@ class _BulletListState extends State<BulletList> {
                         children: _buildTextSpans(context, text, isBold),
                         style: AppFonts.textRegularBullet14,
                       ),
-                      textAlign: TextAlign.left,
+                      textAlign: context.lang == LanguageCode.ar.name ? TextAlign.right : TextAlign.left,
                     ),
                   ),
                 ],

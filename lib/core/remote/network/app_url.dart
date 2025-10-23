@@ -21,6 +21,7 @@ class AppUrl {
   //Apply Pass
   static final pathLocationDropdown = "/Locations/GetAllDropdown"; //POST
   static final pathBuildingDropdown = "/Buildings/GetAllDropdown"; //POST
+  static final pathDocumentIdDropdown = "/SystemCodes/GetDocumentIDTypes"; //POST
   static final pathVisitRequestTypeDropdown = "/VisitRequestTypes/GetAll"; //POST
   static final pathDeviceDropdown = "/SystemCodes/GetAllDetailCodesDropDown"; //POST
   static final pathVisitPurposesDropdown = "/VisitPurposes/GetAllDropdown"; //POST

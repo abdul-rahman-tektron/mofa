@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
+
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:mofa/core/base/loading_state.dart';
 import 'package:mofa/core/localization/context_extensions.dart';
@@ -190,7 +192,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     ApplyPassCategoryNotifier applyPassCategoryNotifier,
   ) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment: context.lang == LanguageCode.ar.name ? Alignment.centerRight : Alignment.centerLeft,
       child: CustomButton(
         text: context.watchLang.translate(AppLanguageText.viewComments),
         smallWidth: true,
@@ -215,15 +217,17 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       builder: (context) {
         return Padding(
           padding: const EdgeInsets.all(15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              commentsHeading(context, applyPassCategoryNotifier),
-              10.verticalSpace,
-              _buildSearchCommentDataTable(context, applyPassCategoryNotifier),
-              10.verticalSpace,
-              ...paginationDetails(context, applyPassCategoryNotifier),
-            ],
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                commentsHeading(context, applyPassCategoryNotifier),
+                10.verticalSpace,
+                _buildSearchCommentDataTable(context, applyPassCategoryNotifier),
+                10.verticalSpace,
+                ...paginationDetails(context, applyPassCategoryNotifier),
+              ],
+            ),
           ),
         );
       },
@@ -517,7 +521,10 @@ class ApplyPassCategoryScreen extends StatelessWidget {
           child: Text(comment.sComment ?? "", maxLines: 2, overflow: TextOverflow.ellipsis),
         );
       case 'Comment Date':
-        return Text(comment.sCommentDate?.formatDateTime() ?? "");
+        return Directionality(
+          textDirection: ui.TextDirection.ltr,
+          child: Text(comment.sCommentDate?.formatDateTime() ?? ""),
+        );
       default:
         return const Text('');
     }
@@ -702,7 +709,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   }
 
   List<Widget> visitorDetailsChildren(BuildContext context, ApplyPassCategoryNotifier notifier) {
-    final idType = IdTypeExtension.fromString(notifier.selectedIdType);
+    final id = int.tryParse(notifier.selectedIdValue ?? "") ?? 0;
+    final idType = IdTypeExtension.fromId(id);
 
     return [
       visitorNameTextField(context, notifier),
@@ -717,9 +725,11 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       15.verticalSpace,
       idTypeField(context, notifier),
       15.verticalSpace,
-      ..._buildIdSpecificFields(context, notifier, idType!),
+      ..._buildIdSpecificFields(context, notifier, idType),
       15.verticalSpace,
       expirationDateTextField(context, notifier),
+      15.verticalSpace,
+      dateOfBirthTextField(context, notifier),
       15.verticalSpace,
       // vehicleNumberTextField(context, notifier),
       vehicleDetailCheckbox(context, notifier),
@@ -738,14 +748,14 @@ class ApplyPassCategoryScreen extends StatelessWidget {
         return [passportField(context, notifier)];
       case IdType.iqama:
         return [iqamaField(context, notifier)];
+      case IdType.visa:
+        return [visaField(context, notifier)];
       case IdType.other:
         return [
           documentNameField(context, notifier),
           15.verticalSpace,
           documentNumberField(context, notifier),
         ];
-      default:
-        return [];
     }
   }
 
@@ -815,20 +825,45 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   }
 
   Widget expirationDateTextField(BuildContext context, ApplyPassCategoryNotifier notifier) {
-    final idType = IdTypeExtension.fromString(notifier.selectedIdType);
 
     return CustomTextField(
       controller: notifier.expiryDateController,
-      fieldName: idType!.translatedLabel(context),
+      fieldName: IdTypeExtension.translatedLabel(context, int.tryParse(notifier.selectedIdValue ?? "0")), // 👈 keep your enum’s label logic
       isSmallFieldFont: true,
       keyboardType: TextInputType.datetime,
       startDate: DateTime.now(),
-      initialDate:
-          notifier.expiryDateController.text.isNotEmpty
-              ? notifier.expiryDateController.text.toDateTime()
-              : DateTime.now(),
+      initialDate: notifier.expiryDateController.text.isNotEmpty
+          ? notifier.expiryDateController.text.toDateTime()
+          : DateTime.now(),
       isEnable: notifier.isEnable,
-      validator: (value) => idType.validator(context, value),
+    validator: (value) {
+      // safely parse the selected ID from notifier
+      final id = int.tryParse(notifier.selectedIdValue ?? "");
+
+      // get the correct validator function based on ID
+      final validatorFn = IdTypeExtension.validatorById(id);
+
+      // call the validator function with context + value
+      return validatorFn(context, value);
+    }, // 👈 validator per type
+    );
+  }
+
+  Widget dateOfBirthTextField(BuildContext context, ApplyPassCategoryNotifier notifier) {
+
+    return CustomTextField(
+      controller: notifier.dateOfBirthController,
+      fieldName: context.watchLang.translate(AppLanguageText.dateOfBirth),
+      isSmallFieldFont: true,
+      keyboardType: TextInputType.datetime,
+      startDate: DateTime(1900),
+      endDate: DateTime.now(),
+      initialDate:
+      notifier.dateOfBirthController.text.isNotEmpty
+          ? notifier.dateOfBirthController.text.toDateTime()
+          : DateTime.now(),
+      isEnable: notifier.isEnable,
+      validator: (value) => CommonValidation().dateOfBirthValidator(context, value),
     );
   }
 
@@ -879,19 +914,19 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       fieldName: context.watchLang.translate(AppLanguageText.idType),
       hintText: context.watchLang.translate(AppLanguageText.select),
       controller: applyPassCategoryNotifier.idTypeController,
-      items: applyPassCategoryNotifier.idTypeMenu,
+      items: applyPassCategoryNotifier.idTypeMenu ?? [],
       currentLang: context.lang,
       itemLabel:
           (item, lang) => CommonUtils.getLocalizedString(
             currentLang: lang,
-            getArabic: () => item.labelAr,
-            getEnglish: () => item.labelEn,
+            getArabic: () => item.sDescA,
+            getEnglish: () => item.sDescE,
           ),
       isSmallFieldFont: true,
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (DocumentIdModel? menu) {
-        applyPassCategoryNotifier.selectedIdValue = menu?.value.toString() ?? "";
-        applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassCategoryNotifier.selectedIdValue = menu?.nDetailedCode.toString() ?? "";
+        applyPassCategoryNotifier.selectedIdType = menu?.sDescE ?? "";
       },
       validator: (value) => CommonValidation().iDTypeValidator(context, value),
     );
@@ -911,6 +946,17 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
+  // iqamaField
+  Widget visaField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
+    return CustomTextField(
+      controller: applyPassCategoryNotifier.visaController,
+      fieldName: context.watchLang.translate(AppLanguageText.visa),
+      isSmallFieldFont: true,
+      isEnable: applyPassCategoryNotifier.isEnable,
+      validator: (value) => CommonValidation().validateVisa(context, value),
+    );
+  }
+
   // passportField
   Widget passportField(BuildContext context, ApplyPassCategoryNotifier applyPassCategoryNotifier) {
     return CustomTextField(
@@ -922,7 +968,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
-  // documentNameField
+  // documentNameField§
   Widget documentNameField(
     BuildContext context,
     ApplyPassCategoryNotifier applyPassCategoryNotifier,
@@ -1092,7 +1138,8 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   ) {
     return [
       locationTextField(context, applyPassCategoryNotifier),
-      //     ld(context, applyPassCategoryNotifier),
+      15.verticalSpace,
+      buildingTextField(context, applyPassCategoryNotifier),
       15.verticalSpace,
       visitRequestTypeTextField(context, applyPassCategoryNotifier),
       15.verticalSpace,
@@ -1266,7 +1313,9 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (LocationDropdownResult? menu) {
         applyPassCategoryNotifier.selectedLocationId = menu?.nLocationId ?? 0;
-        // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
+        applyPassCategoryNotifier.apiBuildingDropdown(
+            context, locationId: applyPassCategoryNotifier.selectedLocationId);
+        applyPassCategoryNotifier.buildingController.clear();
       },
       validator: (value) => CommonValidation().validateLocation(context, value),
     );
@@ -1292,7 +1341,6 @@ class ApplyPassCategoryScreen extends StatelessWidget {
       isEnable: applyPassCategoryNotifier.isEnable,
       onSelected: (VisitRequestDropdownResult? menu) {
         applyPassCategoryNotifier.selectedVisitRequest = menu?.nDetailedCode.toString() ?? "";
-        // applyPassCategoryNotifier.selectedIdType = menu?.labelEn ?? "";
       },
       validator: (value) => CommonValidation().validateVisitRequestType(context, value),
     );
@@ -1812,24 +1860,33 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     BuildContext context,
     ApplyPassCategoryNotifier applyPassCategoryNotifier,
   ) {
-    return CustomSearchDropdown<DeviceDropdownResult>(
-      fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
-      hintText: context.watchLang.translate(AppLanguageText.select),
+    // return CustomSearchDropdown<DeviceDropdownResult>(
+    //   fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
+    //   hintText: context.watchLang.translate(AppLanguageText.select),
+    //   controller: applyPassCategoryNotifier.devicePurposeController,
+    //   items: applyPassCategoryNotifier.devicePurposeDropdownData,
+    //   currentLang: context.lang,
+    //   itemLabel:
+    //       (item, lang) => CommonUtils.getLocalizedString(
+    //         currentLang: lang,
+    //         getArabic: () => item.sDescA,
+    //         getEnglish: () => item.sDescE,
+    //       ),
+    //   isSmallFieldFont: true,
+    //   skipValidation: true,
+    //   isEnable: applyPassCategoryNotifier.isEnable,
+    //   onSelected: (DeviceDropdownResult? menu) {
+    //     applyPassCategoryNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
+    //   },
+    //   validator: (value) => CommonValidation().validateDevicePurpose(context, value),
+    // );
+
+    return CustomTextField(
       controller: applyPassCategoryNotifier.devicePurposeController,
-      items: applyPassCategoryNotifier.devicePurposeDropdownData,
-      currentLang: context.lang,
-      itemLabel:
-          (item, lang) => CommonUtils.getLocalizedString(
-            currentLang: lang,
-            getArabic: () => item.sDescA,
-            getEnglish: () => item.sDescE,
-          ),
+      fieldName: context.watchLang.translate(AppLanguageText.devicePurpose),
       isSmallFieldFont: true,
       skipValidation: true,
       isEnable: applyPassCategoryNotifier.isEnable,
-      onSelected: (DeviceDropdownResult? menu) {
-        applyPassCategoryNotifier.selectedDevicePurpose = menu?.nDetailedCode ?? 0;
-      },
       validator: (value) => CommonValidation().validateDevicePurpose(context, value),
     );
   }
@@ -2182,7 +2239,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
   ) {
     return Row(
       children: [
-        Text(_getFileHeader(context, selectedIdType), style: AppFonts.textRegular14),
+        Text(_getFileHeader(context, int.tryParse(applyPassCategoryNotifier.selectedIdValue ?? "0") ?? 0), style: AppFonts.textRegular14),
         const SizedBox(width: 3),
         const Text("*", style: TextStyle(fontSize: 15, color: AppColors.textRedColor)),
       ],
@@ -2229,7 +2286,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     Function runLoading,
     bool loader,
   ) {
-    int type = _getFileType(selectedIdType);
+    int type = _getFileTypeById(int.tryParse(notifier.selectedIdValue ?? "0") ?? 0);
 
     return GestureDetector(
       onTap: () async {
@@ -2239,7 +2296,7 @@ class ApplyPassCategoryScreen extends StatelessWidget {
               (user?.havePassport == 1 ||
                   user?.haveIqama == 1 ||
                   user?.haveEid == 1 ||
-                  user?.haveOthers == 1) ||
+                  user?.haveVisa == 1) ||
               notifier.haveDocument == 1;
 
           if (hasAnyDocument) {
@@ -2269,33 +2326,39 @@ class ApplyPassCategoryScreen extends StatelessWidget {
     );
   }
 
-  int _getFileType(String idType) {
+  int _getFileTypeById(int? idType) {
     switch (idType) {
-      case "National ID":
-        return 2;
-      case "Passport":
-        return 3;
-      case "Iqama":
-        return 5;
-      case "Other":
-        return 6;
+      case 24: // NATIONAL_ID
+        return 2; // EID
+      case 26: // PASSPORT
+        return 3; // PASSPORT
+      case 2244: // IQAMA
+        return 5; // IQAMA
+      case 2294: // VISA
+        return 7; // VISA
+      case 2245: // OTHER
+        return 6; // OTHERS
       default:
-        return 4;
+        return 4; // default VEHICLE / unknown
     }
   }
 
-  String _getFileHeader(BuildContext context, String idType) {
+  String _getFileHeader(BuildContext context, int? idType) {
+    final lang = context.watchLang;
+
     switch (idType) {
-      case "National ID":
-        return context.watchLang.translate(AppLanguageText.uploadNationalID);
-      case "Passport":
-        return context.watchLang.translate(AppLanguageText.uploadPassport);
-      case "Iqama":
-        return context.watchLang.translate(AppLanguageText.uploadIqama);
-      case "Other":
-        return context.watchLang.translate(AppLanguageText.uploadDocumentOther);
+      case 24: // NATIONAL_ID
+        return lang.translate(AppLanguageText.uploadNationalID);
+      case 26: // PASSPORT
+        return lang.translate(AppLanguageText.uploadPassport);
+      case 2244: // IQAMA
+        return lang.translate(AppLanguageText.uploadIqama);
+      case 2294: // VISA
+        return lang.translate(AppLanguageText.uploadVisa);
+      case 2245: // OTHER
+        return lang.translate(AppLanguageText.uploadDocumentOther);
       default:
-        return context.watchLang.translate(AppLanguageText.uploadNationalID);
+        return lang.translate(AppLanguageText.uploadNationalID);
     }
   }
 

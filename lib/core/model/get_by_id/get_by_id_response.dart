@@ -95,8 +95,7 @@ class DeviceResult {
   String? deviceTypeOthersValue;
   String? deviceModel;
   String? serialNumber;
-  int? devicePurpose;
-  String? devicePurposeOthersValue;
+  String? devicePurpose;
   int? approvalStatus;
   int? currentApprovalStatus;
   dynamic comment;
@@ -109,7 +108,6 @@ class DeviceResult {
     this.deviceModel,
     this.serialNumber,
     this.devicePurpose,
-    this.devicePurposeOthersValue,
     this.approvalStatus,
     this.currentApprovalStatus,
     this.comment,
@@ -122,8 +120,7 @@ class DeviceResult {
     deviceTypeOthersValue: json["deviceTypeOthersValue"],
     deviceModel: json["deviceModel"],
     serialNumber: json["serialNumber"],
-    devicePurpose: json["devicePurpose"],
-    devicePurposeOthersValue: json["devicePurposeOthersValue"],
+    devicePurpose: json["purpose"],
     approvalStatus: json["approvalStatus"],
     currentApprovalStatus: json["currentApprovalStatus"],
     comment: json["comment"],
@@ -136,8 +133,7 @@ class DeviceResult {
     "deviceTypeOthersValue": deviceTypeOthersValue,
     "deviceModel": deviceModel,
     "serialNumber": serialNumber,
-    "devicePurpose": devicePurpose,
-    "devicePurposeOthersValue": devicePurposeOthersValue,
+    "purpose": devicePurpose,
     "approvalStatus": approvalStatus,
     "currentApprovalStatus": currentApprovalStatus,
     "comment": comment,
@@ -158,7 +154,9 @@ class GetByIdUser {
   int? nDocumentType;
   String? eidNumber;
   String? passportNumber;
+  String? sVisaNo;
   String? dtEidExpiryDate;
+  String? dtVisaExpiryDate;
   dynamic dtPassportExpiryDate;
   int? nVisitType;
   String? sVisitorTypeAr;
@@ -170,6 +168,9 @@ class GetByIdUser {
   int? nLocationId;
   String? sLocationNameAr;
   String? sLocationNameEn;
+  int? nBuildingID;
+  String? sBuildingNameEn;
+  String? sBuildingNameAr;
   int? nDepartmentId;
   String? sDepartmentNameEn;
   String? sDepartmentNameAr;
@@ -233,10 +234,12 @@ class GetByIdUser {
   int? haveVehicleRegistration;
   int? havePassport;
   int? haveIqama;
+  int? haveVisa;
   int? haveOthers;
   int? nCurrentApproverOrderNo;
   int? nIsHostRequiredMoreInfo;
   int? pseudoApprovalStatus;
+  String? dtDateOfBirth;
 
   GetByIdUser({
     this.nAppointmentId,
@@ -252,8 +255,10 @@ class GetByIdUser {
     this.nDocumentType,
     this.eidNumber,
     this.passportNumber,
+    this.sVisaNo,
     this.dtEidExpiryDate,
     this.dtPassportExpiryDate,
+    this.dtVisaExpiryDate,
     this.nVisitType,
     this.sVisitorTypeAr,
     this.sRemarks,
@@ -264,6 +269,9 @@ class GetByIdUser {
     this.nLocationId,
     this.sLocationNameAr,
     this.sLocationNameEn,
+    this.nBuildingID,
+    this.sBuildingNameAr,
+    this.sBuildingNameEn,
     this.nDepartmentId,
     this.sDepartmentNameEn,
     this.sDepartmentNameAr,
@@ -324,6 +332,7 @@ class GetByIdUser {
     this.dTOthersExpiry,
     this.havePhoto,
     this.haveEid,
+    this.haveVisa,
     this.haveVehicleRegistration,
     this.havePassport,
     this.haveIqama,
@@ -331,6 +340,7 @@ class GetByIdUser {
     this.nCurrentApproverOrderNo,
     this.nIsHostRequiredMoreInfo,
     this.pseudoApprovalStatus,
+    this.dtDateOfBirth,
   });
 
   factory GetByIdUser.fromJson(Map<String, dynamic> json) => GetByIdUser(
@@ -347,8 +357,10 @@ class GetByIdUser {
     nDocumentType: json["n_DocumentType"],
     eidNumber: json["eidNumber"],
     passportNumber: json["passportNumber"],
+    sVisaNo: json["s_VisaNo"],
     dtEidExpiryDate: json["dt_EIDExpiryDate"],
     dtPassportExpiryDate: json["dt_PassportExpiryDate"],
+    dtVisaExpiryDate: json["dt_VisaExpiryDate"],
     nVisitType: json["n_VisitType"],
     sVisitorTypeAr: json["s_VisitorType_Ar"],
     sRemarks: json["s_Remarks"],
@@ -359,6 +371,9 @@ class GetByIdUser {
     nLocationId: json["n_LocationID"],
     sLocationNameAr: json["s_LocationName_Ar"],
     sLocationNameEn: json["s_LocationName_En"],
+    nBuildingID: json["n_BuildingID"],
+    sBuildingNameAr: json["s_BuildingName_Ar"],
+    sBuildingNameEn: json["s_BuildingName_En"],
     nDepartmentId: json["n_DepartmentID"],
     sDepartmentNameEn: json["s_DepartmentName_En"],
     sDepartmentNameAr: json["s_DepartmentName_Ar"],
@@ -419,6 +434,7 @@ class GetByIdUser {
     dTOthersExpiry: json["dT_OthersExpiry"],
     havePhoto: json["havePhoto"],
     haveEid: json["haveEid"],
+    haveVisa: json["haveVisa"],
     haveVehicleRegistration: json["haveVehicleRegistration"],
     havePassport: json["havePassport"],
     haveIqama: json["haveIqama"],
@@ -426,6 +442,7 @@ class GetByIdUser {
     nCurrentApproverOrderNo: json["n_CurrentApproverOrderNo"],
     nIsHostRequiredMoreInfo: json["n_IsHostRequiredMoreInfo"],
     pseudoApprovalStatus: json["pseudoApprovalStatus"],
+    dtDateOfBirth: json["dt_DateOfBirth"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -442,7 +459,9 @@ class GetByIdUser {
     "n_DocumentType": nDocumentType,
     "eidNumber": eidNumber,
     "passportNumber": passportNumber,
+    "s_VisaNo": sVisaNo,
     "dt_EIDExpiryDate": dtEidExpiryDate,
+    "dt_VisaExpiryDate": dtVisaExpiryDate,
     "dt_PassportExpiryDate": dtPassportExpiryDate,
     "n_VisitType": nVisitType,
     "s_VisitorType_Ar": sVisitorTypeAr,
@@ -454,6 +473,9 @@ class GetByIdUser {
     "n_LocationID": nLocationId,
     "s_LocationName_Ar": sLocationNameAr,
     "s_LocationName_En": sLocationNameEn,
+    "n_BuildingID": nBuildingID,
+    "s_BuildingName_Ar": sBuildingNameAr,
+    "s_BuildingName_En": sBuildingNameEn,
     "n_DepartmentID": nDepartmentId,
     "s_DepartmentName_En": sDepartmentNameEn,
     "s_DepartmentName_Ar": sDepartmentNameAr,
@@ -517,10 +539,12 @@ class GetByIdUser {
     "haveVehicleRegistration": haveVehicleRegistration,
     "havePassport": havePassport,
     "haveIqama": haveIqama,
+    "haveVisa": haveVisa,
     "haveOthers": haveOthers,
     "n_CurrentApproverOrderNo": nCurrentApproverOrderNo,
     "n_IsHostRequiredMoreInfo": nIsHostRequiredMoreInfo,
     "pseudoApprovalStatus": pseudoApprovalStatus,
+    "dt_DateOfBirth": dtDateOfBirth,
   };
 }
 

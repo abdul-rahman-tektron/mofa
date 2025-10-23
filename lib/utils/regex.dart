@@ -27,4 +27,6 @@ class LocalInputRegex {
   static const String nationalId = r'^\d{1,10}$';
 
   static const String passportNumber = r'^[A-PR-WY][0-9]{6,9}$';
+
+  static const String visaNumber = r'^\d{8,9}$';
 }

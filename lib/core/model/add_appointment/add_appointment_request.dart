@@ -12,6 +12,7 @@ class AddAppointmentRequest {
   String? gender;
   int? nVisitType;
   int? nVisaType;
+  int? nBuildingId;
   String? sVehicleNo;
   List<DeviceModel>? devices;
   int? nLocationId;
@@ -35,8 +36,6 @@ class AddAppointmentRequest {
   int? isCheckedIn;
   String? sCovidFile;
   String? sCovidContentType;
-  String? sVisaFile;
-  String? sVisaContentType;
   String? sServiceProviderFile;
   String? sSpContentType;
   int? userId;
@@ -76,18 +75,22 @@ class AddAppointmentRequest {
   String? sIqama;
   String? eidNumber;
   String? passportNumber;
+  String? sVisaNo;
   String? sOthersDoc;
   String? sOthersValue;
   String? dtIqamaExpiry;
   String? dtEidExpiryDate;
   String? dtPassportExpiryDate;
+  String? dtVisaExpiry;
   String? dtOthersExpiry;
+  String? dtDateOfBirth;
   String? nationality;
   String? resubmissionComments;
   int? havePhoto;
   int? haveIqama;
   int? haveEid;
   int? havePassport;
+  int? haveVisa;
   int? haveOthers;
   int? haveVehicleRegistration;
   int? nVisitCreatedFrom;
@@ -102,6 +105,7 @@ class AddAppointmentRequest {
     this.gender = "",
     this.nVisitType,
     this.nVisaType = 0,
+    this.nBuildingId = 0,
     this.sVehicleNo = "",
     this.devices,
     this.nLocationId,
@@ -125,8 +129,6 @@ class AddAppointmentRequest {
     this.isCheckedIn = 0,
     this.sCovidFile = "",
     this.sCovidContentType = "",
-    this.sVisaFile = "",
-    this.sVisaContentType = "",
     this.sServiceProviderFile = "",
     this.sSpContentType = "",
     this.userId = 0,
@@ -166,12 +168,14 @@ class AddAppointmentRequest {
     this.sIqama,
     this.eidNumber,
     this.passportNumber,
+    this.sVisaNo,
     this.sOthersDoc,
     this.sOthersValue,
     this.dtIqamaExpiry,
     this.dtEidExpiryDate,
     this.dtPassportExpiryDate,
     this.dtOthersExpiry,
+    this.dtDateOfBirth,
     this.nationality,
     this.resubmissionComments,
     this.havePhoto,
@@ -179,6 +183,7 @@ class AddAppointmentRequest {
     this.haveEid,
     this.havePassport,
     this.haveOthers,
+    this.haveVisa,
     this.haveVehicleRegistration,
     this.nVisitCreatedFrom,
     this.nVisitUpdatedFrom,
@@ -187,12 +192,14 @@ class AddAppointmentRequest {
     this.nPlateLetter3,
     this.nPlateSource,
     this.sPlateNumber,
+    this.dtVisaExpiry,
   });
 
   factory AddAppointmentRequest.fromJson(Map<String, dynamic> json) => AddAppointmentRequest(
     gender: json["Gender"] ?? "",
     nVisitType: json["N_VisitType"] ?? 0,
     nVisaType: json["N_VisaType"] ?? 0,
+    nBuildingId: json["N_BuildingID"] ?? 0,
     devices:
         json["Devices"] == null
             ? []
@@ -220,8 +227,6 @@ class AddAppointmentRequest {
     isCheckedIn: json["Is_CheckedIN"] ?? 0,
     sCovidFile: json["S_CovidFile"] ?? "",
     sCovidContentType: json["S_CovidContentType"] ?? "",
-    sVisaFile: json["S_VisaFile"] ?? "",
-    sVisaContentType: json["S_VisaContentType"] ?? "",
     sServiceProviderFile: json["S_ServiceProviderFile"] ?? "",
     sSpContentType: json["S_SPContentType"] ?? "",
     userId: json["user_id"] ?? 0,
@@ -262,18 +267,21 @@ class AddAppointmentRequest {
     sIqama: json["S_Iqama"],
     eidNumber: json["EIDNumber"],
     passportNumber: json["PassportNumber"],
+    sVisaNo: json["S_VisaNo"],
     sOthersDoc: json["S_OthersDoc"],
     sOthersValue: json["S_OthersValue"],
     dtIqamaExpiry: json["Dt_IqamaExpiry"],
     dtEidExpiryDate: json["Dt_EIDExpiryDate"],
     dtPassportExpiryDate: json["Dt_PassportExpiryDate"],
     dtOthersExpiry: json["Dt_OthersExpiry"],
+    dtDateOfBirth: json["Dt_DateOfBirth"],
     nationality: json["Nationality"],
     resubmissionComments: json["ReSubmissionComment"],
     havePhoto: json["havePhoto"],
     haveIqama: json["haveIqama"],
     haveEid: json["haveEid"],
     havePassport: json["havePassport"],
+    haveVisa: json["haveVisa"],
     haveOthers: json["haveOthers"],
     haveVehicleRegistration: json["haveVehicleRegistration"],
     nVisitCreatedFrom: json["N_VisitCreatedFrom"],
@@ -283,12 +291,14 @@ class AddAppointmentRequest {
     nPlateLetter3: json['N_PlateLetter3'],
     nPlateSource: json['N_PlateSource'],
     sPlateNumber: json['S_PlateNumber'],
+    dtVisaExpiry: json['Dt_VisaExpiryDate'],
   );
 
   Map<String, dynamic> toJson() => {
     "Gender": gender,
     "N_VisitType": nVisitType,
     "N_VisaType": nVisaType,
+    "N_BuildingID": nBuildingId,
     "Devices": devices == null ? [] : List<dynamic>.from(devices!.map((x) => x.toJson())),
     "N_LocationID": nLocationId,
     "N_DepartmentID": nDepartmentId,
@@ -311,8 +321,6 @@ class AddAppointmentRequest {
     "Is_CheckedIN": isCheckedIn,
     "S_CovidFile": sCovidFile,
     "S_CovidContentType": sCovidContentType,
-    "S_VisaFile": sVisaFile,
-    "S_VisaContentType": sVisaContentType,
     "S_ServiceProviderFile": sServiceProviderFile,
     "S_SPContentType": sSpContentType,
     "user_id": userId,
@@ -352,18 +360,21 @@ class AddAppointmentRequest {
     "S_Iqama": sIqama,
     "EIDNumber": eidNumber,
     "PassportNumber": passportNumber,
+    "S_VisaNo": sVisaNo,
     "S_OthersDoc": sOthersDoc,
     "S_OthersValue": sOthersValue,
     "Dt_IqamaExpiry": dtIqamaExpiry,
     "Dt_EIDExpiryDate": dtEidExpiryDate,
     "Dt_PassportExpiryDate": dtPassportExpiryDate,
     "Dt_OthersExpiry": dtOthersExpiry,
+    "Dt_DateOfBirth": dtDateOfBirth,
     "Nationality": nationality,
     "ReSubmissionComment": resubmissionComments,
     "havePhoto": havePhoto,
     "haveIqama": haveIqama,
     "haveEid": haveEid,
     "havePassport": havePassport,
+    "haveVisa": haveVisa,
     "haveOthers": haveOthers,
     "haveVehicleRegistration": haveVehicleRegistration,
     "N_VisitCreatedFrom": nVisitCreatedFrom,
@@ -373,6 +384,7 @@ class AddAppointmentRequest {
     'N_PlateLetter3': nPlateLetter3,
     'N_PlateSource': nPlateSource,
     'S_PlateNumber': sPlateNumber,
+    'Dt_VisaExpiryDate': dtVisaExpiry,
   };
 }
 
@@ -383,7 +395,6 @@ class DeviceModel {
   String? deviceTypeOthersValue;
   String? deviceModel;
   String? serialNumber;
-  int? devicePurpose;
   String? devicePurposeString;
   String? devicePurposeOthersValue;
   int? approvalStatus;
@@ -394,7 +405,6 @@ class DeviceModel {
     this.deviceTypeOthersValue = "",
     this.deviceModel = "",
     this.serialNumber = "",
-    this.devicePurpose,
     this.devicePurposeString = "",
     this.deviceTypeString = "",
     this.devicePurposeOthersValue = "",
@@ -407,9 +417,8 @@ class DeviceModel {
     deviceTypeOthersValue: json["DeviceTypeOthersValue"] ?? "",
     deviceModel: json["DeviceModel"] ?? "",
     serialNumber: json["SerialNumber"] ?? "",
-    devicePurposeString: json["DevicePurposeString"] ?? "",
+    devicePurposeString: json["purpose"] ?? "",
     deviceTypeString: json["DeviceTypeString"] ?? "",
-    devicePurpose: json["DevicePurpose"] ?? 0,
     devicePurposeOthersValue: json["DevicePurposeOthersValue"] ?? "",
     approvalStatus: json["ApprovalStatus"] ?? 50,
   );
@@ -420,9 +429,8 @@ class DeviceModel {
     "DeviceTypeOthersValue": deviceTypeOthersValue,
     "DeviceModel": deviceModel,
     "SerialNumber": serialNumber,
-    "DevicePurposeString": devicePurposeString,
+    "purpose": devicePurposeString,
     "DeviceTypeString": deviceTypeString,
-    "DevicePurpose": devicePurpose,
     "DevicePurposeOthersValue": devicePurposeOthersValue,
     "ApprovalStatus": approvalStatus,
   };

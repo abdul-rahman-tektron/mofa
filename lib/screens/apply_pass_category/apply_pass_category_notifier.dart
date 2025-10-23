@@ -20,7 +20,6 @@ import 'package:mofa/core/model/get_by_id/get_by_id_response.dart';
 import 'package:mofa/core/model/get_file/get_file_request.dart';
 import 'package:mofa/core/model/get_file/get_file_response.dart';
 import 'package:mofa/core/model/location_dropdown/location_dropdown_response.dart';
-import 'package:mofa/core/model/login/login_response.dart';
 import 'package:mofa/core/model/search_comment/search_comment_request.dart';
 import 'package:mofa/core/model/search_comment/search_comment_response.dart';
 import 'package:mofa/core/model/search_visitor/search_visitor_request.dart';
@@ -35,13 +34,11 @@ import 'package:mofa/core/model/visiting_hours_config/visiting_hours_config_resp
 import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/core/remote/service/search_pass_repository.dart';
-import 'package:mofa/model/apply_pass/apply_pass_category.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/model/token_user_response.dart';
 import 'package:mofa/res/app_language_text.dart';
 import 'package:mofa/res/app_strings.dart';
 import 'package:mofa/screens/search_pass/search_pass_screen.dart';
-import 'package:mofa/screens/stepper_handler/stepper_handler_notifier.dart';
 import 'package:mofa/utils/app_routes.dart';
 import 'package:mofa/utils/common_utils.dart';
 import 'package:mofa/utils/encrypt.dart';
@@ -50,8 +47,6 @@ import 'package:mofa/utils/extensions.dart';
 import 'package:mofa/utils/file_uplaod_helper.dart';
 import 'package:mofa/utils/secure_storage.dart';
 import 'package:mofa/utils/toast_helper.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions, CommonUtils {
@@ -135,12 +130,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   ];
 
 
-  final List<DocumentIdModel> idTypeMenu = [
-    DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
-    DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
-    DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
-    DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
-  ];
+  List<DocumentIdModel>? idTypeMenu;
 
   final nonEditableStatuses = ["Approved", "Expired", "Cancelled", "Rejected"];
 
@@ -161,10 +151,12 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   TextEditingController _emailController = TextEditingController();
   TextEditingController _idTypeController = TextEditingController();
   TextEditingController _expiryDateController = TextEditingController();
+  TextEditingController _dateOfBirthController = TextEditingController();
   TextEditingController _vehicleNumberController = TextEditingController();
   TextEditingController _documentNameController = TextEditingController();
   TextEditingController _documentNumberController = TextEditingController();
   TextEditingController _iqamaController = TextEditingController();
+  TextEditingController _visaController = TextEditingController();
   TextEditingController _passportNumberController = TextEditingController();
 
   //Visit Detail
@@ -234,6 +226,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) apiGetById(context, userResponse!, id),
         apiLocationDropdown(context),
         apiBuildingDropdown(context),
+        apiDocumentIdDropdown(context),
         apiNationalityDropdown(context),
         apiVisitRequestDropdown(context),
         apiVisitPurposeDropdown(context),
@@ -253,6 +246,12 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     if (applyPassCategory == ApplyPassCategory.myself.name || isUpdate) {
       if (isUpdate) {
         final approvalStatus = getByIdResult?.user?.sApprovalStatusEn ?? "";
+
+        if(getByIdResult?.vehicle == null) {
+          isCheckedVehicle = false;
+        } else {
+          isCheckedVehicle = true;
+        }
 
         if (approvalStatus == 'Rejected' ||
             approvalStatus == 'Cancelled' ||
@@ -280,11 +279,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       emailController.text = isUpdate ? getByIdResult?.user?.visitorEmail ?? "" : getByIdResult?.user?.sEmail ?? "";
 
       idTypeController.text = (() {
-        final item = idTypeMenu.firstWhere(
-              (item) => item.value == getByIdResult?.user?.nDocumentType,
-          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        final item = idTypeMenu?.firstWhere(
+              (item) => item.nDetailedCode == getByIdResult?.user?.nDocumentType,
+          orElse: () => DocumentIdModel(sDescE: "", sDescA: "", nDetailedCode: 0),
         );
-        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+        return context.lang == LanguageCode.ar.name ? item?.sDescA ?? "": item?.sDescE ?? "";
       })();
 
       selectedIdValue = getByIdResult?.user?.nDocumentType.toString() ?? "";
@@ -297,6 +296,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
               ? decryptAES(getByIdResult!.user!.passportNumber!)
               : "";
 
+      visaController.text =
+      (getByIdResult?.user?.sVisaNo?.isNotEmpty ?? false) ? decryptAES(getByIdResult!.user!.sVisaNo!) : "";
+
       nationalityIdController.text =
           (getByIdResult?.user?.eidNumber?.isNotEmpty ?? false) ? decryptAES(getByIdResult!.user!.eidNumber!) : "";
 
@@ -307,23 +309,39 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
           (getByIdResult?.user?.sOthersValue?.isNotEmpty ?? false)
               ? decryptAES(getByIdResult!.user!.sOthersValue!)
               : "";
-      expiryDateController.text = (getByIdResult?.user?.dTIqamaExpiry
-          ?.trim()
-          .isNotEmpty == true
-          ? getByIdResult?.user?.dTIqamaExpiry!
-          : getByIdResult?.user?.dtPassportExpiryDate
-          ?.trim()
-          .isNotEmpty == true
-          ? getByIdResult?.user?.dtPassportExpiryDate!
-          : getByIdResult?.user?.dtEidExpiryDate
-          ?.trim()
-          .isNotEmpty == true
-          ? getByIdResult?.user?.dtEidExpiryDate!
-          : getByIdResult?.user?.dTOthersExpiry?.trim() ?? '').toString().toDisplayDateOnly() ?? "";
+      String? expiry = getByIdResult?.user?.dTIqamaExpiry;
+      debugPrint("dTIqamaExpiry: $expiry");
+
+      if (expiry == null || expiry.trim().isEmpty) {
+        expiry = getByIdResult?.user?.dtVisaExpiryDate;
+        debugPrint("dtVisaExpiryDate: $expiry");
+      }
+
+      if (expiry == null || expiry.trim().isEmpty) {
+        expiry = getByIdResult?.user?.dtPassportExpiryDate;
+        debugPrint("dtPassportExpiryDate: $expiry");
+      }
+
+      if (expiry == null || expiry.trim().isEmpty) {
+        expiry = getByIdResult?.user?.dtEidExpiryDate;
+        debugPrint("dtEidExpiryDate: $expiry");
+      }
+
+      if (expiry == null || expiry.trim().isEmpty) {
+        expiry = getByIdResult?.user?.dTOthersExpiry;
+        debugPrint("dTOthersExpiry: $expiry");
+      }
+
+      expiryDateController.text = expiry?.toDisplayDateOnly() ?? "";
+      debugPrint("Final expiryDateController.text: ${expiryDateController.text}");
+
+      final dob = getByIdResult?.user?.dtDateOfBirth;
+      debugPrint("dtDateOfBirth: $dob");
+      dateOfBirthController.text = dob?.toDisplayDateOnly() ?? "";
+      debugPrint("Final dateOfBirthController.text: ${dateOfBirthController.text}");
 
       vehicleNumberController.text = getByIdResult?.user?.sVehicleNo ?? "";
 
-      if(getByIdResult?.vehicle == null) isCheckedVehicle = false;
 
       if(getByIdResult?.vehicle != null) {
         selectedPlateType = getByIdResult?.vehicle?.nPlateSource ?? 0;
@@ -375,6 +393,17 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
           return context.lang == LanguageCode.ar.name
               ? (item.sLocationNameAr ?? "")
               : (item.sLocationNameEn ?? "");
+        })();
+
+        selectedBuilding = getByIdResult?.user?.nBuildingID?.toString() ?? "0";
+        buildingController.text = (() {
+          final item = buildingDropdownData.firstWhere(
+                (item) => item.nBuildingId == getByIdResult?.user?.nBuildingID,
+            orElse: () => BuildingDropdownResult(),
+          );
+          return context.lang == LanguageCode.ar.name
+              ? (item.sBuildingNameAr ?? "")
+              : (item.sBuildingNameEn ?? "");
         })();
 
         visitRequestTypeController.text = (() {
@@ -433,11 +462,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
           userData.mobileNo ?? "";
       emailController.text = userData.email ?? "";
       idTypeController.text = (() {
-        final item = idTypeMenu.firstWhere(
-              (item) => item.value == userData.idType,
-          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        final item = idTypeMenu?.firstWhere(
+              (item) => item.nDetailedCode == userData.idType,
+          orElse: () => DocumentIdModel(sDescE: "", sDescA: "", nDetailedCode: 0),
         );
-        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+        return context.lang == LanguageCode.ar.name ? item?.sDescA ?? "" : item?.sDescE ?? "";
       })();
 
       selectedIdValue = userData.idType?.toString() ?? "";
@@ -447,19 +476,24 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
       nationalityIdController.text = userData.eidNumber ?? "";
 
+      visaController.text = userData.sVisaNo ?? "";
+
       documentNameController.text = userData.sOthersDoc ?? "";
 
       documentNumberController.text = userData.sOthersValue ?? "";
 
-      final expiryDate = switch (IdTypeExtension.fromInt(userData.idType)) {
+
+      final expiryDate = switch (IdTypeExtension.fromId(userData.idType)) {
         IdType.nationalId => userData.dtEidExpiryDate,
         IdType.passport => userData.dtPassportExpiryDate,
         IdType.iqama => userData.dtIqamaExpiry,
+        IdType.visa => userData.dtVisaExpiry,
         IdType.other => userData.dtOthersExpiry,
         _ => null,
       };
 
       expiryDateController.text = expiryDate?.toDisplayDate() ?? "";
+      dateOfBirthController.text = userData.dtDateOfBirth?.toDisplayDate() ?? "";
 
       vehicleNumberController.text = userData.sVehicleNo ?? "";
 
@@ -509,6 +543,17 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
             : (item.sLocationNameEn ?? "");
       })();
 
+      selectedBuilding = userData.nBuildingId?.toString() ?? "0";
+      buildingController.text = (() {
+        final item = buildingDropdownData.firstWhere(
+              (item) => item.nBuildingId == userData.nBuildingId,
+          orElse: () => BuildingDropdownResult(),
+        );
+        return context.lang == LanguageCode.ar.name
+            ? (item.sBuildingNameAr ?? "")
+            : (item.sBuildingNameEn ?? "");
+      })();
+
       visitRequestTypeController.text = (() {
         final item = visitRequestTypesDropdownData.firstWhere(
               (item) => item.nDetailedCode == userData.nVisitType,
@@ -551,7 +596,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       final dynamic rawImageData = imageMap['imageUploaded'];
       final dynamic rawDocumentData = imageMap['documentUploaded'];
       final dynamic rawVehicleData = imageMap['vehicleRegistrationUploaded'];
-      final String? selectedIdType = imageMap['selectedIdType'];
 
       // Convert to Uint8List only if it's actually a list
       final Uint8List? imageBytes = rawImageData is List ? Uint8List.fromList(rawImageData.cast<int>()) : null;
@@ -575,8 +619,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         deviceTypeOthersValue: model.deviceTypeOthersValue,
         deviceModel: model.deviceModel,
         serialNumber: model.serialNumber,
-        devicePurpose: model.devicePurpose,
-        devicePurposeOthersValue: model.devicePurposeOthersValue,
+        devicePurpose: model.devicePurposeString,
         approvalStatus: model.approvalStatus,
         currentApprovalStatus: null, // Provide if needed
         comment: null,
@@ -598,30 +641,23 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     // ID-based types
     final idType = selectedIdType; // e.g. "National ID", "Passport", etc.
 
-    // Your idTypeMenu list (make sure this is accessible here)
-    final List<DocumentIdModel> idTypeMenu = [
-      DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
-      DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
-      DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
-      DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
-    ];
 
     // Map from idTypeMenu.value to typesToFetch code
     final fetchCodeMap = {
       24: 2,    // National ID → 2
       26: 3,    // Passport → 3
       2244: 5,  // Iqama → 5
-      2245: 6,  // Other → 6
+      2294: 7,  // Visa → 7
     };
 
     // Find matching item by English label (idType)
-    final matchingItem = idTypeMenu.firstWhere(
-          (item) => item.labelEn == idType,
-      orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+    final matchingItem = idTypeMenu?.firstWhere(
+          (item) => item.sDescE == idType,
+      orElse: () => DocumentIdModel(sDescE: "", sDescA: "", nDetailedCode: 0),
     );
 
-    if (matchingItem.value != 0) {
-      final code = fetchCodeMap[matchingItem.value];
+    if (matchingItem?.nDetailedCode != 0) {
+      final code = fetchCodeMap[matchingItem?.nDetailedCode];
       if (code != null) {
         typesToFetch.add(code);
       }
@@ -645,20 +681,6 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     }
   }
 
-  int _getFileType(String idType) {
-    switch (idType) {
-      case "National ID":
-        return 2;
-      case "Passport":
-        return 3;
-      case "Iqama":
-        return 5;
-      case "Other":
-        return 6;
-      default:
-        return 4;
-    }
-  }
 
   Future<void> apiGetFile(BuildContext context, {required int type}) async {
     try {
@@ -839,11 +861,11 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       emailController.text = searchResult.appointment?.sEmail ?? "";
 
       idTypeController.text = (() {
-        final item = idTypeMenu.firstWhere(
-              (item) => item.value == searchResult.appointment?.nDocumentType,
-          orElse: () => DocumentIdModel(labelEn: "", labelAr: "", value: 0),
+        final item = idTypeMenu?.firstWhere(
+              (item) => item.nDetailedCode == searchResult.appointment?.nDocumentType,
+          orElse: () => DocumentIdModel(sDescA: "", sDescE: "", nDetailedCode: 0),
         );
-        return context.lang == LanguageCode.ar.name ? item.labelAr : item.labelEn;
+        return context.lang == LanguageCode.ar.name ? item?.sDescA ?? "" : item?.sDescE ?? "";
       })();
 
       selectedIdValue = searchResult.appointment?.nDocumentType.toString() ?? "";
@@ -867,6 +889,8 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
               ? searchResult.appointment!.dtEidExpiryDate
               : searchResult.appointment?.dtOthersExpiry?.trim()
       )?.toString().toDisplayDateOnly() ?? '';
+
+      dateOfBirthController.text = searchResult.appointment?.dtDateOfBirth?.toDisplayDateOnly() ?? '';
 
       vehicleNumberController.text = searchResult.appointment!.sVehicleNo ?? "";
 
@@ -933,12 +957,28 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     }
   }
 
-  // Location dropdown
-  Future<void> apiBuildingDropdown(BuildContext context) async {
+  // Building dropdown
+  Future<void> apiBuildingDropdown(BuildContext context, {int? locationId = 1}) async {
     try {
-      final result = await ApplyPassRepository().apiBuildingDropDown(DeviceDropdownRequest(encryptedId: encryptAES("1")), context);
+      final result = await ApplyPassRepository().apiBuildingDropDown(
+          DeviceDropdownRequest(encryptedId: encryptAES(locationId.toString())), context);
       if (result is List<BuildingDropdownResult>) {
         buildingDropdownData = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
+    }
+  }
+
+  // Building dropdown
+  Future<void> apiDocumentIdDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDocumentIdDropDown(
+         {}, context);
+      if (result is List<DocumentIdModel>) {
+        idTypeMenu = result;
       } else {
         debugPrint("Unexpected result type in apiBuildingDropdown");
       }
@@ -1192,6 +1232,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     try {
       final result = await ApplyPassRepository().apiDuplicateAppointment(
         DuplicateAppointmentRequest(
+          nAppointmentID: isUpdate ? getByIdResult?.user?.nAppointmentId ?? 0 : 0,
           dFromDate: visitStartDateController.text.toDateTime().toString(),
           dToDate: visitEndDateController.text.toDateTime().toString(),
           nExternalRegistrationId: getByIdResult?.user?.nExternalRegistrationId ?? 0,
@@ -1219,13 +1260,25 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
    try {
       final expiryDate = expiryDateController.text.toDateTime().toString();
 
-      // Assign expiry based on ID type
-      final Map<String, String?> expiryMap = {'National ID': null, 'Iqama': null, 'Passport': null, 'Other': null};
-      expiryMap[selectedIdType ?? ''] = expiryDate;
+// Map expiry by ID
+     final expiryMap = <int?, String?>{
+       24: null,    // National ID
+       2244: null,  // Iqama
+       26: null,    // Passport
+       2294: null,  // Visa
+     };
 
-      // Assign expiry based on ID type
-      final Map<String, int?> expiryImageMap = {'National ID': 0, 'Iqama': 0, 'Passport': 0, 'Other': 0};
-      expiryImageMap[selectedIdType ?? ''] = haveDocument;
+     expiryMap[int.tryParse(selectedIdValue ?? "0") ?? 0] = expiryDate;
+
+// Map document uploaded flag
+     final expiryImageMap = <int?, int?>{
+       24: 0,
+       2244: 0,
+       26: 0,
+       2294: 0,
+       2245: 0,
+     };
+     expiryImageMap[int.tryParse(selectedIdValue ?? "0") ?? 0] = haveDocument;
 
       final user = getByIdResult?.user;
       final userId = int.tryParse(userResponse?.userId ?? "0") ?? 0;
@@ -1239,29 +1292,31 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         idType: int.tryParse(selectedIdValue ?? "") ?? 0,
         sIqama: encryptAES(iqamaController.text),
         passportNumber: encryptAES(passportNumberController.text),
-        sOthersDoc: encryptAES(documentNameController.text),
         eidNumber: encryptAES(nationalityIdController.text),
-        sOthersValue: encryptAES(documentNumberController.text),
-        dtEidExpiryDate: expiryMap['National ID'],
-        dtIqamaExpiry: expiryMap['Iqama'],
-        dtPassportExpiryDate: expiryMap['Passport'],
-        dtOthersExpiry: expiryMap['Other'],
+        dtEidExpiryDate: expiryMap[24],
+        dtIqamaExpiry: expiryMap[2244],
+        dtPassportExpiryDate: expiryMap[26],
+        dtVisaExpiry: expiryMap[2294],
+        sVisaNo: encryptAES(visaController.text),
+        dtDateOfBirth: dateOfBirthController.text.apiDateFormat(),
         dtAppointmentStartTime: visitStartDateController.text.toDateTime(),
         dtAppointmentEndTime: visitEndDateController.text.toDateTime(),
         sVehicleNo: vehicleNumberController.text,
         devices: isCheckedDevice ? addedDevices : null,
         nLocationId: selectedLocationId,
         nVisitType: int.tryParse(selectedVisitRequest ?? "") ?? 0,
+        nBuildingId: int.tryParse(selectedBuilding ?? "") ?? 0,
         purpose: int.tryParse(selectedVisitPurpose ?? "") ?? 0,
         purposeOtherValue: visitPurposeOtherController.text,
         remarks: noteController.text,
         sVisitingPersonEmail: mofaHostEmailController.text,
-        haveEid: user?.haveEid ?? expiryImageMap['National ID'],
-        havePassport: user?.havePassport ?? expiryImageMap['Passport'],
-        haveIqama: user?.haveIqama ?? expiryImageMap['Iqama'],
+        haveEid: user?.haveEid ?? expiryImageMap[24],
+        havePassport: user?.havePassport ?? expiryImageMap[26],
+        haveIqama: user?.haveIqama ?? expiryImageMap[2244],
+        haveVisa: user?.haveVisa ?? expiryImageMap[2294],
+        haveOthers: user?.haveOthers ?? expiryImageMap[2245],
         havePhoto: user?.havePhoto ?? havePhoto,
         haveVehicleRegistration: user?.haveVehicleRegistration ?? haveVehicleRegistration,
-        haveOthers: user?.haveOthers ?? expiryImageMap['Other'],
         userId: userId,
         nExternalRegistrationId: userId,
         nAppointmentId: isUpdate ? user?.nAppointmentId ?? 0 : 0,
@@ -1286,7 +1341,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         "vehicleRegistrationUploaded": uploadedVehicleRegistrationFile == null
             ? uploadedVehicleImageBytes
             : await uploadedVehicleRegistrationFile?.toBase64(),
-        "selectedIdType": selectedIdType,
+        "selectedIdValue": selectedIdValue,
       };
 
       debugPrint("Appointment Data: ${jsonEncode(appointmentData.toJson())}");
@@ -1419,17 +1474,32 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   }
 
   void startEditingDevice(int index) {
+    debugPrint("=== startEditingDevice START ===");
+    debugPrint("Editing device at index: $index");
+
     editDeviceIndex = index;
     isEditingDevice = true;
     showDeviceFields = true;
 
     final device = _addedDevices[index];
+    debugPrint("📦 Device before editing: $device");
+
     deviceTypeController.text = device.deviceTypeString ?? "";
     deviceModelController.text = device.deviceModel ?? "";
     serialNumberController.text = device.serialNumber ?? "";
     devicePurposeController.text = device.devicePurposeString ?? "";
     deviceTypeOtherController.text = device.deviceTypeOthersValue ?? "";
     devicePurposeOtherController.text = device.devicePurposeOthersValue ?? "";
+
+    debugPrint("🔧 Controllers after load:");
+    debugPrint(" - DeviceType: ${deviceTypeController.text}");
+    debugPrint(" - DeviceModel: ${deviceModelController.text}");
+    debugPrint(" - SerialNumber: ${serialNumberController.text}");
+    debugPrint(" - DevicePurpose: ${devicePurposeController.text}");
+    debugPrint(" - DeviceTypeOther: ${deviceTypeOtherController.text}");
+    debugPrint(" - DevicePurposeOther: ${devicePurposeOtherController.text}");
+
+    debugPrint("=== startEditingDevice END ===\n");
   }
 
   void cancelEditing() {
@@ -1459,15 +1529,38 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
 
   void saveDevice() {
     final isDeviceTypeOther = selectedDeviceType == 2250;
-    final isDevicePurposeOther = selectedDevicePurpose == 2254;
+    // final isDevicePurposeOther = selectedDevicePurpose == 2254;
+
+    final match = _deviceTypeDropdownData.firstWhere(
+          (element) => element.sDescE == deviceTypeController.text,
+      orElse: () => DeviceDropdownResult(
+        nDetailedCode: -1,
+        sDescE: '',
+        sDescA: '',
+      ),
+    );
+
+    if (match.nDetailedCode != -1) {
+      selectedDeviceType = match.nDetailedCode;
+      debugPrint("✅ Matched DeviceType: ${match.sDescE} -> ${selectedDeviceType}");
+    } else {
+      debugPrint("⚠️ No match found for '${deviceTypeController.text}'");
+    }
+
+    debugPrint("=== saveDevice START ===");
+    debugPrint("DeviceType: ${deviceTypeController.text} (ID: $selectedDeviceType)");
+    debugPrint("DeviceModel: ${deviceModelController.text}");
+    debugPrint("SerialNumber: ${serialNumberController.text}");
+    debugPrint("DevicePurpose: ${devicePurposeController.text} (ID: $selectedDevicePurpose)");
+    debugPrint("DeviceTypeOther: ${isDeviceTypeOther ? deviceTypeOtherController.text : 'N/A'}");
+    debugPrint("isEditing: $isEditingDevice, editDeviceIndex: $editDeviceIndex");
 
     // Validate fields
     if (deviceTypeController.text.isEmpty ||
         deviceModelController.text.isEmpty ||
         serialNumberController.text.isEmpty ||
         devicePurposeController.text.isEmpty ||
-        (isDeviceTypeOther && deviceTypeOtherController.text.isEmpty) ||
-        (isDevicePurposeOther && devicePurposeOtherController.text.isEmpty)) {
+        (isDeviceTypeOther && deviceTypeOtherController.text.isEmpty)) {
       return;
     }
 
@@ -1477,10 +1570,10 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       deviceModel: deviceModelController.text,
       serialNumber: serialNumberController.text,
       devicePurposeString: devicePurposeController.text,
-      devicePurpose: selectedDevicePurpose,
+      // devicePurpose: selectedDevicePurpose,
       deviceTypeOthersValue: isDeviceTypeOther ? deviceTypeOtherController.text : null,
-      devicePurposeOthersValue: isDevicePurposeOther ? devicePurposeOtherController.text : null,
     );
+
 
     if (isEditingDevice && editDeviceIndex != null) {
       addedDevices[editDeviceIndex!] = newDevice; // update
@@ -1505,6 +1598,9 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       // selectedDevicePurpose = r.devicePurpose;
       // selectedDeviceType = r.deviceType;
 
+      log("r.deviceType");
+      log(r.deviceType.toString());
+
       return DeviceModel(
         appointmentDeviceId: r.appointmentDeviceId ?? 0,
         deviceType: r.deviceType,
@@ -1512,9 +1608,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
         deviceTypeOthersValue: r.deviceTypeOthersValue ?? "",
         deviceModel: r.deviceModel ?? "",
         serialNumber: r.serialNumber ?? "",
-        devicePurpose: r.devicePurpose,
-        devicePurposeString: _getDevicePurposeString(r.devicePurpose),
-        devicePurposeOthersValue: r.devicePurposeOthersValue ?? "",
+        devicePurposeString: r.devicePurpose,
         approvalStatus: r.approvalStatus ?? 50,
       );
     }).toList();
@@ -1659,7 +1753,7 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
       return false;
     }
 
-    if (!isUpdate && await _hasNoDuplicates(context)) {
+    if (await _hasNoDuplicates(context)) {
       return false;
     }
 
@@ -1880,6 +1974,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
     notifyListeners();
   }
 
+  TextEditingController get dateOfBirthController => _dateOfBirthController;
+
+  set dateOfBirthController(TextEditingController value) {
+    if (_dateOfBirthController == value) return;
+    _dateOfBirthController = value;
+    notifyListeners();
+  }
+
   TextEditingController get vehicleNumberController => _vehicleNumberController;
 
   set vehicleNumberController(TextEditingController value) {
@@ -1973,6 +2075,14 @@ class ApplyPassCategoryNotifier extends BaseChangeNotifier with CommonFunctions,
   set iqamaController(TextEditingController value) {
     if (_iqamaController == value) return;
     _iqamaController = value;
+    notifyListeners();
+  }
+
+  TextEditingController get visaController => _visaController;
+
+  set visaController(TextEditingController value) {
+    if (_visaController == value) return;
+    _visaController = value;
     notifyListeners();
   }
 

@@ -146,6 +146,7 @@ class SearchVisitorAppointment {
   dynamic dtPassportExpiryDate;
   String? sIqama;
   dynamic dtIqamaExpiry;
+  String? dtDateOfBirth;
   String? sOthersDoc;
   String? sOthersValue;
   dynamic dtOthersExpiry;
@@ -265,6 +266,7 @@ class SearchVisitorAppointment {
     this.dtPassportExpiryDate,
     this.sIqama,
     this.dtIqamaExpiry,
+    this.dtDateOfBirth,
     this.sOthersDoc,
     this.sOthersValue,
     this.dtOthersExpiry,
@@ -385,6 +387,7 @@ class SearchVisitorAppointment {
     dtPassportExpiryDate: json["dt_PassportExpiryDate"],
     sIqama: json["s_Iqama"],
     dtIqamaExpiry: json["dt_IqamaExpiry"],
+    dtDateOfBirth: json["dt_DateOfBirth"],
     sOthersDoc: json["s_OthersDoc"],
     sOthersValue: json["s_OthersValue"],
     dtOthersExpiry: json["dt_OthersExpiry"],
@@ -505,6 +508,7 @@ class SearchVisitorAppointment {
     "dt_PassportExpiryDate": dtPassportExpiryDate,
     "s_Iqama": sIqama,
     "dt_IqamaExpiry": dtIqamaExpiry,
+    "dt_DateOfBirth": dtDateOfBirth,
     "s_OthersDoc": sOthersDoc,
     "s_OthersValue": sOthersValue,
     "dt_OthersExpiry": dtOthersExpiry,

@@ -4,9 +4,11 @@ import 'package:mofa/core/localization/context_extensions.dart';
 import 'package:mofa/core/model/country/country_response.dart';
 import 'package:mofa/core/model/get_profile/get_profile_response.dart';
 import 'package:mofa/core/model/update_profile/update_profile_request.dart';
+import 'package:mofa/core/remote/service/apply_pass_repository.dart';
 import 'package:mofa/core/remote/service/auth_repository.dart';
 import 'package:mofa/model/document/document_id_model.dart';
 import 'package:mofa/utils/common_utils.dart';
+import 'package:mofa/utils/extensions.dart';
 
 class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
 
@@ -20,8 +22,10 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
   final TextEditingController nationalityController = TextEditingController();
   final TextEditingController mobileNumberController = TextEditingController();
   final TextEditingController emailAddressController = TextEditingController();
+  final TextEditingController dateOfBirthController = TextEditingController();
   final TextEditingController idTypeController = TextEditingController();
   final TextEditingController nationalityIdController = TextEditingController();
+  final TextEditingController visaController = TextEditingController();
   final TextEditingController documentNameController = TextEditingController();
   final TextEditingController documentNumberController = TextEditingController();
   final TextEditingController iqamaController = TextEditingController();
@@ -32,12 +36,7 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
 
   List<CountryData> _nationalityMenu = [];
 
-  final List<DocumentIdModel> idTypeMenu = [
-    DocumentIdModel(labelEn: "Iqama", labelAr: "الإقامة", value: 2244),
-    DocumentIdModel(labelEn: "National ID", labelAr: "الهوية_الوطنية", value: 24),
-    DocumentIdModel(labelEn: "Passport", labelAr: "جواز_السفر", value: 26),
-    DocumentIdModel(labelEn: "Other", labelAr: "أخرى", value: 2245),
-  ];
+  List<DocumentIdModel>? idTypeMenu;
 
   //Functions
   EditProfileNotifier(BuildContext context) {
@@ -46,9 +45,25 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
 
   Future<void> _init(BuildContext context) async {
     runWithLoadingVoid(() async {
+      await apiDocumentIdDropdown(context);
       await _fetchProfileAndNationality(context);
       _initializeData(context);
     },);
+  }
+
+  // Building dropdown
+  Future<void> apiDocumentIdDropdown(BuildContext context) async {
+    try {
+      final result = await ApplyPassRepository().apiDocumentIdDropDown(
+          {}, context);
+      if (result is List<DocumentIdModel>) {
+        idTypeMenu = result;
+      } else {
+        debugPrint("Unexpected result type in apiBuildingDropdown");
+      }
+    } catch (e) {
+      debugPrint("Error in apiBuildingDropdown: $e");
+    }
   }
 
   Future<void> _fetchProfileAndNationality(BuildContext context) async {
@@ -73,17 +88,19 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
     emailAddressController.text = data?.sEmail ?? "";
     iqamaController.text = data?.sIqama ?? "";
     passportNumberController.text = data?.passportNumber ?? "";
+    visaController.text = data?.sVisaNo ?? "";
     nationalityIdController.text = data?.eidNumber ?? "";
     documentNameController.text = data?.sOthersDoc ?? "";
     documentNumberController.text = data?.sOthersValue ?? "";
+    dateOfBirthController.text = data?.dtDateOfBirth?.toDisplayDate() ?? "";
 
-    final matchedIdType = idTypeMenu.firstWhere(
-          (item) => item.value == data?.nDocumentType,
-      orElse: () => DocumentIdModel(labelEn: "Unknown", labelAr: "", value: 0),
+    final matchedIdType = idTypeMenu?.firstWhere(
+          (item) => item.nDetailedCode == data?.nDocumentType,
+      orElse: () => DocumentIdModel(sDescE: "Unknown", sDescA: "", nDetailedCode: 0),
     );
-    _selectedIdType = getLocalizedText(currentLang: context.lang, english: matchedIdType.labelEn, arabic: matchedIdType.labelAr);
+    _selectedIdType = getLocalizedText(currentLang: context.lang, english: matchedIdType?.sDescE ?? "", arabic: matchedIdType?.sDescA ?? "");
     _selectedIdValue = data?.nDocumentType.toString();
-    idTypeController.text = getLocalizedText(currentLang: context.lang, english: matchedIdType.labelEn, arabic: matchedIdType.labelAr);
+    idTypeController.text = getLocalizedText(currentLang: context.lang, english: matchedIdType?.sDescE ?? "", arabic: matchedIdType?.sDescA ?? "");
 
     final matchedNationality = _nationalityMenu.firstWhere(
           (country) => country.iso3 == data?.iso3,
@@ -104,20 +121,24 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
     String? iqama;
     String? eidNumber;
     String? passportNumber;
+    String? visaNumber;
     String? othersDoc;
     String? othersValue;
 
-    switch (_selectedIdType) {
-      case "Iqama":
+    switch (int.tryParse(_selectedIdValue ?? "0") ?? 0) {
+      case 2244: // Iqama
         iqama = iqamaController.text;
         break;
-      case "National ID":
+      case 24: // National ID
         eidNumber = nationalityIdController.text;
         break;
-      case "Passport":
+      case 26: // Passport
         passportNumber = passportNumberController.text;
         break;
-      case "Other":
+      case 2294: // Visa
+        visaNumber = visaController.text;
+        break;
+      case 2245: // Other
         othersDoc = documentNameController.text;
         othersValue = documentNumberController.text;
         break;
@@ -133,9 +154,11 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
       nDocumentType: int.tryParse(_selectedIdValue ?? "") ?? 0,
       sIqama: iqama,
       eidNumber: eidNumber,
+      sVisaNo: visaNumber,
       passportNumber: passportNumber,
       sOthersDoc: othersDoc,
       sOthersValue: othersValue,
+      dtDateOfBirth: dateOfBirthController.text.apiDateFormat(),
     );
 
     await AuthRepository().apiUpdateProfile(updateProfileRequest, context);
@@ -199,6 +222,7 @@ class EditProfileNotifier extends BaseChangeNotifier with CommonUtils {
     nationalityController.dispose();
     mobileNumberController.dispose();
     emailAddressController.dispose();
+    dateOfBirthController.dispose();
     idTypeController.dispose();
     nationalityIdController.dispose();
     documentNameController.dispose();

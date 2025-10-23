@@ -68,6 +68,12 @@ class CommonValidation {
   String? vehicleNumberValidator(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.vehicleNumberRequired);
 
+  String? buildingValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.vehicleNumberRequired);
+
+  String? dateOfBirthValidator(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.dateOfBirthRequired);
+
   String? nationalityValidator(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.nationalityRequired);
 
@@ -104,8 +110,18 @@ class CommonValidation {
     if (value == null || value.isEmpty) {
       return context.readLang.translate(AppLanguageText.passportRequired);
     }
-    if (!RegExp(LocalInputRegex.passportNumber).hasMatch(value)) {
-      return context.readLang.translate(AppLanguageText.passportInvalid);
+    // if (!RegExp(LocalInputRegex.passportNumber).hasMatch(value)) {
+    //   return context.readLang.translate(AppLanguageText.passportInvalid);
+    // }
+    return null;
+  }
+
+  String? validateVisa(BuildContext context, String? value) {
+    if (value == null || value.isEmpty) {
+      return context.readLang.translate(AppLanguageText.visaRequired);
+    }
+    if (!RegExp(LocalInputRegex.visaNumber).hasMatch(value)) {
+      return context.readLang.translate(AppLanguageText.visaInvalid);
     }
     return null;
   }
@@ -117,6 +133,9 @@ class CommonValidation {
       _requiredFieldValidator(context, value, AppLanguageText.iqamaExpiryRequired);
 
   String? validatePassportExpiryDate(BuildContext context, String? value) =>
+      _requiredFieldValidator(context, value, AppLanguageText.passportExpiryRequired);
+
+  String? validateVisaExpiryDate(BuildContext context, String? value) =>
       _requiredFieldValidator(context, value, AppLanguageText.passportExpiryRequired);
 
   String? validateDocumentExpiryDate(BuildContext context, String? value) =>

@@ -13,7 +13,7 @@ mixin CommonUtils {
       case 'approved':
         return Colors.green;
       case 'pending':
-        return Colors.yellow;
+        return Color(0xffefb100);
       case 'rejected':
         return Colors.red;
       case 'cancelled':
